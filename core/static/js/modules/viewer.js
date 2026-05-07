@@ -39,7 +39,83 @@ const tabsExtension = {
 
 marked.use({ extensions: [tabsExtension] });
 
+// Mermaid initialization
+if (window.mermaid) {
+    mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+}
+
 const renderer = new marked.Renderer();
+
+// Custom Blockquote for Callouts [!NOTE]
+renderer.blockquote = function(arg1) {
+    let quote;
+    if (typeof arg1 === 'object') {
+        quote = arg1.text;
+    } else {
+        quote = arg1;
+    }
+
+    const calloutMap = {
+        'NOTE': { icon: 'info', class: 'note' },
+        'TIP': { icon: 'lightbulb', class: 'tip' },
+        'IMPORTANT': { icon: 'alert-circle', class: 'important' },
+        'WARNING': { icon: 'alert-triangle', class: 'warning' },
+        'CAUTION': { icon: 'zap', class: 'caution' }
+    };
+
+    const match = quote.match(/^<p>\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/i);
+    if (match) {
+        const type = match[1].toUpperCase();
+        const cfg = calloutMap[type];
+        const content = quote.replace(/^<p>\[!(?:NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/i, '<p>');
+        return `<div class="callout callout-${cfg.class}">
+                    <div class="callout-header"><i data-lucide="${cfg.icon}"></i>${type}</div>
+                    <div class="callout-content">${content}</div>
+                </div>`;
+    }
+    return `<blockquote>${quote}</blockquote>`;
+};
+
+// Custom Code for Mermaid
+renderer.code = function(arg1, arg2) {
+    let code, lang;
+    if (typeof arg1 === 'object') {
+        code = arg1.text;
+        lang = arg1.lang;
+    } else {
+        code = arg1;
+        lang = arg2;
+    }
+
+    if (lang === 'mermaid') {
+        return `<div class="mermaid">${code}</div>`;
+    }
+    
+    const language = lang || 'plaintext';
+    return `<pre><code class="language-${language}">${code}</code></pre>`;
+};
+
+// Custom List Item for Checkboxes
+renderer.listitem = function(arg1, arg2, arg3) {
+    let text, task, checked;
+    if (typeof arg1 === 'object') {
+        text = arg1.text;
+        task = arg1.task;
+        checked = arg1.checked;
+    } else {
+        text = arg1;
+        task = arg2;
+        checked = arg3;
+    }
+
+    if (task) {
+        return `<li class="task-list-item">
+                    <input type="checkbox" ${checked ? 'checked' : ''}>
+                    <span>${text}</span>
+                </li>`;
+    }
+    return `<li>${text}</li>`;
+};
 renderer.heading = function(arg1, arg2, arg3) {
     let text, level, raw;
     if (typeof arg1 === 'object') {
@@ -107,28 +183,37 @@ export function updateBreadcrumbs(path) {
     const parts = path.split('/');
     ui.breadcrumb.innerHTML = '';
     
+    // Add a Home icon at the start
+    const homeIcon = document.createElement('i');
+    homeIcon.setAttribute('data-lucide', 'home');
+    homeIcon.className = 'breadcrumb-home-icon';
+    ui.breadcrumb.appendChild(homeIcon);
+
     let currentPath = '';
     parts.forEach((part, index) => {
         if (!part) return;
         currentPath += (index > 0 ? '/' : '') + part;
         
+        const wrapper = document.createElement('div');
+        wrapper.className = 'breadcrumb-item';
+
+        const sep = document.createElement('span');
+        sep.className = 'breadcrumb-separator';
+        sep.textContent = '›';
+        ui.breadcrumb.appendChild(sep);
+
         const span = document.createElement('span');
-        if (index < parts.length - 1) {
-            const a = document.createElement('a');
-            a.href = '#';
-            a.textContent = part.replace('.md', '');
-            // For now, breadcrumbs don't navigate folders, but we could add it
-            span.appendChild(a);
-            const sep = document.createElement('span');
-            sep.textContent = ' / ';
-            sep.style.margin = '0 8px';
-            span.appendChild(sep);
-        } else {
-            span.textContent = part.replace('.md', '');
-            span.style.color = 'var(--text-main)';
-        }
+        span.className = index === parts.length - 1 ? 'breadcrumb-current' : 'breadcrumb-folder';
+        
+        // Remove .md for display
+        let displayName = part.replace('.md', '');
+        // Capitalize or handle special cases? Let's keep it simple
+        span.textContent = displayName;
+        
         ui.breadcrumb.appendChild(span);
     });
+
+    if (window.lucide) lucide.createIcons();
 }
 
 export async function deleteCurrentFile() {
@@ -195,7 +280,20 @@ export async function loadFileContent(path, pushState = true, hash = null) {
         generateTOC();
         addCopyButtons();
         updateBreadcrumbs(path);
+        
+        // Mermaid rendering
+        if (window.mermaid) {
+            try {
+                mermaid.init(undefined, ui.contentViewer.querySelectorAll('.mermaid'));
+            } catch (e) { console.error("Mermaid error:", e); }
+        }
+        
         if (window.lucide) lucide.createIcons();
+        
+        // Checklist interactivity
+        ui.contentViewer.querySelectorAll('.task-list-item input[type="checkbox"]').forEach((cb, idx) => {
+            cb.onchange = () => toggleChecklist(idx, cb.checked);
+        });
         
         // Scroll to hash
         if (hash) {
@@ -218,5 +316,25 @@ export async function loadFileContent(path, pushState = true, hash = null) {
         tree.updateTreeHighlighting(path);
     } else {
         ui.contentViewer.innerHTML = `<h1>Error</h1><p>Could not load file.</p>`;
+    }
+}
+
+async function toggleChecklist(index, isChecked) {
+    let content = ui.contentEditor.value;
+    let count = 0;
+    // Regex to find [ ] or [x] at the start of a list item
+    const newContent = content.replace(/^(\s*[-*+]\s+\[)([ xX])(\])/gm, (match, p1, p2, p3) => {
+        if (count === index) {
+            count++;
+            return p1 + (isChecked ? 'x' : ' ') + p3;
+        }
+        count++;
+        return match;
+    });
+    
+    if (newContent !== content) {
+        ui.contentEditor.value = newContent;
+        if (editor.easyMDE) editor.easyMDE.value(newContent);
+        await editor.saveFile();
     }
 }

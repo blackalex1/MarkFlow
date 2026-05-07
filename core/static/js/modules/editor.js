@@ -16,9 +16,7 @@ export function toggleEditMode(editing) {
                 spellChecker: false,
                 autosave: { enabled: false },
                 status: ["lines", "words", "cursor"],
-                uploadImage: true,
-                imageUploadEndpoint: "/api/files/upload-image",
-                imageAccept: "image/png, image/jpeg, image/gif, image/webp",
+                uploadImage: false, // We handle upload on save
                 renderingConfig: {
                     singleLineBreaks: false,
                     codeSyntaxHighlighting: true,
@@ -27,13 +25,20 @@ export function toggleEditMode(editing) {
                 minHeight: "500px"
             });
 
+            // Auto-save draft to localStorage
+            easyMDE.codemirror.on("change", () => {
+                if (state.currentFilePath) {
+                    localStorage.setItem(`draft_${state.currentFilePath}`, easyMDE.value());
+                }
+            });
+
             // Handle paste for images
             easyMDE.codemirror.on("paste", (cm, e) => {
                 const items = (e.clipboardData || e.originalEvent.clipboardData).items;
                 for (let item of items) {
                     if (item.type.indexOf("image") !== -1) {
                         const file = item.getAsFile();
-                        uploadAndInsertImage(file);
+                        handleImageInsert(file);
                     }
                 }
             });
@@ -45,18 +50,30 @@ export function toggleEditMode(editing) {
                     for (let file of files) {
                         if (file.type.startsWith("image/")) {
                             e.preventDefault();
-                            uploadAndInsertImage(file);
+                            handleImageInsert(file);
                         }
                     }
                 }
             });
         } else {
-            // Ensure it's visible if it was hidden before
             const wrapper = document.querySelector('.EasyMDEContainer');
             if (wrapper) wrapper.classList.remove('hidden');
         }
-        easyMDE.value(ui.contentEditor.value);
-        // Force refresh to fix layout issues in hidden container
+
+        const draft = localStorage.getItem(`draft_${state.currentFilePath}`);
+        const serverContent = ui.contentEditor.value;
+        
+        if (draft && draft !== serverContent) {
+            if (confirm("Найдена сохраненная локально копия этого документа. Восстановить черновик?")) {
+                easyMDE.value(draft);
+            } else {
+                easyMDE.value(serverContent);
+                localStorage.removeItem(`draft_${state.currentFilePath}`);
+            }
+        } else {
+            easyMDE.value(serverContent);
+        }
+
         setTimeout(() => easyMDE.codemirror.refresh(), 100);
     } else {
         ui.contentViewer.classList.remove('hidden');
@@ -72,13 +89,47 @@ export function toggleEditMode(editing) {
 }
 
 export async function saveFile() {
-    const newContent = easyMDE ? easyMDE.value() : ui.contentEditor.value;
+    let newContent = easyMDE ? easyMDE.value() : ui.contentEditor.value;
+    
+    // Handle pending DataURL images
+    const dataUrlRegex = /!\[([^\]]*)\]\((data:image\/[^;]+;base64,[^)]+)\)/g;
+    const matches = [...newContent.matchAll(dataUrlRegex)];
+    
+    if (matches.length > 0) {
+        ui.btnSave.innerText = "Uploading...";
+        ui.btnSave.disabled = true;
+        
+        for (const match of matches) {
+            const [fullMatch, alt, dataUrl] = match;
+            try {
+                const blob = await (await fetch(dataUrl)).blob();
+                const file = new File([blob], (alt || "image").replace(/[^a-z0-9]/gi, '_') + '.png', { type: blob.type });
+                
+                const formData = new FormData();
+                formData.append('file', file);
+                
+                const res = await fetch('/api/files/upload-image', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    newContent = newContent.replace(dataUrl, data.url);
+                }
+            } catch (err) { console.error("Image upload failed", err); }
+        }
+        ui.btnSave.innerText = "Save";
+        ui.btnSave.disabled = false;
+    }
+
     const res = await fetch(`/api/files/content?path=${encodeURIComponent(state.currentFilePath)}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: newContent })
     });
     if (res.ok) {
+        if (easyMDE) easyMDE.value(newContent);
+        localStorage.removeItem(`draft_${state.currentFilePath}`);
         window.dispatchEvent(new CustomEvent('load-file', { detail: { path: state.currentFilePath } }));
     } else {
         alert("Failed to save file");
@@ -127,30 +178,13 @@ export async function syncGit() {
     }
 }
 
-async function uploadAndInsertImage(file) {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const pos = easyMDE.codemirror.getCursor();
-    easyMDE.codemirror.replaceRange("![Uploading...]()", pos);
-
-    try {
-        const res = await fetch('/api/files/upload-image', {
-            method: 'POST',
-            body: formData
-        });
-        const data = await res.json();
-        if (res.ok) {
-            const link = `![${file.name}](${data.url})`;
-            const range = {
-                from: pos,
-                to: { line: pos.line, ch: pos.ch + 15 } // length of "![Uploading...]()"
-            };
-            easyMDE.codemirror.replaceRange(link, range.from, range.to);
-        } else {
-            alert("Upload failed: " + data.detail);
-        }
-    } catch (e) {
-        alert("Upload error");
-    }
+async function handleImageInsert(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const dataUrl = e.target.result;
+        const pos = easyMDE.codemirror.getCursor();
+        const link = `![${file.name}](${dataUrl})`;
+        easyMDE.codemirror.replaceRange(link, pos);
+    };
+    reader.readAsDataURL(file);
 }

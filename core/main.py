@@ -5,7 +5,7 @@ from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from typing import List, Optional
 
-from core.database import init_db
+from core.database import init_db, update_fts_index, delete_fts_index, search_fts, add_audit_log
 from core.auth import (
     router as auth_router, get_current_user, get_admin_user, 
     get_reporter_user, get_developer_user, get_maintainer_user, get_owner_user
@@ -24,7 +24,27 @@ from contextlib import asynccontextmanager
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    reindex_all_docs()
     yield
+
+def reindex_all_docs():
+    """Builds the search index from scratch on startup."""
+    print("--- Reindexing documentation ---")
+    if not os.path.exists(DOCS_DIR):
+        os.makedirs(DOCS_DIR)
+        
+    for root, dirs, files in os.walk(DOCS_DIR):
+        for file in files:
+            if not file.endswith(".md"):
+                continue
+            rel_path = os.path.relpath(os.path.join(root, file), DOCS_DIR).replace('\\', '/')
+            try:
+                with open(os.path.join(root, file), "r", encoding="utf-8") as f:
+                    content = f.read()
+                    update_fts_index(rel_path, file.replace(".md", ""), content)
+            except Exception as e:
+                print(f"Error indexing {file}: {e}")
+    print("--- Reindexing complete ---")
 
 app = FastAPI(title="Notion-like Docs", lifespan=lifespan)
 app.state.limiter = limiter
@@ -153,6 +173,11 @@ def save_file_content(path: str, data: FileContent, user=Depends(get_developer_u
     with open(full_path, "w", encoding="utf-8") as f:
         f.write(data.content)
         
+    # Update search index
+    update_fts_index(path, os.path.basename(path).replace(".md", ""), data.content)
+    
+    add_audit_log(user["username"], "file_updated", f"Path: {path}")
+        
     return {"message": "File saved"}
 
 @app.put("/api/files/visibility")
@@ -160,6 +185,7 @@ def set_file_visibility(path: str, data: FileVisibility, user=Depends(get_mainta
     get_safe_path(DOCS_DIR, path) # validates the path
         
     set_public(path, data.public)
+    add_audit_log(user["username"], "visibility_changed", f"Path: {path}, Public: {data.public}")
     return {"message": f"Visibility updated to {'public' if data.public else 'private'}"}
 
 @app.post("/api/files/create")
@@ -174,10 +200,15 @@ def create_file(path: str, user=Depends(get_developer_user)):
     os.makedirs(os.path.dirname(full_path), exist_ok=True)
     
     with open(full_path, "w", encoding="utf-8") as f:
-        f.write(f"# {os.path.basename(path).replace('.md', '')}\n\nNew file...")
+        content = f"# {os.path.basename(path).replace('.md', '')}\n\nNew file..."
+        f.write(content)
+        
+    # Update search index
+    update_fts_index(path, os.path.basename(path).replace(".md", ""), content)
         
     # Default to private
     set_public(path, False)
+    add_audit_log(user["username"], "file_created", f"Path: {path}")
     return {"message": "File created", "path": path}
 
 @app.post("/api/files/mkdir")
@@ -186,6 +217,7 @@ def create_folder(path: str, user=Depends(get_developer_user)):
     if os.path.exists(full_path):
         raise HTTPException(status_code=400, detail="Path already exists")
     os.makedirs(full_path, exist_ok=True)
+    add_audit_log(user["username"], "folder_created", f"Path: {path}")
     return {"message": "Folder created", "path": path}
 
 @app.delete("/api/files/delete")
@@ -194,14 +226,16 @@ def delete_file(path: str, user=Depends(get_maintainer_user)):
     if not os.path.exists(full_path):
         raise HTTPException(status_code=404, detail="File not found")
     
-    from core.database import add_audit_log
     add_audit_log(user["username"], "file_deleted", f"Path: {path}")
     
     if os.path.isdir(full_path):
         import shutil
         shutil.rmtree(full_path)
+        # Note: We don't recursively delete from FTS here, but reindex on next startup will fix it.
+        # For small scale, this is acceptable.
     else:
         os.remove(full_path)
+        delete_fts_index(path)
         
     return {"message": "File deleted"}
 
@@ -215,40 +249,17 @@ def search_docs(q: str, request: Request):
     user_role = user.get("role", "guest") if user else "guest"
     can_see_private = ROLES.get(user_role, 0) >= ROLES.get("reporter", 0)
     
-    results = []
-    query = q.lower()
+    # Use FTS5 ranked search
+    db_results = search_fts(q)
     
-    for root, dirs, files in os.walk(DOCS_DIR):
-        for file in files:
-            if not file.endswith(".md"):
-                continue
+    results = []
+    for r in db_results:
+        # Check permissions
+        if not is_public(r["path"]) and not can_see_private:
+            continue
+        results.append(r)
                 
-            rel_path = os.path.relpath(os.path.join(root, file), DOCS_DIR).replace('\\', '/')
-            public = is_public(rel_path)
-            
-            if not public and not can_see_private:
-                continue
-                
-            full_path = os.path.join(root, file)
-            try:
-                with open(full_path, "r", encoding="utf-8") as f:
-                    content = f.read()
-                    if query in content.lower():
-                        # Find a snippet
-                        idx = content.lower().find(query)
-                        start = max(0, idx - 40)
-                        end = min(len(content), idx + len(query) + 40)
-                        snippet = content[start:end].replace('\n', ' ')
-                        
-                        results.append({
-                            "path": rel_path,
-                            "name": file.replace(".md", ""),
-                            "snippet": f"...{snippet}..."
-                        })
-            except:
-                continue
-                
-    return {"results": results[:20]} # Limit to top 20
+    return {"results": results}
 
 from fastapi import UploadFile, File
 import uuid

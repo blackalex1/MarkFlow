@@ -78,7 +78,12 @@ def init_db():
         if not cursor.fetchone():
             new_secret = secrets.token_urlsafe(32)
             cursor.execute('INSERT INTO settings (key, value) VALUES (?, ?)', (key_name, new_secret))
-    
+    # Create FTS5 virtual table for documentation search
+    try:
+        cursor.execute('CREATE VIRTUAL TABLE IF NOT EXISTS fts_docs USING fts5(path, name, content)')
+    except sqlite3.OperationalError:
+        pass
+
     conn.commit()
     conn.close()
 
@@ -224,3 +229,43 @@ def clear_user_sessions(username: str):
     cursor.execute('DELETE FROM sessions WHERE username = ?', (username,))
     conn.commit()
     conn.close()
+
+# --- Full Text Search (FTS5) ---
+
+def update_fts_index(path: str, name: str, content: str):
+    conn = get_db()
+    cursor = conn.cursor()
+    # FTS5 doesn't support UNIQUE constraints, so we delete first to "replace"
+    cursor.execute('DELETE FROM fts_docs WHERE path = ?', (path,))
+    cursor.execute('INSERT INTO fts_docs (path, name, content) VALUES (?, ?, ?)', (path, name, content))
+    conn.commit()
+    conn.close()
+
+def delete_fts_index(path: str):
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute('DELETE FROM fts_docs WHERE path = ?', (path,))
+    conn.commit()
+    conn.close()
+
+def search_fts(query_str: str, limit: int = 20):
+    conn = get_db()
+    cursor = conn.cursor()
+    # Using bm25 ranking and snippet function for results
+    # We escape double quotes in query to prevent syntax errors
+    safe_query = query_str.replace('"', '""')
+    try:
+        cursor.execute('''
+            SELECT path, name, snippet(fts_docs, 2, '...', '...', '...', 10) as snippet
+            FROM fts_docs 
+            WHERE fts_docs MATCH ? 
+            ORDER BY rank 
+            LIMIT ?
+        ''', (f'"{safe_query}"', limit))
+        rows = cursor.fetchall()
+    except sqlite3.OperationalError:
+        # Fallback if query syntax is wrong or MATCH fails
+        return []
+    finally:
+        conn.close()
+    return [dict(row) for row in rows]
