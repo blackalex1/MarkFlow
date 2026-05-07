@@ -18,7 +18,7 @@ function renderFileTree(tree) {
             
             if (node.type === 'folder') {
                 const isOpen = state.openFolders.has(nodePath);
-                item.innerHTML = `<i data-lucide="${isOpen ? 'chevron-down' : 'chevron-right'}" class="icon-sm"></i> <i data-lucide="folder" class="icon-sm"></i> <span>${node.name}</span>`;
+                item.innerHTML = `<i data-lucide="chevron-right" class="icon-sm chevron"></i> <i data-lucide="folder" class="icon-sm"></i> <span>${node.name}</span>`;
                 if (isOpen) item.classList.add('open');
                 
                 const childrenContainer = document.createElement('div');
@@ -69,4 +69,15 @@ export function updateTreeHighlighting(activePath) {
             el.classList.remove('active');
         }
     });
+}
+
+export function getAllFiles() {
+    const files = [];
+    document.querySelectorAll('.file-item').forEach(el => {
+        files.push({
+            path: el.dataset.path,
+            name: el.querySelector('span').textContent
+        });
+    });
+    return files;
 }

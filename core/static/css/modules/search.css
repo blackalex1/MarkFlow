@@ -8,20 +8,32 @@
     position: relative;
     display: flex;
     align-items: center;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    transition: var(--transition);
+    padding-right: 12px;
+}
+
+.search-input-wrapper:focus-within {
+    border-color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .search-input-wrapper i {
-    position: absolute;
-    left: 12px;
     opacity: 0.5;
     color: var(--text-muted);
+    pointer-events: none;
 }
 
 .search-input-wrapper input {
-    padding-left: 36px !important;
+    flex: 1;
+    background: transparent !important;
+    border: none !important;
+    padding-left: 12px !important;
     margin-bottom: 0 !important;
     font-size: 13px;
-    background: rgba(255, 255, 255, 0.03);
+    height: 40px;
 }
 
 .search-results {

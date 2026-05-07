@@ -6,9 +6,12 @@ import * as editor from './modules/editor.js';
 import { initTheme } from './modules/theme.js';
 import { initSearch } from './modules/search.js';
 import { initGlobalHandlers } from './modules/utils.js';
+import * as i18n from './modules/i18n.js';
 
 // Initialization
 async function init() {
+    i18n.updatePage();
+    updateLangLabel();
     initTheme();
     initSearch();
     initGlobalHandlers();
@@ -29,6 +32,12 @@ async function init() {
     }
 }
 
+function updateLangLabel() {
+    if (ui.langLabel) {
+        ui.langLabel.textContent = i18n.getLang().toUpperCase();
+    }
+}
+
 // --- Event Listeners ---
 window.addEventListener('load-file', (e) => viewer.loadFileContent(e.detail.path));
 window.addEventListener('tree-update-required', () => tree.loadFileTree());
@@ -38,17 +47,26 @@ window.addEventListener('auth-changed', () => {
 });
 
 // Editor Actions
-ui.btnEdit.onclick = () => editor.toggleEditMode(true);
-ui.btnDelete.onclick = viewer.deleteCurrentFile;
-ui.btnCancel.onclick = () => editor.toggleEditMode(false);
-ui.btnSave.onclick = editor.saveFile;
-ui.visibilityCheckbox.onchange = editor.updateVisibility;
+if (ui.btnEdit) ui.btnEdit.onclick = () => editor.toggleEditMode(true);
+if (ui.btnDelete) ui.btnDelete.onclick = viewer.deleteCurrentFile;
+if (ui.btnCancel) ui.btnCancel.onclick = () => editor.toggleEditMode(false);
+if (ui.btnSave) ui.btnSave.onclick = editor.saveFile;
+if (ui.visibilityCheckbox) ui.visibilityCheckbox.onchange = editor.updateVisibility;
+
+if (ui.btnLangToggle) {
+    ui.btnLangToggle.onclick = () => {
+        const nextLang = i18n.getLang() === 'ru' ? 'en' : 'ru';
+        i18n.setLang(nextLang);
+        updateLangLabel();
+        if (window.lucide) lucide.createIcons();
+    };
+}
 
 // Auth Actions
-ui.loginForm.onsubmit = auth.login;
-ui.closeLogin.onclick = () => ui.loginModal.classList.add('hidden');
-ui.closeTotpSetup.onclick = () => ui.totpSetupModal.classList.add('hidden');
-ui.btnVerify2fa.onclick = auth.verify2FA;
+if (ui.loginForm) ui.loginForm.onsubmit = auth.login;
+if (ui.closeLogin) ui.closeLogin.onclick = () => ui.loginModal.classList.add('hidden');
+if (ui.closeTotpSetup) ui.closeTotpSetup.onclick = () => ui.totpSetupModal.classList.add('hidden');
+if (ui.btnVerify2fa) ui.btnVerify2fa.onclick = auth.verify2FA;
 
 // Start
 init();

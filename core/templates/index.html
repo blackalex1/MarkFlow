@@ -3,9 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Documentation</title>
+    <title>{{ config.app_name }}</title>
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="/static/css/style.css?v=5.8">
+    <link rel="stylesheet" href="/static/css/style.css?v=6.2">
+    <link rel="stylesheet" href="/static/css/modules/ui-extras.css?v=1.0">
+    <link rel="stylesheet" href="/static/css/modules/errors.css?v=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@0.475.0/dist/umd/lucide.min.js"></script>
     <!-- Highlight.js for Code Highlighting -->
@@ -23,6 +25,11 @@
     <!-- EasyMDE for Markdown Editing -->
     <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
     <script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
+
+    <!-- KaTeX for Mathematics -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 </head>
 <body>
     <div class="bg-glow"></div>
@@ -30,20 +37,22 @@
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <h2>Docs</h2>
-                <button id="theme-toggle" class="btn-icon" title="Toggle Theme">
-                    <i data-lucide="sun" class="icon-sm"></i>
-                </button>
-                <div id="user-controls">
-                    <!-- Login/Logout buttons dynamically inserted here -->
+                {% if config.use_logo %}
+                <div class="app-branding">
+                    <img src="{{ config.logo_path }}" alt="Logo" class="app-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                    <h2 style="display:none;">{{ config.app_name }}</h2>
+                    <h2 class="branding-text">{{ config.app_name }}</h2>
                 </div>
+                {% else %}
+                <h2>{{ config.app_name }}</h2>
+                {% endif %}
             </div>
             
 
             <div class="sidebar-search">
                 <div class="search-input-wrapper">
+                    <input type="text" id="search-input" data-t="search_placeholder" placeholder="Поиск в документах...">
                     <i data-lucide="search" class="icon-xs"></i>
-                    <input type="text" id="search-input" placeholder="Поиск в документах...">
                 </div>
                 <div id="search-results" class="search-results hidden"></div>
             </div>
@@ -51,6 +60,23 @@
             <nav class="file-tree" id="file-tree">
                 <!-- File tree dynamically inserted here -->
             </nav>
+
+            <div class="sidebar-footer">
+                <div class="header-tools">
+                    <button id="btn-lang-toggle" class="btn-icon" title="Switch Language">
+                        <span id="lang-label">RU</span>
+                    </button>
+                    {% if is_authenticated %}
+                    <button id="btn-user-dashboard" class="btn-icon" data-t-title="dashboard_btn">
+                        <i data-lucide="user"></i>
+                    </button>
+                    {% else %}
+                    <button id="btn-login-trigger" class="btn-icon" data-t-title="login_btn">
+                        <i data-lucide="log-in"></i>
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
         </aside>
 
         <!-- Main Content -->
@@ -59,38 +85,61 @@
                 <div id="top-bar" class="top-bar hidden">
                     <div id="breadcrumb" class="breadcrumb"></div>
                     <div class="actions">
-                        <div id="edit-actions" class="hidden">
-                            <button id="btn-save" class="btn btn-primary btn-sm">Save</button>
-                            <button id="btn-cancel" class="btn btn-outline btn-sm">Cancel</button>
-                        </div>
-                        <div id="view-actions" class="view-actions">
+                        <div class="header-actions">
+                            {% if user_role in ['developer', 'maintainer', 'owner'] %}
                             <label class="visibility-toggle" title="Public Visibility">
                                 <input type="checkbox" id="visibility-checkbox">
                                 <span class="slider"></span>
                                 <i data-lucide="eye" class="icon-xs"></i>
                             </label>
-                            <button id="btn-edit" class="btn-icon" title="Edit Page">
+                            <button id="btn-edit" class="btn-icon" data-t-title="btn_edit">
                                 <i data-lucide="edit-3" class="icon-sm"></i>
                             </button>
-                            <button id="btn-delete" class="btn-icon btn-danger-hover" title="Delete Page">
+                            <button id="btn-save" class="btn-primary hidden" data-t="btn_save">Save</button>
+                            <button id="btn-cancel" class="btn-secondary hidden" data-t="btn_cancel">Cancel</button>
+                            <button id="btn-delete" class="btn-icon btn-danger-hover" data-t-title="btn_delete">
                                 <i data-lucide="trash-2" class="icon-sm"></i>
                             </button>
+                            {% endif %}
                         </div>
                     </div>
                 </div>
 
-                <div id="content-viewer" class="markdown-body">
-                    <h1>Welcome</h1>
-                    <p>Select a document from the sidebar to view.</p>
+                <div id="view-mode-container">
+                    <div id="content-viewer" class="markdown-body">
+                        <h1 data-t="welcome_title">Welcome</h1>
+                        <p data-t="welcome_msg">Select a document from the sidebar to view.</p>
+                    </div>
+
+                    <!-- Page Navigation (Next/Prev) -->
+                    <div id="page-navigation" class="page-navigation hidden">
+                        <a id="nav-prev" class="nav-btn prev">
+                            <i data-lucide="chevron-left"></i>
+                            <div class="nav-info">
+                                <span class="nav-label">Previous</span>
+                                <span class="nav-title"></span>
+                            </div>
+                        </a>
+                        <a id="nav-next" class="nav-btn next">
+                            <div class="nav-info">
+                                <span class="nav-label">Next</span>
+                                <span class="nav-title"></span>
+                            </div>
+                            <i data-lucide="chevron-right"></i>
+                        </a>
+                    </div>
                 </div>
                 
+                {% if user_role in ['developer', 'maintainer', 'owner'] %}
                 <textarea id="content-editor" class="hidden"></textarea>
+                {% endif %}
             </div>
 
             <!-- Right TOC Sidebar -->
             <aside class="toc-sidebar" id="toc-sidebar">
                 <div class="toc-header">
-                    <h3>Содержание</h3>
+                <div class="toc-header">
+                    <h3 data-t="toc_title">Содержание</h3>
                 </div>
                 <nav id="page-toc"></nav>
             </aside>
@@ -101,15 +150,34 @@
     <div id="login-modal" class="modal hidden">
         <div class="modal-content">
             <span class="close-btn" id="close-login">&times;</span>
-            <h2>Admin Login</h2>
+            <h2 data-t="login_title">Admin Login</h2>
             <form id="login-form">
-                <input type="text" id="login-username" placeholder="Username" required>
-                <input type="password" id="login-password" placeholder="Password" required>
+                <input type="text" id="login-username" data-t="username_label" placeholder="Username" required>
+                <input type="password" id="login-password" data-t="password_label" placeholder="Password" required>
                 <div id="totp-container" class="hidden">
-                    <input type="text" id="login-totp" placeholder="2FA Code (Google Authenticator)">
+                    <input type="text" id="login-totp" data-t="totp_label" placeholder="2FA Code (Google Authenticator)">
                 </div>
-                <button type="submit" class="btn" style="width: 100%; margin-top: 10px;">Login</button>
+                <button type="submit" class="btn" style="width: 100%; margin-top: 10px;" data-t="btn_login_submit">Login</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Quick Switcher Modal -->
+    <div id="quick-switcher-modal" class="modal hidden">
+        <div class="quick-switcher-container">
+            <div class="quick-switcher-header">
+                <input type="text" id="qs-input" placeholder="Перейти к..." autocomplete="off">
+                <i data-lucide="search" class="icon-sm"></i>
+                <div class="qs-badge">ESC</div>
+            </div>
+            <div id="qs-results" class="qs-results">
+                <!-- Results injected here -->
+            </div>
+            <div class="quick-switcher-footer">
+                <span><kbd>↑↓</kbd> Select</span>
+                <span><kbd>Enter</kbd> Open</span>
+                <span><kbd>ESC</kbd> Close</span>
+            </div>
         </div>
     </div>
 
@@ -121,124 +189,134 @@
                 <div style="font-size: 18px; font-weight: 600; color: #fff;" id="dashboard-username">Загрузка...</div>
             </div>
             
-            <div class="dashboard-tabs" style="display: flex; gap: 20px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color);">
-                <div class="tab-item active" data-tab="settings">Настройки</div>
-                <div class="tab-item owner-only hidden" data-tab="users">Пользователи</div>
-                <div class="tab-item owner-only hidden" data-tab="logs">Журнал</div>
+            <div class="dashboard-tabs">
+                <div class="tab-item active" data-tab="account" data-t="tab_account">Account</div>
+                {% if user_role in ['developer', 'maintainer', 'owner'] %}
+                <div class="tab-item" data-tab="pages" data-t="tab_pages">Pages</div>
+                {% endif %}
+                {% if user_role in ['maintainer', 'owner'] %}
+                <div class="tab-item" data-tab="users" data-t="tab_users">Users</div>
+                <div class="tab-item" data-tab="git" data-t="tab_git">Git</div>
+                <div class="tab-item" data-tab="logs" data-t="tab_logs">Audit Logs</div>
+                {% endif %}
             </div>
 
             <div id="tab-settings" class="tab-content">
                 <div class="settings-list">
-                    <!-- Git Section -->
-                    <div class="settings-plate">
-                        <div class="plate-header">
-                            <i data-lucide="git-branch"></i>
-                            <span>Синхронизация с Git</span>
-                            <button id="btn-git-sync" class="btn btn-sm btn-primary">Синхронизировать</button>
-                        </div>
-                        <div class="plate-body">
-                            <input type="text" id="git-remote-url" placeholder="URL репозитория (https://...)">
-                            <input type="password" id="git-token" placeholder="Personal Access Token (для приватных репо)">
-                            <button id="btn-save-git-config" class="btn-text">Сохранить настройки</button>
-                        </div>
-                    </div>
-
-                    <!-- New Page Section -->
-                    <div class="settings-plate">
-                        <div class="plate-header">
-                            <i data-lucide="file-plus"></i>
-                            <span>Создание контента</span>
-                        </div>
-                        <div class="plate-body">
-                            <div class="input-group" style="margin-bottom: 10px;">
-                                <select id="new-item-type" style="width: auto; margin-bottom: 0;">
-                                    <option value="file">Файл (.md)</option>
-                                    <option value="folder">Папка</option>
-                                </select>
-                                <input type="text" id="new-page-name" placeholder="Название или путь (напр. Docs/Intro)" style="flex: 1; margin-bottom: 0;">
-                            </div>
-                            <button id="btn-create-page" class="btn btn-sm btn-primary" style="width: 100%;">Создать</button>
-                        </div>
-                    </div>
-
+                    
                     <!-- Security Section -->
                     <div class="settings-plate">
                         <div class="plate-header">
                             <i data-lucide="shield-check"></i>
-                            <span>Безопасность (2FA)</span>
-                            <div id="2fa-status-tag" class="tag tag-off">Отключена</div>
+                            <span data-t="sec_2fa">Security (2FA)</span>
+                            <div id="2fa-status-tag" class="tag tag-off">OFF</div>
                         </div>
                         <div class="plate-body" style="display: flex; justify-content: space-between; align-items: center;">
-                            <span id="2fa-description" style="font-size: 12px; color: var(--text-muted);">Двухэтапная аутентификация</span>
-                            <button id="btn-toggle-2fa" class="btn btn-sm btn-outline">Настроить</button>
+                            <span id="2fa-description" style="font-size: 12px; color: var(--text-muted);">2-Step Verification</span>
+                            <button id="btn-toggle-2fa" class="btn btn-sm btn-outline">Setup</button>
                         </div>
                     </div>
 
-                    <!-- Password Change Section -->
                     <div class="settings-plate">
                         <div class="plate-header">
                             <i data-lucide="key"></i>
-                            <span>Смена пароля</span>
+                            <span data-t="sec_password">Change Password</span>
                         </div>
                         <div class="plate-body">
-                            <input type="password" id="old-password" placeholder="Старый пароль">
-                            <input type="password" id="new-password" placeholder="Новый пароль">
-                            <button id="btn-change-password" class="btn btn-sm btn-primary">Сменить пароль</button>
+                            <input type="password" id="old-password" data-t="old_password" placeholder="Old Password">
+                            <input type="password" id="new-password" data-t="new_password" placeholder="New Password">
+                            <button id="btn-change-password" class="btn btn-sm btn-primary" data-t="sec_password">Change Password</button>
                         </div>
                     </div>
                 </div>
                 
-                <button id="btn-logout" class="btn btn-outline" style="width: 100%; margin-top: 20px;">Выйти из системы</button>
-                <button id="btn-logout-all" class="btn btn-text btn-sm" style="width: 100%; margin-top: 10px; text-align: center;">Выйти на всех устройствах</button>
+                <button id="btn-logout" class="btn btn-outline" style="width: 100%; margin-top: 20px;" data-t="logout_btn">Logout</button>
+                <button id="btn-logout-all" class="btn btn-text btn-sm" style="width: 100%; margin-top: 10px; text-align: center;" data-t="logout_all_btn">Logout from all devices</button>
             </div>
 
-            <!-- Users Tab -->
-            <div id="tab-users" class="tab-content hidden">
-                <div class="settings-plate">
-                    <div class="plate-header"><span>Новый пользователь</span></div>
-                    <div class="plate-body" style="display: flex; gap: 10px; align-items: flex-start;">
-                        <input type="text" id="admin-new-username" placeholder="Логин" style="flex: 1;">
-                        <input type="password" id="admin-new-password" placeholder="Пароль" style="flex: 1;">
-                        <select id="admin-new-role" style="flex: 1;">
-                            <option value="guest">Guest</option>
-                            <option value="reporter">Reporter</option>
-                            <option value="developer">Developer</option>
-                            <option value="maintainer">Maintainer</option>
-                            <option value="owner">Owner</option>
-                        </select>
-                        <button id="btn-admin-create-user" class="btn btn-primary" style="height: 45px; padding: 0 25px;">Создать</button>
+                {% if user_role in ['developer', 'maintainer', 'owner'] %}
+                <div id="tab-pages" class="tab-content hidden">
+                    <div class="settings-plate">
+                        <div class="plate-header">
+                            <i data-lucide="file-plus"></i>
+                            <span>Create New Content</span>
+                        </div>
+                        <div class="plate-body">
+                            <div class="input-group" style="margin-bottom: 10px; display: flex; gap: 10px;">
+                                <select id="new-item-type" style="width: auto;">
+                                    <option value="file">File (.md)</option>
+                                    <option value="folder">Folder</option>
+                                </select>
+                                <input type="text" id="new-page-name" placeholder="Name or path (e.g. Docs/Intro)" style="flex: 1;">
+                            </div>
+                            <button id="btn-create-page" class="btn btn-sm btn-primary" style="width: 100%;">Create</button>
+                        </div>
                     </div>
                 </div>
-                <div id="users-table-container" style="margin-top: 20px; overflow-x: auto;">
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>Пользователь</th>
-                                <th>Роль</th>
-                                <th>Действия</th>
-                            </tr>
-                        </thead>
-                        <tbody id="users-list-body"></tbody>
-                    </table>
-                </div>
-            </div>
+                {% endif %}
 
-            <!-- Logs Tab -->
-            <div id="tab-logs" class="tab-content hidden">
-                <div id="logs-table-container" style="max-height: 400px; overflow-y: auto;">
-                    <table class="admin-table">
-                        <thead>
-                            <tr>
-                                <th>Время</th>
-                                <th>Кто</th>
-                                <th>Действие</th>
-                                <th>Детали</th>
-                            </tr>
-                        </thead>
-                        <tbody id="logs-list-body"></tbody>
-                    </table>
+                {% if user_role in ['maintainer', 'owner'] %}
+                <div id="tab-users" class="tab-content hidden">
+                    <div class="settings-plate">
+                        <div class="plate-header"><span>Add New User</span></div>
+                        <div class="plate-body" style="display: flex; gap: 10px; align-items: flex-start;">
+                            <input type="text" id="admin-new-username" placeholder="Login" style="flex: 1;">
+                            <input type="password" id="admin-new-password" placeholder="Password" style="flex: 1;">
+                            <select id="admin-new-role" style="flex: 1;">
+                                <option value="guest">Guest</option>
+                                <option value="reporter">Reporter</option>
+                                <option value="developer">Developer</option>
+                                <option value="maintainer">Maintainer</option>
+                                <option value="owner">Owner</option>
+                            </select>
+                            <button id="btn-admin-create-user" class="btn btn-primary">Create</button>
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Role</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-list-body"></tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
+
+                <div id="tab-git" class="tab-content hidden">
+                    <div class="settings-plate">
+                        <div class="plate-header">
+                            <i data-lucide="git-branch"></i>
+                            <span>Git Sync</span>
+                            <button id="btn-git-sync" class="btn btn-sm btn-primary">Sync Now</button>
+                        </div>
+                        <div class="plate-body">
+                            <input type="text" id="git-remote-url" placeholder="Repo URL (https://...)">
+                            <input type="password" id="git-token" placeholder="Personal Access Token">
+                            <button id="btn-save-git-config" class="btn btn-text">Save Config</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-logs" class="tab-content hidden">
+                    <div id="logs-table-container" style="max-height: 400px; overflow-y: auto;">
+                        <table class="admin-table">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>User</th>
+                                    <th>Action</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logs-list-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+                {% endif %}
         </div>
     </div>
 
@@ -254,6 +332,61 @@
         </div>
     </div>
 
+    {% if user_role in ['developer', 'maintainer', 'owner'] %}
+    <!-- Slash Menu -->
+    <div id="slash-menu" class="hidden">
+        <div class="slash-item active" data-command="h2">
+            <i data-lucide="heading-2"></i>
+            <div class="slash-info">
+                <div class="slash-name" data-t="hint_h2">Heading 2</div>
+                <div class="slash-desc" data-t="hint_h2_desc">Medium section heading</div>
+            </div>
+        </div>
+        <div class="slash-item" data-command="h3">
+            <i data-lucide="heading-3"></i>
+            <div class="slash-info">
+                <div class="slash-name" data-t="hint_h3">Heading 3</div>
+                <div class="slash-desc" data-t="hint_h3_desc">Small section heading</div>
+            </div>
+        </div>
+        <div class="slash-item" data-command="table">
+            <i data-lucide="table"></i>
+            <div class="slash-info">
+                <div class="slash-name" data-t="hint_table">Table</div>
+                <div class="slash-desc" data-t="hint_table_desc">Insert a 3x2 table</div>
+            </div>
+        </div>
+        <div class="slash-item" data-command="code">
+            <i data-lucide="code"></i>
+            <div class="slash-info">
+                <div class="slash-name" data-t="hint_code">Code Block</div>
+                <div class="slash-desc" data-t="hint_code_desc">Fenced code block</div>
+            </div>
+        </div>
+        <div class="slash-item" data-command="note">
+            <i data-lucide="info"></i>
+            <div class="slash-info">
+                <div class="slash-name" data-t="hint_note">Note Callout</div>
+                <div class="slash-desc" data-t="hint_note_desc">[!NOTE] block</div>
+            </div>
+        </div>
+        <div class="slash-item" data-command="tabs">
+            <i data-lucide="layers"></i>
+            <div class="slash-info">
+                <div class="slash-name" data-t="hint_tabs">Tabs</div>
+                <div class="slash-desc" data-t="hint_tabs_desc">@tabs container</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Selection Toolbar -->
+    <div id="selection-toolbar" class="hidden">
+        <button class="toolbar-btn" data-cmd="bold" data-t-title="tt_bold"><i data-lucide="bold"></i></button>
+        <button class="toolbar-btn" data-cmd="italic" data-t-title="tt_italic"><i data-lucide="italic"></i></button>
+        <button class="toolbar-btn" data-cmd="link" data-t-title="tt_link"><i data-lucide="link"></i></button>
+        <button class="toolbar-btn" data-cmd="quote" data-t-title="tt_quote"><i data-lucide="quote"></i></button>
+    </div>
+    {% endif %}
     <script type="module" src="/static/js/app.js?v=4.0"></script>
 </body>
 </html>

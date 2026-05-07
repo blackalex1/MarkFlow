@@ -113,6 +113,11 @@ def sync_git(user=Depends(get_maintainer_user)):
         try:
             # Push
             repo.git.push(auth_url, repo.active_branch.name)
+            
+            # Full Reindex after successful sync to include pulled changes
+            from core.database import reindex_all_docs
+            reindex_all_docs(DOCS_DIR)
+            
             add_audit_log(user["username"], "git_sync_success")
         except GitCommandError as e:
             error_msg = str(e)

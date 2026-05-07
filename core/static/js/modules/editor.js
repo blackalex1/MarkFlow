@@ -1,13 +1,17 @@
 import { ui, state } from './ui.js';
 let easyMDE = null;
+const pendingImages = new Map();
 
 export function toggleEditMode(editing) {
     if (editing) {
-        ui.contentViewer.classList.add('hidden');
+        if (!ui.contentEditor) return;
+
+        ui.viewModeContainer.classList.add('hidden');
+        if (ui.pageNav) ui.pageNav.classList.add('hidden');
         ui.contentEditor.classList.remove('hidden');
-        ui.btnEdit.classList.add('hidden');
-        ui.btnSave.classList.remove('hidden');
-        ui.btnCancel.classList.remove('hidden');
+        if (ui.btnEdit) ui.btnEdit.classList.add('hidden');
+        if (ui.btnSave) ui.btnSave.classList.remove('hidden');
+        if (ui.btnCancel) ui.btnCancel.classList.remove('hidden');
         
         // Initialize EasyMDE if not exists
         if (!easyMDE) {
@@ -55,6 +59,9 @@ export function toggleEditMode(editing) {
                     }
                 }
             });
+
+            // Slash Commands & Toolbar
+            initEditorEnhancements(easyMDE.codemirror);
         } else {
             const wrapper = document.querySelector('.EasyMDEContainer');
             if (wrapper) wrapper.classList.remove('hidden');
@@ -76,11 +83,14 @@ export function toggleEditMode(editing) {
 
         setTimeout(() => easyMDE.codemirror.refresh(), 100);
     } else {
-        ui.contentViewer.classList.remove('hidden');
-        ui.contentEditor.classList.add('hidden');
-        ui.btnEdit.classList.remove('hidden');
-        ui.btnSave.classList.add('hidden');
-        ui.btnCancel.classList.add('hidden');
+        if (ui.viewModeContainer) ui.viewModeContainer.classList.remove('hidden');
+        if (ui.contentViewer) ui.contentViewer.classList.remove('hidden');
+        if (ui.contentEditor) ui.contentEditor.classList.add('hidden');
+        if (ui.btnEdit) ui.btnEdit.classList.remove('hidden');
+        if (ui.btnSave) ui.btnSave.classList.add('hidden');
+        if (ui.btnCancel) ui.btnCancel.classList.add('hidden');
+        if (ui.pageNav) ui.pageNav.classList.remove('hidden');
+        
         if (easyMDE) {
             const wrapper = document.querySelector('.EasyMDEContainer');
             if (wrapper) wrapper.classList.add('hidden');
@@ -91,19 +101,29 @@ export function toggleEditMode(editing) {
 export async function saveFile() {
     let newContent = easyMDE ? easyMDE.value() : ui.contentEditor.value;
     
-    // Handle pending DataURL images
-    const dataUrlRegex = /!\[([^\]]*)\]\((data:image\/[^;]+;base64,[^)]+)\)/g;
-    const matches = [...newContent.matchAll(dataUrlRegex)];
+    // Handle pending images (DataURLs and Blob URLs)
+    const pendingImagesRegex = /!\[([^\]]*)\]\((data:image\/[^;]+;base64,[^)]+|blob:[^)]+)\)/g;
+    const matches = [...newContent.matchAll(pendingImagesRegex)];
     
     if (matches.length > 0) {
         ui.btnSave.innerText = "Uploading...";
         ui.btnSave.disabled = true;
         
         for (const match of matches) {
-            const [fullMatch, alt, dataUrl] = match;
+            const [fullMatch, alt, url] = match;
             try {
-                const blob = await (await fetch(dataUrl)).blob();
-                const file = new File([blob], (alt || "image").replace(/[^a-z0-9]/gi, '_') + '.png', { type: blob.type });
+                let file;
+                if (pendingImages.has(url)) {
+                    file = pendingImages.get(url);
+                } else if (url.startsWith('data:')) {
+                    const response = await fetch(url);
+                    const blob = await response.blob();
+                    const ext = blob.type.split('/')[1] || 'png';
+                    file = new File([blob], (alt || "image").replace(/[^a-z0-9]/gi, '_') + '.' + ext, { type: blob.type });
+                } else {
+                    // It's already a server URL or something else we don't need to upload
+                    continue;
+                }
                 
                 const formData = new FormData();
                 formData.append('file', file);
@@ -112,11 +132,25 @@ export async function saveFile() {
                     method: 'POST',
                     body: formData
                 });
+                
                 if (res.ok) {
                     const data = await res.json();
-                    newContent = newContent.replace(dataUrl, data.url);
+                    newContent = newContent.split(url).join(data.url);
+                    if (url.startsWith('blob:')) {
+                        URL.revokeObjectURL(url);
+                        pendingImages.delete(url);
+                    }
+                } else {
+                    const err = await res.json();
+                    throw new Error(err.detail || "Upload failed");
                 }
-            } catch (err) { console.error("Image upload failed", err); }
+            } catch (err) { 
+                console.error("Image upload failed", err);
+                alert(`Failed to upload image: ${err.message}`);
+                ui.btnSave.innerText = "Save";
+                ui.btnSave.disabled = false;
+                return;
+            }
         }
         ui.btnSave.innerText = "Save";
         ui.btnSave.disabled = false;
@@ -179,12 +213,150 @@ export async function syncGit() {
 }
 
 async function handleImageInsert(file) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        const dataUrl = e.target.result;
-        const pos = easyMDE.codemirror.getCursor();
-        const link = `![${file.name}](${dataUrl})`;
-        easyMDE.codemirror.replaceRange(link, pos);
-    };
-    reader.readAsDataURL(file);
+    // Use Blob URL instead of DataURL for editor cleanliness and performance
+    const blobUrl = URL.createObjectURL(file);
+    pendingImages.set(blobUrl, file);
+    
+    const pos = easyMDE.codemirror.getCursor();
+    const link = `![${file.name}](${blobUrl})`;
+    easyMDE.codemirror.replaceRange(link, pos);
+    
+    // Refresh preview if active to show the new image
+    if (easyMDE.isPreviewActive()) {
+        easyMDE.togglePreview();
+        easyMDE.togglePreview();
+    }
+}
+
+function initEditorEnhancements(cm) {
+    // Selection Toolbar
+    cm.on("cursorActivity", () => {
+        if (cm.somethingSelected()) {
+            const selection = cm.getSelection();
+            if (selection.trim().length > 0) {
+                showSelectionToolbar(cm);
+            } else {
+                ui.selectionToolbar.classList.add('hidden');
+            }
+        } else {
+            ui.selectionToolbar.classList.add('hidden');
+        }
+    });
+
+    // Slash Menu
+    cm.on("inputRead", (cm, change) => {
+        if (change.text[0] === "/") {
+            const pos = cm.getCursor();
+            const line = cm.getLine(pos.line);
+            // Show only if / is at the start of a line or after a space
+            if (pos.ch === 1 || line[pos.ch - 2] === " ") {
+                showSlashMenu(cm);
+            }
+        }
+    });
+
+    // Handle selection toolbar buttons
+    ui.selectionToolbar.querySelectorAll('.toolbar-btn').forEach(btn => {
+        btn.onclick = (e) => {
+            e.preventDefault();
+            const cmd = btn.dataset.cmd;
+            applyFormat(cm, cmd);
+            cm.focus();
+        };
+    });
+
+    // Handle slash menu items
+    ui.slashMenu.querySelectorAll('.slash-item').forEach(item => {
+        item.onclick = () => {
+            const cmd = item.dataset.command;
+            applySlashCommand(cm, cmd);
+            ui.slashMenu.classList.add('hidden');
+            cm.focus();
+        };
+    });
+
+    // Navigation in slash menu
+    document.addEventListener('keydown', (e) => {
+        if (!ui.slashMenu.classList.contains('hidden')) {
+            const items = ui.slashMenu.querySelectorAll('.slash-item');
+            const active = ui.slashMenu.querySelector('.slash-item.active');
+            let index = Array.from(items).indexOf(active);
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                if (index < items.length - 1) {
+                    active.classList.remove('active');
+                    items[index + 1].classList.add('active');
+                    items[index + 1].scrollIntoView({ block: 'nearest' });
+                }
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                if (index > 0) {
+                    active.classList.remove('active');
+                    items[index - 1].classList.add('active');
+                    items[index - 1].scrollIntoView({ block: 'nearest' });
+                }
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (active) active.click();
+            } else if (e.key === 'Escape') {
+                ui.slashMenu.classList.add('hidden');
+            }
+        }
+    });
+}
+
+function showSelectionToolbar(cm) {
+    const coords = cm.cursorCoords(true, "window");
+    const toolbar = ui.selectionToolbar;
+    toolbar.classList.remove('hidden');
+    
+    // Position above the selection
+    const top = coords.top - toolbar.offsetHeight - 10;
+    const left = coords.left;
+    
+    toolbar.style.top = `${top}px`;
+    toolbar.style.left = `${left}px`;
+}
+
+function showSlashMenu(cm) {
+    const coords = cm.cursorCoords(true, "window");
+    const menu = ui.slashMenu;
+    menu.classList.remove('hidden');
+    
+    // Position below the cursor
+    menu.style.top = `${coords.bottom + 5}px`;
+    menu.style.left = `${coords.left}px`;
+}
+
+function applyFormat(cm, cmd) {
+    const selection = cm.getSelection();
+    let formatted = "";
+    switch(cmd) {
+        case 'bold': formatted = `**${selection}**`; break;
+        case 'italic': formatted = `*${selection}*`; break;
+        case 'link': formatted = `[${selection}](url)`; break;
+        case 'quote': formatted = `> ${selection}`; break;
+    }
+    cm.replaceSelection(formatted);
+}
+
+function applySlashCommand(cm, cmd) {
+    const pos = cm.getCursor();
+    // Delete the slash
+    cm.replaceRange("", { line: pos.line, ch: pos.ch - 1 }, pos);
+    
+    let snippet = "";
+    switch(cmd) {
+        case 'h2': snippet = "## "; break;
+        case 'h3': snippet = "### "; break;
+        case 'table': snippet = "\n| Column 1 | Column 2 |\n| --- | --- |\n| Data | Data |\n"; break;
+        case 'code': snippet = "\n```javascript\n\n```\n"; break;
+        case 'note': snippet = "\n> [!NOTE]\n> \n"; break;
+        case 'tabs': snippet = "\n@tabs\n@tab Tab 1\nContent\n@tab Tab 2\nContent\n@endtabs\n"; break;
+    }
+    cm.replaceRange(snippet, cm.getCursor());
+    if (cmd === 'h2' || cmd === 'h3' || cmd === 'note') {
+        cm.setCursor({ line: cm.getCursor().line, ch: snippet.length });
+    }
 }

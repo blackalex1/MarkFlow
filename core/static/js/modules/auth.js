@@ -6,22 +6,15 @@ export async function checkAuth() {
     const data = await res.json();
     if (data.logged_in) {
         state.currentUser = data;
-        updateAuthUI();
     } else {
         state.currentUser = null;
-        updateAuthUI();
     }
+    initAuthListeners();
 }
 
-export function updateAuthUI() {
-    if (state.currentUser) {
-        ui.userControls.innerHTML = `
-            <button id="btn-show-dashboard" class="btn-icon" title="Личный кабинет">
-                <i data-lucide="user" class="icon-sm"></i>
-            </button>
-        `;
-        lucide.createIcons();
-        document.getElementById('btn-show-dashboard').onclick = async () => {
+export function initAuthListeners() {
+    if (state.currentUser && ui.btnUserDashboard) {
+        ui.btnUserDashboard.onclick = async () => {
             const rolesRu = {
                 "guest": "Гость",
                 "reporter": "Репортер",
@@ -33,11 +26,8 @@ export function updateAuthUI() {
             
             ui.dashboardModal.classList.remove('hidden');
             update2FAStatusUI();
-            
-            // Initialize Admin features if not already done
             initAdmin();
 
-            // Fetch current git config
             try {
                 const res = await fetch('/api/git/config');
                 const data = await res.json();
@@ -48,11 +38,8 @@ export function updateAuthUI() {
             } catch (err) { console.error(err); }
         };
         initDashboardListeners();
-    } else {
-        ui.userControls.innerHTML = `
-            <button id="btn-show-login" class="btn btn-outline">Login</button>
-        `;
-        document.getElementById('btn-show-login').onclick = () => {
+    } else if (ui.btnLoginTrigger) {
+        ui.btnLoginTrigger.onclick = () => {
             ui.loginModal.classList.remove('hidden');
         };
     }
@@ -208,10 +195,7 @@ export async function login(e) {
     });
     
     if (res.ok) {
-        ui.loginModal.classList.add('hidden');
-        ui.totpContainer.classList.add('hidden');
-        ui.loginTotp.value = '';
-        window.dispatchEvent(new CustomEvent('auth-changed'));
+        window.location.reload();
     } else {
         const err = await res.json();
         if (err.detail === "2fa_required") {
@@ -225,8 +209,7 @@ export async function login(e) {
 
 export async function logout() {
     await fetch('/api/auth/logout', { method: 'POST' });
-    state.currentUser = null;
-    window.dispatchEvent(new CustomEvent('auth-changed'));
+    window.location.reload();
 }
 
 export async function setup2FA() {

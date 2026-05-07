@@ -1,6 +1,7 @@
 export const ui = {
     fileTree: document.getElementById('file-tree'),
     contentViewer: document.getElementById('content-viewer'),
+    viewModeContainer: document.getElementById('view-mode-container'),
     contentEditor: document.getElementById('content-editor'),
     topBar: document.getElementById('top-bar'),
     visibilityCheckbox: document.getElementById('visibility-checkbox'),
@@ -9,6 +10,8 @@ export const ui = {
     btnDelete: document.getElementById('btn-delete'),
     btnSave: document.getElementById('btn-save'),
     btnCancel: document.getElementById('btn-cancel'),
+    btnLangToggle: document.getElementById('btn-lang-toggle'),
+    langLabel: document.getElementById('lang-label'),
     searchInput: document.getElementById('search-input'),
     searchResults: document.getElementById('search-results'),
     
@@ -27,7 +30,8 @@ export const ui = {
     desc2FA: document.getElementById('2fa-description'),
     btnCloseDashboard: document.getElementById('close-dashboard'),
     dashboardUsername: document.getElementById('dashboard-username'),
-    userControls: document.getElementById('user-controls'),
+    btnUserDashboard: document.getElementById('btn-user-dashboard'),
+    btnLoginTrigger: document.getElementById('btn-login-trigger'),
     loginModal: document.getElementById('login-modal'),
     totpContainer: document.getElementById('totp-container'),
     totpSetupModal: document.getElementById('totp-setup-modal'),
@@ -56,7 +60,21 @@ export const ui = {
     adminNewUsername: document.getElementById('admin-new-username'),
     adminNewPassword: document.getElementById('admin-new-password'),
     adminNewRole: document.getElementById('admin-new-role'),
-    btnAdminCreateUser: document.getElementById('btn-admin-create-user')
+    btnAdminCreateUser: document.getElementById('btn-admin-create-user'),
+    
+    // Quick Switcher
+    qsModal: document.getElementById('quick-switcher-modal'),
+    qsInput: document.getElementById('qs-input'),
+    qsResults: document.getElementById('qs-results'),
+    
+    // Page Navigation
+    pageNav: document.getElementById('page-navigation'),
+    navPrev: document.getElementById('nav-prev'),
+    navNext: document.getElementById('nav-next'),
+    
+    // Editor Enhancements
+    slashMenu: document.getElementById('slash-menu'),
+    selectionToolbar: document.getElementById('selection-toolbar')
 };
 
 export const state = {

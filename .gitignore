@@ -22,3 +22,7 @@ core/**/.DS_Store
 # EXTREMELY IMPORTANT: Keep the database out of Git!
 core/app.db
 core/*.db
+
+# Branding and customization
+core/branding/
+!core/branding_example/

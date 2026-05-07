@@ -24,9 +24,14 @@ def save_metadata(data):
 
 def is_public(filepath: str) -> bool:
     """Returns True if file is public, False if private (admin-only)"""
-    data = get_metadata()
     # Normalize path to use forward slashes
     filepath = filepath.replace('\\', '/')
+    
+    # Attachments are always public
+    if filepath.startswith("attachments/"):
+        return True
+        
+    data = get_metadata()
     return data.get(filepath, {}).get("public", False)
 
 def set_public(filepath: str, public: bool):

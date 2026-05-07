@@ -56,4 +56,33 @@ export function initGlobalHandlers() {
             viewer.loadFileContent(e.state.path, false);
         }
     };
+
+    // Keyboard Shortcuts
+    window.addEventListener('keydown', (e) => {
+        // Ctrl + S: Save
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+            const btnSave = document.getElementById('btn-save');
+            if (btnSave && !btnSave.classList.contains('hidden')) {
+                e.preventDefault();
+                btnSave.click();
+            }
+        }
+        
+        // Ctrl + K or /: Search
+        if (((e.ctrlKey || e.metaKey) && e.key === 'k') || (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA')) {
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) {
+                e.preventDefault();
+                searchInput.focus();
+            }
+        }
+
+        // Esc: Close search results or modals
+        if (e.key === 'Escape') {
+            const searchResults = document.getElementById('search-results');
+            if (searchResults) searchResults.classList.add('hidden');
+            
+            document.querySelectorAll('.modal').forEach(modal => modal.classList.add('hidden'));
+        }
+    });
 }

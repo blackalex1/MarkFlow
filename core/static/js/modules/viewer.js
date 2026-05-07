@@ -1,6 +1,18 @@
 import { ui, state } from './ui.js';
 import * as editor from './editor.js';
 import * as tree from './tree.js';
+import { t } from './i18n.js';
+
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+}
 
 // Custom Tabs Extension for Marked
 const tabsExtension = {
@@ -92,7 +104,7 @@ renderer.code = function(arg1, arg2) {
     }
     
     const language = lang || 'plaintext';
-    return `<pre><code class="language-${language}">${code}</code></pre>`;
+    return `<pre><code class="language-${language}">${escapeHtml(code)}</code></pre>`;
 };
 
 // Custom List Item for Checkboxes
@@ -193,25 +205,42 @@ export function updateBreadcrumbs(path) {
     parts.forEach((part, index) => {
         if (!part) return;
         currentPath += (index > 0 ? '/' : '') + part;
+        const thisPath = currentPath;
         
-        const wrapper = document.createElement('div');
-        wrapper.className = 'breadcrumb-item';
-
         const sep = document.createElement('span');
         sep.className = 'breadcrumb-separator';
         sep.textContent = '›';
         ui.breadcrumb.appendChild(sep);
 
         const span = document.createElement('span');
-        span.className = index === parts.length - 1 ? 'breadcrumb-current' : 'breadcrumb-folder';
+        const isLast = index === parts.length - 1;
+        span.className = isLast ? 'breadcrumb-current' : 'breadcrumb-folder';
         
-        // Remove .md for display
         let displayName = part.replace('.md', '');
-        // Capitalize or handle special cases? Let's keep it simple
         span.textContent = displayName;
+        
+        if (!isLast) {
+            span.onclick = () => {
+                // If it's a folder, we don't have a direct "folder view", 
+                // but we could try to find an index.md or the first file.
+                // For now, let's just log or do nothing, OR navigate if it's a file.
+                if (part.endsWith('.md')) {
+                    loadFileContent(thisPath);
+                }
+            };
+        }
         
         ui.breadcrumb.appendChild(span);
     });
+
+    // Add Home click handler
+    const homeBtn = ui.breadcrumb.querySelector('.breadcrumb-home-icon');
+    if (homeBtn) {
+        homeBtn.style.cursor = 'pointer';
+        homeBtn.onclick = () => {
+            location.href = '/';
+        };
+    }
 
     if (window.lucide) lucide.createIcons();
 }
@@ -269,7 +298,11 @@ export async function loadFileContent(path, pushState = true, hash = null) {
         });
         
         ui.contentViewer.innerHTML = cleanHTML;
-        ui.contentEditor.value = data.content;
+        ui.contentViewer.classList.remove('fade-in');
+        void ui.contentViewer.offsetWidth; // Trigger reflow
+        ui.contentViewer.classList.add('fade-in');
+        
+        if (ui.contentEditor) ui.contentEditor.value = data.content;
         
         // Highlight & Utils
         ui.contentViewer.querySelectorAll('pre code').forEach(b => {
@@ -277,7 +310,23 @@ export async function loadFileContent(path, pushState = true, hash = null) {
                 hljs.highlightElement(b);
             }
         });
+
+        // KaTeX rendering
+        if (window.renderMathInElement) {
+            renderMathInElement(ui.contentViewer, {
+                delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\(', right: '\\)', display: false},
+                    {left: '\\[', right: '\\]', display: true}
+                ],
+                throwOnError: false
+            });
+        }
+
+        updateNavigation(path);
         generateTOC();
+        initTOCObserver(); // Start tracking visible headers
         addCopyButtons();
         updateBreadcrumbs(path);
         
@@ -308,18 +357,101 @@ export async function loadFileContent(path, pushState = true, hash = null) {
         // Admin UI Visibility
         if (state.currentUser && state.currentUser.role !== 'guest' && state.currentUser.role !== 'reporter') {
             ui.topBar.classList.remove('hidden');
-            ui.visibilityCheckbox.checked = data.public;
+            if (ui.visibilityCheckbox) ui.visibilityCheckbox.checked = data.public;
         } else {
             ui.topBar.classList.add('hidden');
         }
         
         tree.updateTreeHighlighting(path);
     } else {
-        ui.contentViewer.innerHTML = `<h1>Error</h1><p>Could not load file.</p>`;
+        const status = res ? res.status : 500;
+        renderErrorPage(status, path);
+        if (ui.pageNav) ui.pageNav.classList.add('hidden');
     }
 }
 
+function renderErrorPage(status, path) {
+    let title = t("error_generic");
+    let message = t("error_generic");
+    let icon = "alert-circle";
+    let actions = `
+        <button class="error-btn error-btn-primary" onclick="location.reload()">
+            <i data-lucide="refresh-cw"></i> ${t("btn_retry")}
+        </button>
+        <button class="error-btn error-btn-outline" onclick="location.href='/'">
+            <i data-lucide="home"></i> ${t("btn_home")}
+        </button>
+    `;
+
+    if (status === 403) {
+        title = t("error_access_denied");
+        message = t("error_access_denied_msg");
+        icon = "shield-off";
+        actions = `
+            <button class="error-btn error-btn-primary" onclick="document.getElementById('user-controls').click()">
+                <i data-lucide="log-in"></i> ${t("btn_signin")}
+            </button>
+            <button class="error-btn error-btn-outline" onclick="location.href='/'">
+                <i data-lucide="home"></i> ${t("btn_home")}
+            </button>
+        `;
+    } else if (status === 404) {
+        title = t("error_not_found");
+        message = t("error_not_found_msg");
+        icon = "file-question";
+    }
+
+    ui.contentViewer.innerHTML = `
+        <div class="error-page-container">
+            <div class="error-icon-wrapper">
+                <i data-lucide="${icon}"></i>
+            </div>
+            <div class="error-code">${status}</div>
+            <div class="error-title">${title}</div>
+            <div class="error-message">${message}</div>
+            <div class="error-actions">${actions}</div>
+        </div>
+    `;
+
+    if (window.lucide) lucide.createIcons();
+}
+
+function updateNavigation(currentPath) {
+    const files = tree.getAllFiles();
+    const currentIndex = files.findIndex(f => f.path === currentPath);
+    
+    if (currentIndex === -1 || files.length <= 1) {
+        if (ui.pageNav) ui.pageNav.classList.add('hidden');
+        return;
+    }
+    
+    if (!ui.pageNav) return;
+    ui.pageNav.classList.remove('hidden');
+    
+    const prev = files[currentIndex - 1];
+    const next = files[currentIndex + 1];
+    
+    if (prev) {
+        ui.navPrev.classList.remove('hidden');
+        ui.navPrev.querySelector('.nav-title').textContent = prev.name;
+        ui.navPrev.onclick = () => loadFileContent(prev.path);
+    } else {
+        ui.navPrev.classList.add('hidden');
+    }
+    
+    if (next) {
+        ui.navNext.classList.remove('hidden');
+        ui.navNext.querySelector('.nav-title').textContent = next.name;
+        ui.navNext.onclick = () => loadFileContent(next.path);
+    } else {
+        ui.navNext.classList.add('hidden');
+    }
+    
+    if (window.lucide) lucide.createIcons();
+}
+
 async function toggleChecklist(index, isChecked) {
+    if (!ui.contentEditor) return;
     let content = ui.contentEditor.value;
     let count = 0;
     // Regex to find [ ] or [x] at the start of a list item
@@ -337,4 +469,25 @@ async function toggleChecklist(index, isChecked) {
         if (editor.easyMDE) editor.easyMDE.value(newContent);
         await editor.saveFile();
     }
+}
+
+let tocObserver = null;
+function initTOCObserver() {
+    if (tocObserver) tocObserver.disconnect();
+    
+    const headers = Array.from(ui.contentViewer.querySelectorAll('h2, h3, h4'));
+    if (headers.length === 0) return;
+
+    tocObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const id = entry.target.id;
+                ui.pageToc.querySelectorAll('a').forEach(a => {
+                    a.classList.toggle('active', a.getAttribute('href') === `#${id}`);
+                });
+            }
+        });
+    }, { rootMargin: '-20% 0px -70% 0px' });
+
+    headers.forEach(header => tocObserver.observe(header));
 }
