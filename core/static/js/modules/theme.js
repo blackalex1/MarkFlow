@@ -22,8 +22,8 @@ function setTheme(theme) {
 
     if (hljsTheme) {
         hljsTheme.href = theme === 'light' 
-            ? 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css'
-            : 'https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css';
+            ? '/static/vendor/css/github.min.css'
+            : '/static/vendor/css/github-dark.min.css';
     }
 
     if (!themeToggle) return;

@@ -1,0 +1,152 @@
+<div id="user-dashboard-modal" class="modal hidden">
+    <div class="modal-content dashboard-content">
+        <span class="close-btn" id="close-dashboard">&times;</span>
+        <div class="dashboard-header-info" style="margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color);">
+            <div style="font-size: 18px; font-weight: 600; color: #fff;" id="dashboard-username">Загрузка...</div>
+        </div>
+        
+        <div class="dashboard-tabs">
+            <div class="tab-item active" data-tab="account" data-t="tab_account">Account</div>
+            {% if user_role in ['developer', 'maintainer', 'owner'] %}
+            <div class="tab-item" data-tab="pages" data-t="tab_pages">Pages</div>
+            {% endif %}
+            {% if user_role in ['maintainer', 'owner'] %}
+            <div class="tab-item" data-tab="users" data-t="tab_users">Users</div>
+            <div class="tab-item" data-tab="git" data-t="tab_git">Git</div>
+            <div class="tab-item" data-tab="logs" data-t="tab_logs">Audit Logs</div>
+            {% endif %}
+        </div>
+
+        <div id="tab-account" class="tab-content">
+            <div class="settings-list">
+                <div class="settings-plate">
+                    <div class="plate-header">
+                        <i data-lucide="shield-check"></i>
+                        <span data-t="sec_2fa">Security (2FA)</span>
+                        <div id="2fa-status-tag" class="tag tag-off">OFF</div>
+                    </div>
+                    <div class="plate-body" style="display: flex; justify-content: space-between; align-items: center;">
+                        <span id="2fa-description" style="font-size: 12px; color: var(--text-muted);">2-Step Verification</span>
+                        <button id="btn-toggle-2fa" class="btn btn-sm btn-outline">Setup</button>
+                    </div>
+                </div>
+
+                <div class="settings-plate">
+                    <div class="plate-header">
+                        <i data-lucide="key"></i>
+                        <span data-t="sec_password">Change Password</span>
+                    </div>
+                    <div class="plate-body">
+                        <label for="old-password" class="sr-only">Old Password</label>
+                        <input type="password" id="old-password" name="old-password" autocomplete="current-password" data-t="old_password" placeholder="Old Password">
+                        <label for="new-password" class="sr-only">New Password</label>
+                        <input type="password" id="new-password" name="new-password" autocomplete="new-password" data-t="new_password" placeholder="New Password">
+                        <button id="btn-change-password" class="btn btn-sm btn-primary" data-t="sec_password">Change Password</button>
+                    </div>
+                </div>
+            </div>
+            
+            <button id="btn-logout" class="btn btn-outline" style="width: 100%; margin-top: 20px;" data-t="logout_btn">Logout</button>
+            <button id="btn-logout-all" class="btn btn-text btn-sm" style="width: 100%; margin-top: 10px; text-align: center;" data-t="logout_all_btn">Logout from all devices</button>
+        </div>
+
+        {% if user_role in ['developer', 'maintainer', 'owner'] %}
+        <div id="tab-pages" class="tab-content hidden">
+            <div class="settings-plate">
+                <div class="plate-header">
+                    <i data-lucide="file-plus"></i>
+                    <span>Create New Content</span>
+                </div>
+                <div class="plate-body">
+                    <div class="input-group" style="margin-bottom: 10px; display: flex; gap: 10px;">
+                        <select id="new-item-type" style="width: auto;">
+                            <option value="file">File (.md)</option>
+                            <option value="folder">Folder</option>
+                        </select>
+                        <input type="text" id="new-page-name" placeholder="Name or path (e.g. Docs/Intro)" style="flex: 1;">
+                    </div>
+                    <button id="btn-create-page" class="btn btn-sm btn-primary" style="width: 100%;">Create</button>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if user_role in ['maintainer', 'owner'] %}
+        <div id="tab-users" class="tab-content hidden">
+            <div class="settings-plate">
+                <div class="plate-header"><span>Add New User</span></div>
+                <div class="plate-body" style="display: flex; gap: 10px; align-items: flex-start;">
+                    <input type="text" id="admin-new-username" placeholder="Login" style="flex: 1;">
+                    <input type="password" id="admin-new-password" placeholder="Password" style="flex: 1;">
+                    <select id="admin-new-role" style="flex: 1;">
+                        <option value="guest">Guest</option>
+                        <option value="reporter">Reporter</option>
+                        <option value="developer">Developer</option>
+                        <option value="maintainer">Maintainer</option>
+                        <option value="owner">Owner</option>
+                    </select>
+                    <button id="btn-admin-create-user" class="btn btn-primary">Create</button>
+                </div>
+            </div>
+            <div style="margin-top: 20px;">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Role</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-list-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="tab-git" class="tab-content hidden">
+            <div class="settings-plate">
+                <div class="plate-header">
+                    <i data-lucide="git-branch"></i>
+                    <span data-t="tab_git">Git Sync</span>
+                    <button id="btn-git-sync" class="btn btn-sm btn-primary" data-t="btn_sync_now">Sync Now</button>
+                </div>
+                <div class="plate-body">
+                    <input type="text" id="git-remote-url" data-t="git_url_placeholder" placeholder="Repo URL (https://... or git@...)">
+                    
+                    <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
+                        <label style="font-size: 11px; color: var(--text-muted); flex: 1;" data-t="git_branch_label">Target Branch:</label>
+                        <button id="btn-fetch-branches" class="btn btn-sm btn-text" style="white-space: nowrap;" data-t="btn_fetch_branches">Fetch Branches</button>
+                    </div>
+                    <select id="git-branch-select" style="margin-top: 5px; width: 100%;"></select>
+                    <button id="btn-save-git-config" class="btn btn-sm btn-text" data-t="btn_save_config">Save Config</button>
+                    
+                    <div id="ssh-manage-section" style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px; display: flex; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div id="ssh-status-icon-container" style="display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;">
+                                <i id="ssh-status-icon" data-lucide="x-circle" style="color: #ef4444; width: 20px; height: 20px;"></i>
+                            </div>
+                            <span style="font-size: 14px; font-weight: 500;" data-t="git_creds_status_label">Credentials Status</span>
+                        </div>
+                        <button id="btn-open-ssh-modal" class="btn btn-sm btn-outline" data-t="btn_manage_creds">Manage Credentials</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tab-logs" class="tab-content hidden">
+            <div id="logs-table-container" style="max-height: 400px; overflow-y: auto;">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Time</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logs-list-body"></tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>

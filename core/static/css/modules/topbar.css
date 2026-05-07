@@ -1,0 +1,110 @@
+.top-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+    transition: var(--transition);
+}
+
+.breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    font-size: 13px;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.breadcrumb-home-icon {
+    width: 14px;
+    height: 14px;
+    margin-right: 4px;
+    opacity: 0.6;
+}
+
+.breadcrumb-separator {
+    margin: 0 4px;
+    font-size: 14px;
+    opacity: 0.4;
+    user-select: none;
+}
+
+.breadcrumb-folder {
+    opacity: 0.8;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.breadcrumb-folder:hover {
+    color: var(--primary-color);
+    opacity: 1;
+}
+
+.breadcrumb-current {
+    color: var(--text-heading);
+    font-weight: 700;
+    padding: 2px 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+}
+
+[data-theme="light"] .breadcrumb-current {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.view-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.header-tools {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+}
+
+#btn-user-dashboard, #btn-login-trigger, #btn-lang-toggle {
+    position: relative !important;
+    margin: 0 !important;
+    transform: none !important;
+    width: auto !important;
+    min-width: 32px;
+    height: 32px;
+    padding: 0 12px !important;
+    border-radius: 8px !important;
+    transition: all 0.2s ease !important;
+    outline: none !important;
+    box-shadow: none !important;
+    border: 1px solid var(--border-color) !important;
+}
+
+#btn-user-dashboard:hover, #btn-login-trigger:hover, #btn-lang-toggle:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 0 0 2px var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+    transform: translateY(-1px) !important;
+}
+
+#lang-label {
+    font-size: 11px;
+    font-weight: 800;
+    color: var(--primary-color);
+    display: inline-block;
+    line-height: 1;
+}

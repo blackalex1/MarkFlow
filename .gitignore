@@ -26,3 +26,10 @@ core/*.db
 # Branding and customization
 core/branding/
 !core/branding_example/
+
+# Vendor libraries (handled by vendor_service.py)
+core/static/vendor/
+
+# Root files
+!requirements.txt
+!main.py

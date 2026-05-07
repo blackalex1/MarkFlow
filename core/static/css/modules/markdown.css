@@ -1,0 +1,30 @@
+#content-viewer {
+    animation: slideUp 0.6s ease-out;
+}
+
+#content-viewer h1, #content-viewer h2, #content-viewer h3, #content-viewer h4 {
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    color: var(--text-heading);
+}
+
+.task-list-item {
+    list-style-type: none !important;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-left: -1.2em !important;
+    margin-bottom: 0.4em;
+}
+
+.task-list-item input[type="checkbox"] {
+    margin-top: 6px;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+    width: 16px;
+    height: 16px;
+}
+
+.hidden {
+    display: none !important;
+}

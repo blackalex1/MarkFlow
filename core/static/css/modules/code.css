@@ -1,0 +1,71 @@
+pre {
+    position: relative;
+    background: var(--bg-code, #0d0d0f);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5em;
+    margin: 1.5em 0;
+    overflow-x: auto;
+    max-width: 100%;
+}
+
+#content-viewer pre code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    background: transparent;
+    padding: 0;
+    border: none;
+}
+
+.copy-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 5px 10px;
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(4px);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(-5px);
+    transition: var(--transition);
+    z-index: 10;
+}
+
+pre:hover .copy-btn {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.copy-btn:hover {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px var(--accent-glow);
+}
+
+.copy-btn:active {
+    transform: scale(0.95);
+}
+
+.mermaid {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    margin: 24px 0;
+    overflow-x: auto;
+}
+
+[data-theme="light"] .mermaid {
+    background: #f8fafc;
+    border: 1px solid var(--border-color);
+}

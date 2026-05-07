@@ -1,23 +1,19 @@
-import os
 import pyotp
 import qrcode
 import qrcode.image.svg
-import re
 from io import BytesIO
-from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
+from fastapi import APIRouter, Depends, HTTPException, Response, Request
 from pydantic import BaseModel
-from itsdangerous import URLSafeTimedSerializer, BadSignature, SignatureExpired
-
 from core.database import (
     verify_password, get_user_by_username, set_user_totp_secret, 
-    get_setting, add_audit_log, create_session, get_session, 
-    delete_session, clear_user_sessions
+    add_audit_log, delete_session, clear_user_sessions,
+    list_users, create_user, delete_user, update_user_role, update_user_password
 )
-
-# Helper to get a serializer for a specific secret
-def get_serializer(secret_key_name: str):
-    secret = get_setting(secret_key_name) or "fallback-secret-key"
-    return URLSafeTimedSerializer(secret)
+from .dependencies import get_current_user, get_admin_user, get_owner_user
+from .utils import create_session_cookie, validate_password_complexity
+from core.config import limiter
+from core.security_config import SECURITY_LIMITS
+router = APIRouter()
 
 class ChangePasswordRequest(BaseModel):
     old_password: str
@@ -32,101 +28,22 @@ class TOTPVerifyRequest(BaseModel):
     totp_code: str
     secret: str
 
-router = APIRouter()
+class UserCreate(BaseModel):
+    username: str
+    password: str
+    role: str = 'guest'
 
-def validate_password_complexity(password: str):
-    if len(password) < 8:
-        raise HTTPException(status_code=400, detail="Пароль должен быть не менее 8 символов")
-    if not re.search(r"\d", password):
-        raise HTTPException(status_code=400, detail="Пароль должен содержать хотя бы одну цифру")
-    if not re.search(r"[A-Z]", password):
-        raise HTTPException(status_code=400, detail="Пароль должен содержать хотя бы одну заглавную букву")
-
-def create_session_cookie(response: Response, username: str, is_admin: bool):
-    # 1. Create session in DB
-    session_id = create_session(username)
-    
-    # 2. Sign the session ID
-    serializer = get_serializer("SESSION_SECRET")
-    token = serializer.dumps(session_id)
-    
-    # 3. Set cookie
-    response.set_cookie(
-        key="session",
-        value=token,
-        httponly=True,
-        secure=True, 
-        max_age=86400 * 7, 
-        samesite="strict"
-    )
-
-def get_current_user(request: Request):
-    token = request.cookies.get("session")
-    if not token:
-        return None
-    try:
-        # 1. Verify signature
-        serializer = get_serializer("SESSION_SECRET")
-        session_id = serializer.loads(token, max_age=86400 * 7)
-        
-        # 2. Verify in DB
-        user_data = get_session(session_id)
-        if user_data:
-            user_data["session_id"] = session_id # Keep ID for logout
-            return user_data
-    except (BadSignature, SignatureExpired):
-        pass
-    return None
-
-# Role Hierarchy (higher number = more permissions)
-ROLES = {
-    "guest": 10,
-    "reporter": 20,
-    "developer": 30,
-    "maintainer": 40,
-    "owner": 50
-}
-
-def check_role(user, required_role: str):
-    if not user:
-        raise HTTPException(status_code=401, detail="Not logged in")
-    user_role = user.get("role", "guest")
-    if ROLES.get(user_role, 0) < ROLES.get(required_role, 0):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, 
-            detail=f"Access denied. Required role: {required_role}"
-        )
-    return user
-
-def get_reporter_user(request: Request):
-    return check_role(get_current_user(request), "reporter")
-
-def get_developer_user(request: Request):
-    return check_role(get_current_user(request), "developer")
-
-def get_maintainer_user(request: Request):
-    return check_role(get_current_user(request), "maintainer")
-
-def get_owner_user(request: Request):
-    return check_role(get_current_user(request), "owner")
-
-def get_admin_user(request: Request):
-    # Backward compatibility: Admin is at least a Maintainer
-    return get_maintainer_user(request)
-
-from slowapi import Limiter
-from slowapi.util import get_remote_address
-limiter = Limiter(key_func=get_remote_address)
+class RoleUpdate(BaseModel):
+    role: str
 
 @router.post("/login")
-@limiter.limit("5/minute")
+@limiter.limit(SECURITY_LIMITS["login"])
 def login(request: Request, login_data: LoginRequest, response: Response):
     user = get_user_by_username(login_data.username)
     if not user or not verify_password(login_data.password, user["password_hash"]):
         add_audit_log(login_data.username, "login_failed", f"IP: {request.client.host}")
         raise HTTPException(status_code=401, detail="Invalid username or password")
     
-    # Check 2FA
     if user["totp_secret"]:
         if not login_data.totp_code:
             raise HTTPException(status_code=401, detail="2fa_required")
@@ -136,12 +53,14 @@ def login(request: Request, login_data: LoginRequest, response: Response):
             add_audit_log(login_data.username, "2fa_failed", f"IP: {request.client.host}")
             raise HTTPException(status_code=401, detail="Invalid 2FA code")
             
-    create_session_cookie(response, user["username"], bool(user["is_admin"]))
+    create_session_cookie(response, user["username"])
     add_audit_log(user["username"], "login_success", f"IP: {request.client.host}")
     return {"message": "Logged in successfully", "username": user["username"]}
 
 @router.get("/2fa/setup")
-def setup_2fa(user=Depends(get_admin_user)):
+def setup_2fa(user=Depends(get_current_user)):
+    if not user:
+        raise HTTPException(status_code=401, detail="Not logged in")
     secret = pyotp.random_base32()
     totp = pyotp.TOTP(secret)
     provisioning_uri = totp.provisioning_uri(name=user["username"], issuer_name="MarkFlow")
@@ -155,7 +74,10 @@ def setup_2fa(user=Depends(get_admin_user)):
     return {"secret": secret, "qr_svg": svg_data}
 
 @router.post("/2fa/verify")
-def verify_2fa(data: TOTPVerifyRequest, user=Depends(get_admin_user)):
+@limiter.limit(SECURITY_LIMITS["2fa_verify"])
+def verify_2fa(request: Request, data: TOTPVerifyRequest, user=Depends(get_current_user)):
+    if not user:
+        raise HTTPException(status_code=401, detail="Not logged in")
     totp = pyotp.TOTP(data.secret)
     if totp.verify(data.totp_code):
         set_user_totp_secret(user["username"], data.secret)
@@ -164,28 +86,30 @@ def verify_2fa(data: TOTPVerifyRequest, user=Depends(get_admin_user)):
     raise HTTPException(status_code=400, detail="Invalid 2FA code")
 
 @router.post("/2fa/disable")
-def disable_2fa(user=Depends(get_admin_user)):
+def disable_2fa(user=Depends(get_current_user)):
+    if not user:
+        raise HTTPException(status_code=401, detail="Not logged in")
     set_user_totp_secret(user["username"], None)
     add_audit_log(user["username"], "2fa_disabled")
     return {"message": "2FA successfully disabled"}
 
 @router.post("/change-password")
-def change_password(data: ChangePasswordRequest, user=Depends(get_current_user)):
+@limiter.limit(SECURITY_LIMITS["change_password"])
+def change_password(request: Request, data: ChangePasswordRequest, user=Depends(get_current_user)):
     if not user:
         raise HTTPException(status_code=401, detail="Not logged in")
     
-    validate_password_complexity(data.new_password)
+    err = validate_password_complexity(data.new_password)
+    if err:
+        raise HTTPException(status_code=400, detail=err)
     
     db_user = get_user_by_username(user["username"])
     if not db_user or not verify_password(data.old_password, db_user["password_hash"]):
         add_audit_log(user["username"], "password_change_failed", "Invalid old password")
         raise HTTPException(status_code=400, detail="Invalid old password")
     
-    from core.database import update_user_password
     update_user_password(user["username"], data.new_password)
     add_audit_log(user["username"], "password_changed")
-    
-    # Optional: clear other sessions on password change for security
     clear_user_sessions(user["username"])
     
     return {"message": "Password updated successfully. All other sessions logged out."}
@@ -200,7 +124,6 @@ def logout_all(user=Depends(get_current_user), response: Response = None):
         response.delete_cookie("session")
     return {"message": "Logged out from all devices"}
 
-@router.get("/logout")
 @router.post("/logout")
 def logout(request: Request, response: Response):
     user = get_current_user(request)
@@ -224,24 +147,13 @@ def get_me(request: Request):
         "two_factor_enabled": bool(user.get("totp_secret"))
     }
 
-# --- Administrative Endpoints (Owner only) ---
-
-class UserCreate(BaseModel):
-    username: str
-    password: str
-    role: str = 'guest'
-
-class RoleUpdate(BaseModel):
-    role: str
-
 @router.get("/users")
 def api_list_users(user=Depends(get_owner_user)):
-    from core.database import list_users
     return list_users()
 
 @router.post("/users")
-def api_create_user(data: UserCreate, user=Depends(get_owner_user)):
-    from core.database import create_user
+@limiter.limit(SECURITY_LIMITS["create_user"])
+def api_create_user(request: Request, data: UserCreate, user=Depends(get_owner_user)):
     try:
         create_user(data.username, data.password, data.role)
         add_audit_log(user["username"], "user_created", f"User: {data.username}, Role: {data.role}")
@@ -251,7 +163,6 @@ def api_create_user(data: UserCreate, user=Depends(get_owner_user)):
 
 @router.delete("/users/{username}")
 def api_delete_user(username: str, user=Depends(get_owner_user)):
-    from core.database import delete_user
     if username == user["username"]:
         raise HTTPException(status_code=400, detail="Cannot delete yourself")
     delete_user(username)
@@ -260,7 +171,6 @@ def api_delete_user(username: str, user=Depends(get_owner_user)):
 
 @router.put("/users/{username}/role")
 def api_update_role(username: str, data: RoleUpdate, user=Depends(get_owner_user)):
-    from core.database import update_user_role
     update_user_role(username, data.role)
     add_audit_log(user["username"], "user_role_updated", f"User: {username}, New Role: {data.role}")
     return {"message": "Role updated"}

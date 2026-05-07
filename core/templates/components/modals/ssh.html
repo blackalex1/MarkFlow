@@ -1,0 +1,32 @@
+<div id="modal-ssh-settings" class="modal hidden" style="z-index: 1100;">
+    <div class="modal-content" style="max-width: 700px;">
+        <span class="close-btn" id="close-ssh-settings">&times;</span>
+        <div class="modal-header">
+            <h2 data-t="git_creds_title" style="text-align: center; margin-bottom: 24px;">Git Credentials</h2>
+        </div>
+        <div class="modal-body">
+            <!-- SSH Keys Section -->
+            <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px;">
+                <div style="display: flex; flex-direction: column; gap: 5px;">
+                    <label style="font-size: 11px; color: var(--text-muted);" data-t="ssh_pubkey_label">Public Key (add to GitHub)</label>
+                    <textarea id="ssh-public-key" readonly style="font-family: monospace; resize: none; min-height: 100px; background: rgba(0,0,0,0.2);" placeholder="No public key"></textarea>
+                </div>
+                
+                <div id="privkey-input-container" class="hidden" style="display: flex; flex-direction: column; gap: 5px; border-top: 1px solid var(--border-color); padding-top: 15px; animation: fadeIn 0.3s;">
+                    <label style="font-size: 11px; color: var(--text-muted);" data-t="ssh_privkey_label">Private Key (Paste to update)</label>
+                    <textarea id="ssh-private-key" style="font-family: monospace; resize: none; min-height: 120px;" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----"></textarea>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 20px;">
+                <button id="btn-generate-ssh-key" class="btn btn-sm btn-outline" data-t="btn_generate_ssh">Generate New</button>
+                <button id="btn-show-privkey-input" class="btn btn-sm btn-text">Set Manually</button>
+                <button id="btn-save-ssh-keys" class="btn btn-sm btn-primary hidden" data-t="btn_save_keys">Save Key</button>
+                <button id="btn-copy-ssh-key" class="btn btn-sm btn-text" data-t="btn_copy_pubkey">Copy PubKey</button>
+            </div>
+            <p style="font-size: 11px; color: var(--text-muted); margin-top: 15px;" data-t="ssh_instruction_html">
+                Paste your keys above or generate new ones. Add the public key to <a href="https://github.com/settings/keys" target="_blank" style="color: var(--primary-color);">GitHub</a>.
+            </p>
+        </div>
+    </div>
+</div>
