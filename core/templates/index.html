@@ -63,6 +63,9 @@
 
             <div class="sidebar-footer">
                 <div class="header-tools">
+                    <button id="theme-toggle" class="btn-icon" title="Toggle Theme">
+                        <i data-lucide="sun"></i>
+                    </button>
                     <button id="btn-lang-toggle" class="btn-icon" title="Switch Language">
                         <span id="lang-label">RU</span>
                     </button>
@@ -151,11 +154,14 @@
         <div class="modal-content">
             <span class="close-btn" id="close-login">&times;</span>
             <h2 data-t="login_title">Admin Login</h2>
-            <form id="login-form">
-                <input type="text" id="login-username" data-t="username_label" placeholder="Username" required>
-                <input type="password" id="login-password" data-t="password_label" placeholder="Password" required>
+            <form id="login-form" action="/" method="POST">
+                <label for="login-username" style="display:none">Username</label>
+                <input type="text" id="login-username" name="username" autocomplete="username" data-t="username_label" placeholder="Username" required>
+                <label for="login-password" style="display:none">Password</label>
+                <input type="password" id="login-password" name="password" autocomplete="current-password" data-t="password_label" placeholder="Password" required>
                 <div id="totp-container" class="hidden">
-                    <input type="text" id="login-totp" data-t="totp_label" placeholder="2FA Code (Google Authenticator)">
+                    <label for="login-totp" style="display:none">2FA Code</label>
+                    <input type="text" id="login-totp" name="totp" autocomplete="one-time-code" data-t="totp_label" placeholder="2FA Code (Google Authenticator)">
                 </div>
                 <button type="submit" class="btn" style="width: 100%; margin-top: 10px;" data-t="btn_login_submit">Login</button>
             </form>
@@ -223,8 +229,10 @@
                             <span data-t="sec_password">Change Password</span>
                         </div>
                         <div class="plate-body">
-                            <input type="password" id="old-password" data-t="old_password" placeholder="Old Password">
-                            <input type="password" id="new-password" data-t="new_password" placeholder="New Password">
+                            <label for="old-password" style="display:none">Old Password</label>
+                            <input type="password" id="old-password" name="old-password" autocomplete="current-password" data-t="old_password" placeholder="Old Password">
+                            <label for="new-password" style="display:none">New Password</label>
+                            <input type="password" id="new-password" name="new-password" autocomplete="new-password" data-t="new_password" placeholder="New Password">
                             <button id="btn-change-password" class="btn btn-sm btn-primary" data-t="sec_password">Change Password</button>
                         </div>
                     </div>
@@ -363,18 +371,53 @@
                 <div class="slash-desc" data-t="hint_code_desc">Fenced code block</div>
             </div>
         </div>
+        <div class="slash-item" data-command="mermaid">
+            <i data-lucide="activity"></i>
+            <div class="slash-info">
+                <div class="slash-name">Mermaid Diagram</div>
+                <div class="slash-desc">Interactive flowchart/diagram</div>
+            </div>
+        </div>
         <div class="slash-item" data-command="note">
             <i data-lucide="info"></i>
             <div class="slash-info">
-                <div class="slash-name" data-t="hint_note">Note Callout</div>
-                <div class="slash-desc" data-t="hint_note_desc">[!NOTE] block</div>
+                <div class="slash-name" data-t="hint_note">Note</div>
+                <div class="slash-desc">[!NOTE] callout</div>
+            </div>
+        </div>
+        <div class="slash-item" data-command="tip">
+            <i data-lucide="lightbulb"></i>
+            <div class="slash-info">
+                <div class="slash-name">Tip</div>
+                <div class="slash-desc">[!TIP] callout</div>
+            </div>
+        </div>
+        <div class="slash-item" data-command="warning">
+            <i data-lucide="alert-triangle"></i>
+            <div class="slash-info">
+                <div class="slash-name">Warning</div>
+                <div class="slash-desc">[!WARNING] callout</div>
+            </div>
+        </div>
+        <div class="slash-item" data-command="important">
+            <i data-lucide="shield-alert"></i>
+            <div class="slash-info">
+                <div class="slash-name">Important</div>
+                <div class="slash-desc">[!IMPORTANT] callout</div>
+            </div>
+        </div>
+        <div class="slash-item" data-command="caution">
+            <i data-lucide="zap"></i>
+            <div class="slash-info">
+                <div class="slash-name">Caution</div>
+                <div class="slash-desc">[!CAUTION] callout</div>
             </div>
         </div>
         <div class="slash-item" data-command="tabs">
             <i data-lucide="layers"></i>
             <div class="slash-info">
                 <div class="slash-name" data-t="hint_tabs">Tabs</div>
-                <div class="slash-desc" data-t="hint_tabs_desc">@tabs container</div>
+                <div class="slash-desc">@tabs container</div>
             </div>
         </div>
     </div>

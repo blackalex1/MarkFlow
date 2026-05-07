@@ -65,7 +65,14 @@ export const translations = {
         tt_bold: "Жирный (Ctrl+B)",
         tt_italic: "Курсив (Ctrl+I)",
         tt_link: "Ссылка (Ctrl+L)",
-        tt_quote: "Цитата"
+        tt_quote: "Цитата",
+        
+        // Callouts
+        callout_note: "Примечание",
+        callout_tip: "Совет",
+        callout_important: "Важно",
+        callout_warning: "Предупреждение",
+        callout_caution: "Внимание"
     },
     en: {
         // Sidebar & UI
@@ -133,7 +140,14 @@ export const translations = {
         tt_bold: "Bold (Ctrl+B)",
         tt_italic: "Italic (Ctrl+I)",
         tt_link: "Link (Ctrl+L)",
-        tt_quote: "Quote"
+        tt_quote: "Quote",
+
+        // Callouts
+        callout_note: "Note",
+        callout_tip: "Tip",
+        callout_important: "Important",
+        callout_warning: "Warning",
+        callout_caution: "Caution"
     }
 };
 

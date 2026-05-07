@@ -1,4 +1,5 @@
 import { ui, state } from './ui.js';
+import { toast } from './toasts.js';
 
 export async function loadFileTree() {
     const res = await fetch('/api/files/tree');
@@ -38,6 +39,12 @@ function renderFileTree(tree) {
                     }
                     if (window.lucide) lucide.createIcons();
                 };
+
+                item.oncontextmenu = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    showContextMenu(e, { path: nodePath, type: 'folder', name: node.name });
+                };
                 
                 parentEl.appendChild(item);
                 parentEl.appendChild(childrenContainer);
@@ -51,6 +58,12 @@ function renderFileTree(tree) {
                 item.onclick = (e) => {
                     e.stopPropagation();
                     window.dispatchEvent(new CustomEvent('load-file', { detail: { path: node.path } }));
+                };
+
+                item.oncontextmenu = (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    showContextMenu(e, { path: node.path, type: 'file', name: node.name });
                 };
                 parentEl.appendChild(item);
             }
@@ -80,4 +93,81 @@ export function getAllFiles() {
         });
     });
     return files;
+}
+
+function showContextMenu(e, node) {
+    // Remove existing menu
+    const existing = document.querySelector('.context-menu');
+    if (existing) existing.remove();
+
+    const menu = document.createElement('div');
+    menu.className = 'context-menu fade-in';
+    menu.style.top = `${e.clientY}px`;
+    menu.style.left = `${e.clientX}px`;
+
+    const items = [
+        { icon: 'edit', label: 'Rename', cmd: 'rename' },
+        { icon: 'move', label: 'Move', cmd: 'move' },
+        { icon: 'trash-2', label: 'Delete', cmd: 'delete', danger: true }
+    ];
+
+    items.forEach(it => {
+        const item = document.createElement('div');
+        item.className = `context-menu-item ${it.danger ? 'danger' : ''}`;
+        item.innerHTML = `<i data-lucide="${it.icon}" class="icon-sm"></i> <span>${it.label}</span>`;
+        item.onclick = () => {
+            handleMenuCommand(it.cmd, node);
+            menu.remove();
+        };
+        menu.appendChild(item);
+    });
+
+    document.body.appendChild(menu);
+    if (window.lucide) lucide.createIcons();
+
+    // Close on click outside
+    const closeMenu = (ev) => {
+        if (!menu.contains(ev.target)) {
+            menu.remove();
+            document.removeEventListener('mousedown', closeMenu);
+        }
+    };
+    document.addEventListener('mousedown', closeMenu);
+}
+
+async function handleMenuCommand(cmd, node) {
+    if (cmd === 'delete') {
+        if (confirm(`Delete ${node.type} "${node.name}"?`)) {
+            const res = await fetch(`/api/files/delete?path=${encodeURIComponent(node.path)}`, { method: 'DELETE' });
+            if (res.ok) {
+                toast.success(`${node.type} deleted`);
+                loadFileTree();
+                if (node.path === state.currentFilePath) {
+                    location.href = '/';
+                }
+            } else {
+                toast.error("Failed to delete");
+            }
+        }
+    } else if (cmd === 'rename' || cmd === 'move') {
+        const newPath = prompt(`Enter new path for ${node.name}:`, node.path);
+        if (!newPath || newPath === node.path) return;
+        
+        const res = await fetch(`/api/files/move`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ old_path: node.path, new_path: newPath })
+        });
+        
+        if (res.ok) {
+            toast.success("Path updated");
+            loadFileTree();
+            if (node.path === state.currentFilePath) {
+                window.dispatchEvent(new CustomEvent('load-file', { detail: { path: newPath } }));
+            }
+        } else {
+            const err = await res.json();
+            toast.error(err.detail || "Failed to move");
+        }
+    }
 }

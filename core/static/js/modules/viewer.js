@@ -1,4 +1,5 @@
 import { ui, state } from './ui.js';
+import { toast } from './toasts.js';
 import * as editor from './editor.js';
 import * as tree from './tree.js';
 import { t } from './i18n.js';
@@ -58,32 +59,35 @@ if (window.mermaid) {
 
 const renderer = new marked.Renderer();
 
+const CALLOUT_MAP = {
+    'NOTE': { icon: 'info', class: 'note' },
+    'TIP': { icon: 'lightbulb', class: 'tip' },
+    'IMPORTANT': { icon: 'alert-circle', class: 'important' },
+    'WARNING': { icon: 'alert-triangle', class: 'warning' },
+    'CAUTION': { icon: 'zap', class: 'caution' }
+};
+
+function renderCallout(type, content) {
+    const cfg = CALLOUT_MAP[type.toUpperCase()] || CALLOUT_MAP['NOTE'];
+    const translatedHeader = t(`callout_${type.toLowerCase()}`);
+    
+    // Remove the [!TYPE] marker if it's still there
+    const cleanContent = content.replace(/\[!(?:NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/i, '').trim();
+    
+    return `<div class="callout callout-${cfg.class}">
+                <div class="callout-header"><i data-lucide="${cfg.icon}"></i>${translatedHeader}</div>
+                <div class="callout-content">${cleanContent}</div>
+            </div>`;
+}
+
 // Custom Blockquote for Callouts [!NOTE]
 renderer.blockquote = function(arg1) {
-    let quote;
-    if (typeof arg1 === 'object') {
-        quote = arg1.text;
-    } else {
-        quote = arg1;
-    }
-
-    const calloutMap = {
-        'NOTE': { icon: 'info', class: 'note' },
-        'TIP': { icon: 'lightbulb', class: 'tip' },
-        'IMPORTANT': { icon: 'alert-circle', class: 'important' },
-        'WARNING': { icon: 'alert-triangle', class: 'warning' },
-        'CAUTION': { icon: 'zap', class: 'caution' }
-    };
-
-    const match = quote.match(/^<p>\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/i);
-    if (match) {
-        const type = match[1].toUpperCase();
-        const cfg = calloutMap[type];
-        const content = quote.replace(/^<p>\[!(?:NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/i, '<p>');
-        return `<div class="callout callout-${cfg.class}">
-                    <div class="callout-header"><i data-lucide="${cfg.icon}"></i>${type}</div>
-                    <div class="callout-content">${content}</div>
-                </div>`;
+    let quote = (typeof arg1 === 'object' ? arg1.text : arg1) || '';
+    const match = quote.match(/\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/i);
+    
+    // If the marker is at the beginning of the blockquote (ignoring tags)
+    if (match && quote.trim().replace(/^<p>/, '').startsWith(`[!${match[1]}]`)) {
+        return renderCallout(match[1], quote);
     }
     return `<blockquote>${quote}</blockquote>`;
 };
@@ -139,6 +143,17 @@ renderer.heading = function(arg1, arg2, arg3) {
     const id = cleanSource.toLowerCase().trim()
         .replace(/[^a-z0-9а-яё\s-]/g, '').replace(/[\s]+/g, '-').replace(/^-+|-+$/g, '');
     return `<h${level} id="${id}">${text}</h${level}>`;
+};
+
+renderer.paragraph = function(arg1) {
+    let text = (typeof arg1 === 'object' ? arg1.text : arg1) || '';
+    const match = text.match(/\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/i);
+    
+    // Check if it's at the start of the paragraph
+    if (match && text.trim().startsWith(`[!${match[1]}]`)) {
+        return renderCallout(match[1], `<p>${text}</p>`);
+    }
+    return `<p>${text}</p>`;
 };
 
 marked.setOptions({ renderer, breaks: true, gfm: true, headerIds: true, mangle: false });
@@ -221,11 +236,15 @@ export function updateBreadcrumbs(path) {
         
         if (!isLast) {
             span.onclick = () => {
-                // If it's a folder, we don't have a direct "folder view", 
-                // but we could try to find an index.md or the first file.
-                // For now, let's just log or do nothing, OR navigate if it's a file.
+                // If it's a folder, we try to see if there's an index.md 
+                // Or just show it as a folder in the tree? 
+                // For now, let's just navigate if it's a file path
                 if (part.endsWith('.md')) {
                     loadFileContent(thisPath);
+                } else {
+                    // Try to find if this path exists as a file or just open the folder in tree
+                    state.openFolders.add(thisPath);
+                    tree.loadFileTree();
                 }
             };
         }
@@ -247,23 +266,27 @@ export function updateBreadcrumbs(path) {
 
 export async function deleteCurrentFile() {
     if (!state.currentFilePath) return;
-    if (!confirm(`Вы уверены, что хотите удалить "${state.currentFilePath}"? Это действие необратимо.`)) return;
-
-    try {
-        const res = await fetch(`/api/files/delete?path=${encodeURIComponent(state.currentFilePath)}`, {
-            method: 'DELETE'
-        });
-        if (res.ok) {
-            alert('Файл удален');
-            location.href = '/'; // Refresh or go home
-        } else {
-            const data = await res.json();
-            alert('Ошибка при удалении: ' + data.detail);
+    
+    toast.show(`Вы уверены, что хотите удалить "${state.currentFilePath}"?`, "warning", 0, {
+        label: "Удалить",
+        callback: async () => {
+            try {
+                const res = await fetch(`/api/files/delete?path=${encodeURIComponent(state.currentFilePath)}`, {
+                    method: 'DELETE'
+                });
+                if (res.ok) {
+                    toast.success('Файл удален');
+                    location.href = '/';
+                } else {
+                    const data = await res.json();
+                    toast.error('Ошибка при удалении: ' + data.detail);
+                }
+            } catch (err) {
+                console.error(err);
+                toast.error('Ошибка при удалении');
+            }
         }
-    } catch (err) {
-        console.error(err);
-        alert('Ошибка при удалении');
-    }
+    });
 }
 
 export function resolveRelativePath(currentPath, relativePath) {
@@ -280,12 +303,16 @@ export function resolveRelativePath(currentPath, relativePath) {
 }
 
 export async function loadFileContent(path, pushState = true, hash = null) {
-    state.currentFilePath = path;
-    if (pushState) {
-        const url = new URL(window.location);
-        url.searchParams.set('p', path);
-        window.history.pushState({ path }, '', url);
-    }
+    // Add fade-out to current content
+    ui.contentViewer.classList.add('fade-out');
+    
+    setTimeout(async () => {
+        state.currentFilePath = path;
+        if (pushState) {
+            const url = new URL(window.location);
+            url.searchParams.set('p', path);
+            window.history.pushState({ path }, '', url);
+        }
 
     const res = await fetch(`/api/files/content?path=${encodeURIComponent(path)}`);
     if (res.ok) {
@@ -298,8 +325,7 @@ export async function loadFileContent(path, pushState = true, hash = null) {
         });
         
         ui.contentViewer.innerHTML = cleanHTML;
-        ui.contentViewer.classList.remove('fade-in');
-        void ui.contentViewer.offsetWidth; // Trigger reflow
+        ui.contentViewer.classList.remove('fade-out');
         ui.contentViewer.classList.add('fade-in');
         
         if (ui.contentEditor) ui.contentEditor.value = data.content;
@@ -365,9 +391,11 @@ export async function loadFileContent(path, pushState = true, hash = null) {
         tree.updateTreeHighlighting(path);
     } else {
         const status = res ? res.status : 500;
+        ui.contentViewer.classList.remove('fade-out');
         renderErrorPage(status, path);
         if (ui.pageNav) ui.pageNav.classList.add('hidden');
     }
+}, 300); // Wait for fade-out animation
 }
 
 function renderErrorPage(status, path) {

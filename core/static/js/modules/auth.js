@@ -1,4 +1,5 @@
 import { ui, state } from './ui.js';
+import { toast } from './toasts.js';
 import { initAdmin } from './admin.js';
 
 export async function checkAuth() {
@@ -62,7 +63,7 @@ function initDashboardListeners() {
 
     ui.btnCreatePage.onclick = async () => {
         const name = ui.newPageName.value.trim();
-        if (!name) return alert('Введите название');
+        if (!name) return toast.warn('Введите название');
         
         const type = ui.newItemType.value;
         const endpoint = type === 'folder' ? '/api/files/mkdir' : '/api/files/create';
@@ -71,7 +72,7 @@ function initDashboardListeners() {
             const res = await fetch(`${endpoint}?path=${encodeURIComponent(name)}`, { method: 'POST' });
             const data = await res.json();
             if (res.ok) {
-                alert(type === 'folder' ? 'Папка создана!' : 'Страница создана!');
+                toast.success(type === 'folder' ? 'Папка создана!' : 'Страница создана!');
                 ui.dashboardModal.classList.add('hidden');
                 ui.newPageName.value = '';
                 
@@ -83,7 +84,7 @@ function initDashboardListeners() {
                     window.dispatchEvent(new CustomEvent('tree-update-required'));
                 }
             } else {
-                alert('Ошибка: ' + data.detail);
+                toast.error('Ошибка: ' + data.detail);
             }
         } catch (err) { console.error(err); }
     };
@@ -96,9 +97,9 @@ function initDashboardListeners() {
             const res = await fetch('/api/git/sync', { method: 'POST' });
             const data = await res.json();
             if (res.ok) {
-                alert(data.message || 'Синхронизация завершена успешно!');
+                toast.success(data.message || 'Синхронизация завершена успешно!');
             } else {
-                alert('Ошибка: ' + data.detail);
+                toast.error('Ошибка: ' + data.detail);
             }
         } catch (err) { console.error(err); } finally {
             ui.btnGitSync.style.opacity = '1';
@@ -109,7 +110,7 @@ function initDashboardListeners() {
     ui.btnSaveGitConfig.onclick = async () => {
         const url = ui.gitRemoteUrl.value.trim();
         const token = ui.gitToken.value.trim();
-        if (!url) return alert('Введите URL');
+        if (!url) return toast.warn('Введите URL');
         
         try {
             const res = await fetch(`/api/git/config`, { 
@@ -118,28 +119,31 @@ function initDashboardListeners() {
                 body: JSON.stringify({ url, token: token || null })
             });
             if (res.ok) {
-                alert('Настройки сохранены');
+                toast.success('Настройки сохранены');
                 ui.gitToken.value = '';
                 if (token) ui.gitToken.placeholder = '******** (Токен сохранен)';
             } else {
                 const data = await res.json();
-                alert('Ошибка: ' + data.detail);
+                toast.error('Ошибка: ' + data.detail);
             }
         } catch (err) { console.error(err); }
     };
 
     ui.btnToggle2FA.onclick = async () => {
         if (state.currentUser.two_factor_enabled) {
-            if (confirm('Вы уверены, что хотите отключить двухфакторную аутентификацию?')) {
-                try {
-                    const res = await fetch('/api/auth/2fa/disable', { method: 'POST' });
-                    if (res.ok) {
-                        alert('2FA отключена');
-                        state.currentUser.two_factor_enabled = false;
-                        update2FAStatusUI();
-                    }
-                } catch (err) { console.error(err); }
-            }
+            toast.show('Вы уверены, что хотите отключить 2FA?', 'warning', 0, {
+                label: 'Отключить',
+                callback: async () => {
+                    try {
+                        const res = await fetch('/api/auth/2fa/disable', { method: 'POST' });
+                        if (res.ok) {
+                            toast.success('2FA отключена');
+                            state.currentUser.two_factor_enabled = false;
+                            update2FAStatusUI();
+                        }
+                    } catch (err) { console.error(err); }
+                }
+            });
         } else {
             ui.dashboardModal.classList.add('hidden');
             ui.totpSetupModal.classList.remove('hidden');
@@ -150,7 +154,7 @@ function initDashboardListeners() {
     ui.btnChangePassword.onclick = async () => {
         const oldP = ui.oldPassword.value;
         const newP = ui.newPassword.value;
-        if (!oldP || !newP) return alert('Заполните поля');
+        if (!oldP || !newP) return toast.warn('Заполните поля');
         
         try {
             const res = await fetch('/api/auth/change-password', {
@@ -159,23 +163,27 @@ function initDashboardListeners() {
                 body: JSON.stringify({ old_password: oldP, new_password: newP })
             });
             if (res.ok) {
-                alert('Пароль изменен! Другие сессии завершены.');
+                toast.success('Пароль изменен! Другие сессии завершены.');
                 ui.oldPassword.value = '';
                 ui.newPassword.value = '';
                 ui.dashboardModal.classList.add('hidden');
             } else {
                 const data = await res.json();
-                alert('Ошибка: ' + (data.detail || 'Не удалось сменить пароль'));
+                toast.error('Ошибка: ' + (data.detail || 'Не удалось сменить пароль'));
             }
         } catch (err) { console.error(err); }
     };
 
     ui.btnLogoutAll.onclick = async () => {
-        if (!confirm('Выйти на всех устройствах?')) return;
-        const res = await fetch('/api/auth/logout-all', { method: 'POST' });
-        if (res.ok) {
-            window.location.reload();
-        }
+        toast.show('Выйти на всех устройствах?', 'warning', 0, {
+            label: 'Выйти',
+            callback: async () => {
+                const res = await fetch('/api/auth/logout-all', { method: 'POST' });
+                if (res.ok) {
+                    window.location.reload();
+                }
+            }
+        });
     };
 }
 
@@ -202,7 +210,7 @@ export async function login(e) {
             ui.totpContainer.classList.remove('hidden');
             ui.loginTotp.focus();
         } else {
-            alert(err.detail || "Invalid credentials");
+            toast.error(err.detail || "Неверный логин или пароль");
         }
     }
 }
@@ -233,13 +241,13 @@ export async function verify2FA() {
         body: JSON.stringify({ totp_code: code, secret: state.setupTotpSecret })
     });
     if (res.ok) {
-        alert("2FA successfully enabled!");
+        toast.success("2FA успешно включена!");
         ui.totpSetupModal.classList.add('hidden');
         state.setupTotpSecret = null;
         ui.setupTotpCode.value = '';
         if (state.currentUser) state.currentUser.two_factor_enabled = true;
-        updateAuthUI();
+        update2FAStatusUI();
     } else {
-        alert("Invalid code.");
+        toast.error("Неверный код.");
     }
 }

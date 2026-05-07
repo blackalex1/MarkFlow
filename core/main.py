@@ -1,6 +1,6 @@
 import os
 import json
-from fastapi import FastAPI, Depends, HTTPException, Request, Response
+from fastapi import FastAPI, Depends, HTTPException, Request, Response, BackgroundTasks
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
@@ -12,7 +12,7 @@ from core.auth import (
     get_reporter_user, get_developer_user, get_maintainer_user, get_owner_user
 )
 from core.git_sync import router as git_router
-from core.metadata import is_public, set_public
+from core.metadata import is_public, set_public, rename_metadata
 
 import asyncio
 from watchdog.observers import Observer
@@ -155,6 +155,10 @@ class FileContent(BaseModel):
 class FileVisibility(BaseModel):
     public: bool
 
+class MoveRequest(BaseModel):
+    old_path: str
+    new_path: str
+
 @app.get("/")
 def read_root(request: Request):
     user = get_current_user(request)
@@ -253,13 +257,14 @@ def get_file_content(path: str, request: Request):
     return {"content": content, "public": public}
 
 @app.put("/api/files/content")
-def save_file_content(path: str, data: FileContent, user=Depends(get_developer_user)):
+async def save_file_content(path: str, data: FileContent, background_tasks: BackgroundTasks, user=Depends(get_developer_user)):
     full_path = get_safe_path(DOCS_DIR, path)
     
-    # --- Orphaned Image Cleanup ---
-    import re
-    from core.database import is_image_referenced
+    # Ensure directory exists
+    os.makedirs(os.path.dirname(full_path), exist_ok=True)
     
+    # --- Orphaned Image Cleanup (Moved to background) ---
+    import re
     image_regex = r'!\[.*?\]\((attachments/.*?)\)'
     old_content = ""
     if os.path.exists(full_path):
@@ -268,12 +273,11 @@ def save_file_content(path: str, data: FileContent, user=Depends(get_developer_u
             
     old_images = set(re.findall(image_regex, old_content))
     new_images = set(re.findall(image_regex, data.content))
-    
     orphans = old_images - new_images
-    # ------------------------------
     
-    # Ensure directory exists
-    os.makedirs(os.path.dirname(full_path), exist_ok=True)
+    if orphans:
+        background_tasks.add_task(cleanup_orphaned_images, list(orphans), user["username"])
+    # ------------------------------
     
     with open(full_path, "w", encoding="utf-8") as f:
         f.write(data.content)
@@ -281,20 +285,20 @@ def save_file_content(path: str, data: FileContent, user=Depends(get_developer_u
     # Update search index
     update_fts_index(path, os.path.basename(path).replace(".md", ""), data.content)
     
-    # Finalize cleanup: check if orphans are used elsewhere
+    add_audit_log(user["username"], "file_updated", f"Path: {path}")
+    return {"message": "File saved"}
+
+def cleanup_orphaned_images(orphans: list, username: str):
+    from core.database import is_image_referenced
     for img_rel_path in orphans:
         if not is_image_referenced(img_rel_path):
             try:
                 img_full_path = get_safe_path(DOCS_DIR, img_rel_path)
                 if os.path.exists(img_full_path):
                     os.remove(img_full_path)
-                    add_audit_log("system", "image_cleanup", f"Deleted orphaned image: {img_rel_path}")
+                    add_audit_log("system", "image_cleanup", f"Deleted orphaned image: {img_rel_path} (after {username} edit)")
             except Exception as e:
                 print(f"Failed to cleanup image {img_rel_path}: {e}")
-    
-    add_audit_log(user["username"], "file_updated", f"Path: {path}")
-        
-    return {"message": "File saved"}
 
 @app.put("/api/files/visibility")
 def set_file_visibility(path: str, data: FileVisibility, user=Depends(get_maintainer_user)):
@@ -335,6 +339,34 @@ def create_folder(path: str, user=Depends(get_developer_user)):
     os.makedirs(full_path, exist_ok=True)
     add_audit_log(user["username"], "folder_created", f"Path: {path}")
     return {"message": "Folder created", "path": path}
+
+@app.post("/api/files/move")
+def move_file(data: MoveRequest, user=Depends(get_developer_user)):
+    old_full_path = get_safe_path(DOCS_DIR, data.old_path)
+    new_full_path = get_safe_path(DOCS_DIR, data.new_path)
+    
+    if not os.path.exists(old_full_path):
+        raise HTTPException(status_code=404, detail="Source not found")
+    if os.path.exists(new_full_path):
+        raise HTTPException(status_code=400, detail="Destination already exists")
+        
+    os.makedirs(os.path.dirname(new_full_path), exist_ok=True)
+    
+    import shutil
+    shutil.move(old_full_path, new_full_path)
+    
+    # Update Metadata
+    rename_metadata(data.old_path, data.new_path)
+    
+    # Update FTS (simple reindex for the new file if it's md)
+    if data.new_path.endswith('.md'):
+        delete_fts_index(data.old_path)
+        with open(new_full_path, "r", encoding="utf-8") as f:
+            content = f.read()
+            update_fts_index(data.new_path, os.path.basename(data.new_path).replace(".md", ""), content)
+    
+    add_audit_log(user["username"], "file_moved", f"From: {data.old_path}, To: {data.new_path}")
+    return {"message": "File moved successfully"}
 
 @app.post("/api/files/reindex")
 def manual_reindex(user=Depends(get_maintainer_user)):

@@ -1,4 +1,6 @@
 import { ui, state } from './ui.js';
+import { toast } from './toasts.js';
+
 let easyMDE = null;
 const pendingImages = new Map();
 
@@ -71,12 +73,13 @@ export function toggleEditMode(editing) {
         const serverContent = ui.contentEditor.value;
         
         if (draft && draft !== serverContent) {
-            if (confirm("Найдена сохраненная локально копия этого документа. Восстановить черновик?")) {
-                easyMDE.value(draft);
-            } else {
-                easyMDE.value(serverContent);
-                localStorage.removeItem(`draft_${state.currentFilePath}`);
-            }
+            toast.show("Найдена сохраненная копия документа. Восстановить?", "info", 0, {
+                label: "Восстановить",
+                callback: () => {
+                    easyMDE.value(draft);
+                }
+            }, 'center');
+            // Also add a "Clear" option if needed, but for now info is fine
         } else {
             easyMDE.value(serverContent);
         }
@@ -109,7 +112,7 @@ export async function saveFile() {
         ui.btnSave.innerText = "Uploading...";
         ui.btnSave.disabled = true;
         
-        for (const match of matches) {
+        const uploadPromises = matches.map(async (match) => {
             const [fullMatch, alt, url] = match;
             try {
                 let file;
@@ -121,8 +124,7 @@ export async function saveFile() {
                     const ext = blob.type.split('/')[1] || 'png';
                     file = new File([blob], (alt || "image").replace(/[^a-z0-9]/gi, '_') + '.' + ext, { type: blob.type });
                 } else {
-                    // It's already a server URL or something else we don't need to upload
-                    continue;
+                    return { url, serverUrl: url }; // Already server URL
                 }
                 
                 const formData = new FormData();
@@ -135,23 +137,33 @@ export async function saveFile() {
                 
                 if (res.ok) {
                     const data = await res.json();
-                    newContent = newContent.split(url).join(data.url);
                     if (url.startsWith('blob:')) {
                         URL.revokeObjectURL(url);
                         pendingImages.delete(url);
                     }
+                    return { url, serverUrl: data.url };
                 } else {
                     const err = await res.json();
                     throw new Error(err.detail || "Upload failed");
                 }
             } catch (err) { 
                 console.error("Image upload failed", err);
-                alert(`Failed to upload image: ${err.message}`);
-                ui.btnSave.innerText = "Save";
-                ui.btnSave.disabled = false;
-                return;
+                throw err;
             }
+        });
+
+        try {
+            const results = await Promise.all(uploadPromises);
+            results.forEach(res => {
+                newContent = newContent.split(res.url).join(res.serverUrl);
+            });
+        } catch (err) {
+            toast.error(`Ошибка загрузки изображений: ${err.message}`);
+            ui.btnSave.innerText = "Save";
+            ui.btnSave.disabled = false;
+            return;
         }
+        
         ui.btnSave.innerText = "Save";
         ui.btnSave.disabled = false;
     }
@@ -164,9 +176,10 @@ export async function saveFile() {
     if (res.ok) {
         if (easyMDE) easyMDE.value(newContent);
         localStorage.removeItem(`draft_${state.currentFilePath}`);
+        toast.success("Файл успешно сохранен");
         window.dispatchEvent(new CustomEvent('load-file', { detail: { path: state.currentFilePath } }));
     } else {
-        alert("Failed to save file");
+        toast.error("Ошибка при сохранении файла");
     }
 }
 
@@ -252,6 +265,17 @@ function initEditorEnhancements(cm) {
             if (pos.ch === 1 || line[pos.ch - 2] === " ") {
                 showSlashMenu(cm);
             }
+        } else if (!ui.slashMenu.classList.contains('hidden')) {
+            // Live filter
+            const pos = cm.getCursor();
+            const line = cm.getLine(pos.line);
+            const slashPos = line.lastIndexOf("/", pos.ch - 1);
+            if (slashPos !== -1) {
+                const query = line.substring(slashPos + 1, pos.ch).toLowerCase();
+                filterSlashMenu(query);
+            } else {
+                ui.slashMenu.classList.add('hidden');
+            }
         }
     });
 
@@ -322,11 +346,40 @@ function showSelectionToolbar(cm) {
 function showSlashMenu(cm) {
     const coords = cm.cursorCoords(true, "window");
     const menu = ui.slashMenu;
+    
+    // Reset filters
+    menu.querySelectorAll('.slash-item').forEach(item => item.classList.remove('hidden'));
+    menu.querySelectorAll('.slash-item')[0].classList.add('active');
+    
     menu.classList.remove('hidden');
     
     // Position below the cursor
     menu.style.top = `${coords.bottom + 5}px`;
     menu.style.left = `${coords.left}px`;
+}
+
+function filterSlashMenu(query) {
+    const items = ui.slashMenu.querySelectorAll('.slash-item');
+    let firstVisible = null;
+    
+    items.forEach(item => {
+        const text = item.innerText.toLowerCase();
+        const cmd = item.dataset.command.toLowerCase();
+        if (text.includes(query) || cmd.includes(query)) {
+            item.classList.remove('hidden');
+            if (!firstVisible) firstVisible = item;
+        } else {
+            item.classList.add('hidden');
+            item.classList.remove('active');
+        }
+    });
+
+    if (firstVisible) {
+        items.forEach(i => i.classList.remove('active'));
+        firstVisible.classList.add('active');
+    } else {
+        ui.slashMenu.classList.add('hidden');
+    }
 }
 
 function applyFormat(cm, cmd) {
@@ -352,7 +405,12 @@ function applySlashCommand(cm, cmd) {
         case 'h3': snippet = "### "; break;
         case 'table': snippet = "\n| Column 1 | Column 2 |\n| --- | --- |\n| Data | Data |\n"; break;
         case 'code': snippet = "\n```javascript\n\n```\n"; break;
+        case 'mermaid': snippet = "\n```mermaid\ngraph TD\n    A[Start] --> B{Decision}\n    B -- Yes --> C[Result 1]\n    B -- No --> D[Result 2]\n```\n"; break;
         case 'note': snippet = "\n> [!NOTE]\n> \n"; break;
+        case 'tip': snippet = "\n> [!TIP]\n> \n"; break;
+        case 'warning': snippet = "\n> [!WARNING]\n> \n"; break;
+        case 'important': snippet = "\n> [!IMPORTANT]\n> \n"; break;
+        case 'caution': snippet = "\n> [!CAUTION]\n> \n"; break;
         case 'tabs': snippet = "\n@tabs\n@tab Tab 1\nContent\n@tab Tab 2\nContent\n@endtabs\n"; break;
     }
     cm.replaceRange(snippet, cm.getCursor());

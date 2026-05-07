@@ -41,3 +41,32 @@ def set_public(filepath: str, public: bool):
         data[filepath] = {}
     data[filepath]["public"] = public
     save_metadata(data)
+
+def rename_metadata(old_path: str, new_path: str):
+    """Updates metadata keys when a file or folder is renamed/moved."""
+    data = get_metadata()
+    old_path = old_path.replace('\\', '/')
+    new_path = new_path.replace('\\', '/')
+    
+    updated = False
+    # If it's a folder, we need to update all nested paths
+    to_delete = []
+    to_add = {}
+    
+    for path in data.keys():
+        if path == old_path:
+            to_delete.append(path)
+            to_add[new_path] = data[path]
+            updated = True
+        elif path.startswith(old_path + "/"):
+            to_delete.append(path)
+            suffix = path[len(old_path):]
+            to_add[new_path + suffix] = data[path]
+            updated = True
+            
+    for path in to_delete:
+        del data[path]
+    data.update(to_add)
+    
+    if updated:
+        save_metadata(data)
