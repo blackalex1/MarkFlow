@@ -76,7 +76,7 @@ function renderCallout(type, content) {
     
     return `<div class="callout callout-${cfg.class}">
                 <div class="callout-header"><i data-lucide="${cfg.icon}"></i>${translatedHeader}</div>
-                <div class="callout-content">${marked.parseInline(cleanContent)}</div>
+                <div class="callout-content">${marked.parse(cleanContent)}</div>
             </div>`;
 }
 

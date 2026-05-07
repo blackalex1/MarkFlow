@@ -8,7 +8,8 @@ export function initAdmin() {
             ui.tabContents.forEach(c => c.classList.add('hidden'));
             tab.classList.add('active');
             const target = tab.dataset.tab;
-            document.getElementById(`tab-${target}`).classList.remove('hidden');
+            const contentEl = document.getElementById(`tab-${target}`);
+            if (contentEl) contentEl.classList.remove('hidden');
             
             if (target === 'users') loadUsers();
             if (target === 'logs') loadLogs();
