@@ -76,20 +76,21 @@ function renderCallout(type, content) {
     
     return `<div class="callout callout-${cfg.class}">
                 <div class="callout-header"><i data-lucide="${cfg.icon}"></i>${translatedHeader}</div>
-                <div class="callout-content">${cleanContent}</div>
+                <div class="callout-content">${marked.parseInline(cleanContent)}</div>
             </div>`;
 }
 
-// Custom Blockquote for Callouts [!NOTE]
 renderer.blockquote = function(arg1) {
     let quote = (typeof arg1 === 'object' ? arg1.text : arg1) || '';
     const match = quote.match(/\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/i);
     
-    // If the marker is at the beginning of the blockquote (ignoring tags)
-    if (match && quote.trim().replace(/^<p>/, '').startsWith(`[!${match[1]}]`)) {
+    // If the marker is at the beginning of the blockquote
+    if (match && quote.trim().startsWith(`[!${match[1]}]`)) {
         return renderCallout(match[1], quote);
     }
-    return `<blockquote>${quote}</blockquote>`;
+    // Ensure content is parsed
+    const parsedQuote = marked.parseInline(quote);
+    return `<blockquote>${parsedQuote}</blockquote>`;
 };
 
 // Custom Code for Mermaid
@@ -124,13 +125,15 @@ renderer.listitem = function(arg1, arg2, arg3) {
         checked = arg3;
     }
 
+    const parsedText = marked.parseInline(text);
+
     if (task) {
         return `<li class="task-list-item">
                     <input type="checkbox" ${checked ? 'checked' : ''}>
-                    <span>${text}</span>
+                    <span>${parsedText}</span>
                 </li>`;
     }
-    return `<li>${text}</li>`;
+    return `<li>${parsedText}</li>`;
 };
 renderer.heading = function(arg1, arg2, arg3) {
     let text, level, raw;
@@ -142,7 +145,9 @@ renderer.heading = function(arg1, arg2, arg3) {
     const cleanSource = (raw || text || '').replace(/<[^>]*>?/gm, '');
     const id = cleanSource.toLowerCase().trim()
         .replace(/[^a-z0-9а-яё\s-]/g, '').replace(/[\s]+/g, '-').replace(/^-+|-+$/g, '');
-    return `<h${level} id="${id}">${text}</h${level}>`;
+    
+    const parsedText = marked.parseInline(text);
+    return `<h${level} id="${id}">${parsedText}</h${level}>`;
 };
 
 renderer.paragraph = function(arg1) {
@@ -151,9 +156,16 @@ renderer.paragraph = function(arg1) {
     
     // Check if it's at the start of the paragraph
     if (match && text.trim().startsWith(`[!${match[1]}]`)) {
-        return renderCallout(match[1], `<p>${text}</p>`);
+        return renderCallout(match[1], text);
     }
-    return `<p>${text}</p>`;
+    
+    // Use the original marked behavior for standard paragraphs
+    // If arg1 is an object, we should let marked handle it or use the tokens
+    if (typeof arg1 === 'object' && arg1.tokens) {
+        return `<p>${marked.parseInline(arg1.text)}</p>`;
+    }
+    
+    return `<p>${marked.parseInline(text)}</p>`;
 };
 
 marked.setOptions({ renderer, breaks: true, gfm: true, headerIds: true, mangle: false });
