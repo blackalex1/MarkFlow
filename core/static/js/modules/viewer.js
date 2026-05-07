@@ -21,15 +21,15 @@ const tabsExtension = {
     level: 'block',
     start(src) { return src.match(/@tabs/)?.index; },
     tokenizer(src, tokens) {
-        const rule = /^@tabs\n([\s\S]*?)\n@endtabs/;
+        const rule = /^@tabs\s*\n([\s\S]*?)\n@endtabs/;
         const match = rule.exec(src);
         if (match) {
             const token = { type: 'tabs', raw: match[0], tabs: [] };
             const content = match[1];
-            const tabRule = /@tab ([^\n]+)\n([\s\S]*?)(?=\n@tab|\n$)/g;
+            const tabRule = /@tab ([^\n]+)\n([\s\S]*?)(?=\n@tab|$)/g;
             let tabMatch;
             while ((tabMatch = tabRule.exec(content)) !== null) {
-                token.tabs.push({ name: tabMatch[1].trim(), content: tabMatch[2] });
+                token.tabs.push({ name: tabMatch[1].trim(), content: tabMatch[2].trim() });
             }
             return token;
         }
@@ -428,7 +428,7 @@ function renderErrorPage(status, path) {
         message = t("error_access_denied_msg");
         icon = "shield-off";
         actions = `
-            <button class="error-btn error-btn-primary" onclick="document.getElementById('user-controls').click()">
+            <button class="error-btn error-btn-primary" onclick="document.getElementById('btn-login-trigger').click()">
                 <i data-lucide="log-in"></i> ${t("btn_signin")}
             </button>
             <button class="error-btn error-btn-outline" onclick="location.href='/'">

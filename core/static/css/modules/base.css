@@ -65,6 +65,19 @@ h1, h2, h3, h4, .sidebar-header h2 {
     display: none !important;
 }
 
+/* Visually hidden but accessible to browsers/screen readers */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
 a {
     color: var(--primary-color);
     text-decoration: none;

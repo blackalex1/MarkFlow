@@ -72,7 +72,11 @@ export const translations = {
         callout_tip: "Совет",
         callout_important: "Важно",
         callout_warning: "Предупреждение",
-        callout_caution: "Внимание"
+        callout_caution: "Внимание",
+        
+        // Navigation
+        nav_prev: "Назад",
+        nav_next: "Далее"
     },
     en: {
         // Sidebar & UI
@@ -147,7 +151,11 @@ export const translations = {
         callout_tip: "Tip",
         callout_important: "Important",
         callout_warning: "Warning",
-        callout_caution: "Caution"
+        callout_caution: "Caution",
+        
+        // Navigation
+        nav_prev: "Previous",
+        nav_next: "Next"
     }
 };
 

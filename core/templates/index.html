@@ -119,13 +119,13 @@
                         <a id="nav-prev" class="nav-btn prev">
                             <i data-lucide="chevron-left"></i>
                             <div class="nav-info">
-                                <span class="nav-label">Previous</span>
+                                <span class="nav-label" data-t="nav_prev">Previous</span>
                                 <span class="nav-title"></span>
                             </div>
                         </a>
                         <a id="nav-next" class="nav-btn next">
                             <div class="nav-info">
-                                <span class="nav-label">Next</span>
+                                <span class="nav-label" data-t="nav_next">Next</span>
                                 <span class="nav-title"></span>
                             </div>
                             <i data-lucide="chevron-right"></i>
@@ -154,13 +154,13 @@
         <div class="modal-content">
             <span class="close-btn" id="close-login">&times;</span>
             <h2 data-t="login_title">Admin Login</h2>
-            <form id="login-form" action="/" method="POST">
-                <label for="login-username" style="display:none">Username</label>
+            <form id="login-form" action="/api/auth/login" method="POST">
+                <label for="login-username" class="sr-only">Username</label>
                 <input type="text" id="login-username" name="username" autocomplete="username" data-t="username_label" placeholder="Username" required>
-                <label for="login-password" style="display:none">Password</label>
+                <label for="login-password" class="sr-only">Password</label>
                 <input type="password" id="login-password" name="password" autocomplete="current-password" data-t="password_label" placeholder="Password" required>
                 <div id="totp-container" class="hidden">
-                    <label for="login-totp" style="display:none">2FA Code</label>
+                    <label for="login-totp" class="sr-only">2FA Code</label>
                     <input type="text" id="login-totp" name="totp" autocomplete="one-time-code" data-t="totp_label" placeholder="2FA Code (Google Authenticator)">
                 </div>
                 <button type="submit" class="btn" style="width: 100%; margin-top: 10px;" data-t="btn_login_submit">Login</button>
