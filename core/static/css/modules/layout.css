@@ -278,7 +278,7 @@
 /* --- Toast Notifications --- */
 .toast-container {
     position: fixed;
-    z-index: 1000;
+    z-index: 2000;
     display: flex;
     flex-direction: column;
     gap: 12px;

@@ -76,7 +76,34 @@ export const translations = {
         
         // Navigation
         nav_prev: "Назад",
-        nav_next: "Далее"
+        nav_next: "Далее",
+
+        // Git Sync
+        btn_sync_now: "Синхронизировать сейчас",
+        btn_syncing: "Синхронизация...",
+        btn_fetch_branches: "Загрузить ветки",
+        btn_save_config: "Сохранить конфиг",
+        git_url_placeholder: "URL репозитория (https://... или git@...)",
+        git_token_placeholder: "Токен (для HTTPS)",
+        git_branch_placeholder: "Ветка (например, master или main)",
+        git_branch_label: "Целевая ветка:",
+        ssh_config_title: "Настройка SSH",
+        ssh_status_label: "Статус ключей",
+        git_creds_status_label: "Статус данных доступа",
+        btn_manage_ssh: "Управление ключами",
+        btn_manage_creds: "Управление данными",
+        git_creds_title: "Данные доступа Git",
+        git_token_label: "Токен персонального доступа (HTTPS):",
+        btn_save_token: "Сохранить токен",
+        ssh_pubkey_label: "Публичный ключ (добавьте в GitHub)",
+        ssh_privkey_label: "Приватный ключ (хранить в секрете)",
+        btn_generate_ssh: "Создать новый",
+        btn_save_keys: "Сохранить ключи",
+        btn_copy_pubkey: "Копировать PubKey",
+        success_ssh_gen: "Новый SSH ключ успешно создан!",
+        confirm_gen_ssh: "Вы уверены? Старый ключ будет удален, и вам придется обновить его в настройках GitHub.",
+        btn_confirm_gen: "Сгенерировать",
+        ssh_instruction_html: "Вставьте ваши ключи выше или создайте новые. Добавьте публичный ключ в настройки <a href=\"https://github.com/settings/keys\" target=\"_blank\" style=\"color: var(--primary-color);\">GitHub</a>."
     },
     en: {
         // Sidebar & UI
@@ -155,7 +182,34 @@ export const translations = {
         
         // Navigation
         nav_prev: "Previous",
-        nav_next: "Next"
+        nav_next: "Next",
+
+        // Git Sync
+        btn_sync_now: "Sync Now",
+        btn_syncing: "Syncing...",
+        btn_fetch_branches: "Fetch Branches",
+        btn_save_config: "Save Config",
+        git_url_placeholder: "Repo URL (https://... or git@...)",
+        git_token_placeholder: "Token (for HTTPS)",
+        git_branch_placeholder: "Branch (e.g. master or main)",
+        git_branch_label: "Target Branch:",
+        ssh_config_title: "SSH Configuration",
+        ssh_status_label: "Keys Status",
+        git_creds_status_label: "Credentials Status",
+        btn_manage_ssh: "Manage SSH Keys",
+        btn_manage_creds: "Manage Credentials",
+        git_creds_title: "Git Credentials",
+        git_token_label: "Personal Access Token (HTTPS):",
+        btn_save_token: "Save Token",
+        ssh_pubkey_label: "Public Key (add to GitHub)",
+        ssh_privkey_label: "Private Key (keep secret)",
+        btn_generate_ssh: "Generate New",
+        btn_save_keys: "Save Keys",
+        btn_copy_pubkey: "Copy PubKey",
+        success_ssh_gen: "New SSH key generated successfully!",
+        confirm_gen_ssh: "Are you sure? The old key will be deleted, and you will need to update it in GitHub settings.",
+        btn_confirm_gen: "Generate",
+        ssh_instruction_html: "Paste your keys above or generate new ones. Add the public key to <a href=\"https://github.com/settings/keys\" target=\"_blank\" style=\"color: var(--primary-color);\">GitHub</a>."
     }
 };
 
@@ -191,6 +245,8 @@ export function updatePage() {
         const key = el.dataset.t;
         if (el.tagName === 'INPUT' && el.placeholder) {
             el.placeholder = t(key);
+        } else if (key.endsWith('_html')) {
+            el.innerHTML = t(key);
         } else {
             el.textContent = t(key);
         }

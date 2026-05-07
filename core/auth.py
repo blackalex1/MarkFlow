@@ -144,7 +144,7 @@ def login(request: Request, login_data: LoginRequest, response: Response):
 def setup_2fa(user=Depends(get_admin_user)):
     secret = pyotp.random_base32()
     totp = pyotp.TOTP(secret)
-    provisioning_uri = totp.provisioning_uri(name=user["username"], issuer_name="GlebDocs")
+    provisioning_uri = totp.provisioning_uri(name=user["username"], issuer_name="MarkFlow")
     
     factory = qrcode.image.svg.SvgPathImage
     img = qrcode.make(provisioning_uri, image_factory=factory)

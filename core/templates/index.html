@@ -298,16 +298,33 @@
                     <div class="settings-plate">
                         <div class="plate-header">
                             <i data-lucide="git-branch"></i>
-                            <span>Git Sync</span>
-                            <button id="btn-git-sync" class="btn btn-sm btn-primary">Sync Now</button>
+                            <span data-t="tab_git">Git Sync</span>
+                            <button id="btn-git-sync" class="btn btn-sm btn-primary" data-t="btn_sync_now">Sync Now</button>
                         </div>
                         <div class="plate-body">
-                            <input type="text" id="git-remote-url" placeholder="Repo URL (https://...)">
-                            <input type="password" id="git-token" placeholder="Personal Access Token">
-                            <button id="btn-save-git-config" class="btn btn-text">Save Config</button>
+                            <input type="text" id="git-remote-url" data-t="git_url_placeholder" placeholder="Repo URL (https://... or git@...)">
+                            
+                            <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
+                                <label style="font-size: 11px; color: var(--text-muted); flex: 1;" data-t="git_branch_label">Target Branch:</label>
+                                <button id="btn-fetch-branches" class="btn btn-sm btn-text" style="white-space: nowrap;" data-t="btn_fetch_branches">Fetch Branches</button>
+                            </div>
+                            <select id="git-branch-select" style="margin-top: 5px; width: 100%;"></select>
+                            <button id="btn-save-git-config" class="btn btn-sm btn-text" data-t="btn_save_config">Save Config</button>
+                            
+                            <div id="ssh-manage-section" style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px; display: flex; align-items: center; justify-content: space-between;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div id="ssh-status-icon-container" style="display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;">
+                                        <i id="ssh-status-icon" data-lucide="x-circle" style="color: #ef4444; width: 20px; height: 20px;"></i>
+                                    </div>
+                                    <span style="font-size: 14px; font-weight: 500;" data-t="git_creds_status_label">Credentials Status</span>
+                                </div>
+                                <button id="btn-open-ssh-modal" class="btn btn-sm btn-outline" data-t="btn_manage_creds">Manage Credentials</button>
+                            </div>
                         </div>
                     </div>
                 </div>
+
+
 
                 <div id="tab-logs" class="tab-content hidden">
                     <div id="logs-table-container" style="max-height: 400px; overflow-y: auto;">
@@ -325,6 +342,39 @@
                     </div>
                 </div>
                 {% endif %}
+        </div>
+    </div>
+
+    <!-- SSH & Token Settings Modal -->
+    <div id="modal-ssh-settings" class="modal hidden" style="z-index: 1100;">
+        <div class="modal-content" style="max-width: 700px;">
+            <div class="modal-header">
+                <h3 data-t="git_creds_title">Git Credentials</h3>
+                <button class="btn-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- SSH Keys Section -->
+                <div style="font-size: 13px; font-weight: 600; margin-bottom: 10px;" data-t="ssh_config_title">SSH Configuration</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                        <label style="font-size: 11px; color: var(--text-muted);" data-t="ssh_pubkey_label">Public Key (add to GitHub)</label>
+                        <textarea id="ssh-public-key" class="blur-sensitive" style="font-family: monospace; resize: none; min-height: 120px;" placeholder="No public key"></textarea>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                        <label style="font-size: 11px; color: var(--text-muted);" data-t="ssh_privkey_label">Private Key (keep secret)</label>
+                        <textarea id="ssh-private-key" class="blur-sensitive" style="font-family: monospace; resize: none; min-height: 120px;" placeholder="No private key"></textarea>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 20px;">
+                    <button id="btn-generate-ssh-key" class="btn btn-sm btn-outline" data-t="btn_generate_ssh">Generate New</button>
+                    <button id="btn-save-ssh-keys" class="btn btn-sm btn-primary" data-t="btn_save_keys">Save Keys</button>
+                    <button id="btn-copy-ssh-key" class="btn btn-sm btn-text" data-t="btn_copy_pubkey">Copy PubKey</button>
+                </div>
+                <p style="font-size: 11px; color: var(--text-muted); margin-top: 15px;" data-t="ssh_instruction_html">
+                    Paste your keys above or generate new ones. Add the public key to <a href="https://github.com/settings/keys" target="_blank" style="color: var(--primary-color);">GitHub</a>.
+                </p>
+            </div>
         </div>
     </div>
 
@@ -430,6 +480,8 @@
         <button class="toolbar-btn" data-cmd="quote" data-t-title="tt_quote"><i data-lucide="quote"></i></button>
     </div>
     {% endif %}
+
+
     <script type="module" src="/static/js/app.js?v=4.0"></script>
 </body>
 </html>
