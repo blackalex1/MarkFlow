@@ -1,0 +1,24 @@
+# Ignore everything by default
+*
+
+# Allow the .gitignore and README file
+!.gitignore
+!README.md
+
+# Allow the 'core' directory and everything inside it
+!core/
+!core/**
+
+# Optional: if you want to include some root files later, add them here
+# !requirements.txt
+# !README.md
+
+# --- Standard ignore rules for things inside 'core' ---
+# Even though we allowed 'core', we still want to ignore junk inside it
+core/**/__pycache__/
+core/**/*.py[cod]
+core/**/.DS_Store
+
+# EXTREMELY IMPORTANT: Keep the database out of Git!
+core/app.db
+core/*.db

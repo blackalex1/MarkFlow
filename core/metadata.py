@@ -1,0 +1,38 @@
+import json
+import os
+import threading
+
+DOCS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "markdown_docs")
+METADATA_PATH = os.path.join(DOCS_DIR, "metadata.json")
+
+metadata_lock = threading.Lock()
+
+def get_metadata():
+    with metadata_lock:
+        if not os.path.exists(METADATA_PATH):
+            return {}
+        try:
+            with open(METADATA_PATH, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except json.JSONDecodeError:
+            return {}
+
+def save_metadata(data):
+    with metadata_lock:
+        with open(METADATA_PATH, 'w', encoding='utf-8') as f:
+            json.dump(data, f, indent=4, ensure_ascii=False)
+
+def is_public(filepath: str) -> bool:
+    """Returns True if file is public, False if private (admin-only)"""
+    data = get_metadata()
+    # Normalize path to use forward slashes
+    filepath = filepath.replace('\\', '/')
+    return data.get(filepath, {}).get("public", False)
+
+def set_public(filepath: str, public: bool):
+    data = get_metadata()
+    filepath = filepath.replace('\\', '/')
+    if filepath not in data:
+        data[filepath] = {}
+    data[filepath]["public"] = public
+    save_metadata(data)

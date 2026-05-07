@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation</title>
+    <link rel="icon" href="data:,">
+    <link rel="stylesheet" href="/static/css/style.css?v=4.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Highlight.js for Code Highlighting -->
+    <link id="hljs-theme" rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/scala.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/sql.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/r.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
+    <!-- EasyMDE for Markdown Editing -->
+    <link rel="stylesheet" href="https://unpkg.com/easymde/dist/easymde.min.css">
+    <script src="https://unpkg.com/easymde/dist/easymde.min.js"></script>
+</head>
+<body>
+    <div class="bg-glow"></div>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>Docs</h2>
+                <button id="theme-toggle" class="btn-icon" title="Toggle Theme">
+                    <i data-lucide="sun" class="icon-sm"></i>
+                </button>
+                <div id="user-controls">
+                    <!-- Login/Logout buttons dynamically inserted here -->
+                </div>
+            </div>
+            
+
+            <div class="sidebar-search">
+                <div class="search-input-wrapper">
+                    <i data-lucide="search" class="icon-xs"></i>
+                    <input type="text" id="search-input" placeholder="Поиск в документах...">
+                </div>
+                <div id="search-results" class="search-results hidden"></div>
+            </div>
+
+            <nav class="file-tree" id="file-tree">
+                <!-- File tree dynamically inserted here -->
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content" id="main-content">
+            <div id="content-area">
+                <div id="top-bar" class="top-bar hidden">
+                    <div id="breadcrumb" class="breadcrumb"></div>
+                    <div class="actions">
+                        <div id="edit-actions" class="hidden">
+                            <button id="btn-save" class="btn btn-primary btn-sm">Save</button>
+                            <button id="btn-cancel" class="btn btn-outline btn-sm">Cancel</button>
+                        </div>
+                        <div id="view-actions" class="view-actions">
+                            <label class="visibility-toggle" title="Public Visibility">
+                                <input type="checkbox" id="visibility-checkbox">
+                                <span class="slider"></span>
+                                <i data-lucide="eye" class="icon-xs"></i>
+                            </label>
+                            <button id="btn-edit" class="btn-icon" title="Edit Page">
+                                <i data-lucide="edit-3" class="icon-sm"></i>
+                            </button>
+                            <button id="btn-delete" class="btn-icon btn-danger-hover" title="Delete Page">
+                                <i data-lucide="trash-2" class="icon-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="content-viewer" class="markdown-body">
+                    <h1>Welcome</h1>
+                    <p>Select a document from the sidebar to view.</p>
+                </div>
+                
+                <textarea id="content-editor" class="hidden"></textarea>
+            </div>
+
+            <!-- Right TOC Sidebar -->
+            <aside class="toc-sidebar" id="toc-sidebar">
+                <div class="toc-header">
+                    <h3>Содержание</h3>
+                </div>
+                <nav id="page-toc"></nav>
+            </aside>
+        </main>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-btn" id="close-login">&times;</span>
+            <h2>Admin Login</h2>
+            <form id="login-form">
+                <input type="text" id="login-username" placeholder="Username" required>
+                <input type="password" id="login-password" placeholder="Password" required>
+                <div id="totp-container" class="hidden">
+                    <input type="text" id="login-totp" placeholder="2FA Code (Google Authenticator)">
+                </div>
+                <button type="submit" class="btn" style="width: 100%; margin-top: 10px;">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- User Dashboard Modal (LK) -->
+    <div id="user-dashboard-modal" class="modal hidden">
+        <div class="modal-content dashboard-content">
+            <span class="close-btn" id="close-dashboard">&times;</span>
+            <div class="dashboard-header-info" style="margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color);">
+                <div style="font-size: 18px; font-weight: 600; color: #fff;" id="dashboard-username">Загрузка...</div>
+            </div>
+            
+            <div class="dashboard-tabs" style="display: flex; gap: 20px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color);">
+                <div class="tab-item active" data-tab="settings">Настройки</div>
+                <div class="tab-item owner-only hidden" data-tab="users">Пользователи</div>
+                <div class="tab-item owner-only hidden" data-tab="logs">Журнал</div>
+            </div>
+
+            <div id="tab-settings" class="tab-content">
+                <div class="settings-list">
+                    <!-- Git Section -->
+                    <div class="settings-plate">
+                        <div class="plate-header">
+                            <i data-lucide="git-branch"></i>
+                            <span>Синхронизация с Git</span>
+                            <button id="btn-git-sync" class="btn btn-sm btn-primary">Синхронизировать</button>
+                        </div>
+                        <div class="plate-body">
+                            <input type="text" id="git-remote-url" placeholder="URL репозитория (https://...)">
+                            <input type="password" id="git-token" placeholder="Personal Access Token (для приватных репо)">
+                            <button id="btn-save-git-config" class="btn-text">Сохранить настройки</button>
+                        </div>
+                    </div>
+
+                    <!-- New Page Section -->
+                    <div class="settings-plate">
+                        <div class="plate-header">
+                            <i data-lucide="file-plus"></i>
+                            <span>Создание контента</span>
+                        </div>
+                        <div class="plate-body">
+                            <div class="input-group" style="margin-bottom: 10px;">
+                                <select id="new-item-type" style="width: auto; padding: 10px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; color: #fff;">
+                                    <option value="file">Файл (.md)</option>
+                                    <option value="folder">Папка</option>
+                                </select>
+                                <input type="text" id="new-page-name" placeholder="Название или путь (напр. Docs/Intro)" style="flex: 1; margin-bottom: 0;">
+                            </div>
+                            <button id="btn-create-page" class="btn btn-sm btn-primary" style="width: 100%;">Создать</button>
+                        </div>
+                    </div>
+
+                    <!-- Security Section -->
+                    <div class="settings-plate">
+                        <div class="plate-header">
+                            <i data-lucide="shield-check"></i>
+                            <span>Безопасность (2FA)</span>
+                            <div id="2fa-status-tag" class="tag tag-off">Отключена</div>
+                        </div>
+                        <div class="plate-body" style="display: flex; justify-content: space-between; align-items: center;">
+                            <span id="2fa-description" style="font-size: 12px; color: var(--text-muted);">Двухэтапная аутентификация</span>
+                            <button id="btn-toggle-2fa" class="btn btn-sm btn-outline">Настроить</button>
+                        </div>
+                    </div>
+
+                    <!-- Password Change Section -->
+                    <div class="settings-plate">
+                        <div class="plate-header">
+                            <i data-lucide="key"></i>
+                            <span>Смена пароля</span>
+                        </div>
+                        <div class="plate-body">
+                            <input type="password" id="old-password" placeholder="Старый пароль">
+                            <input type="password" id="new-password" placeholder="Новый пароль">
+                            <button id="btn-change-password" class="btn btn-sm btn-primary">Сменить пароль</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <button id="btn-logout" class="btn btn-outline" style="width: 100%; margin-top: 20px;">Выйти из системы</button>
+                <button id="btn-logout-all" class="btn btn-text btn-sm" style="width: 100%; margin-top: 10px; text-align: center;">Выйти на всех устройствах</button>
+            </div>
+
+            <!-- Users Tab -->
+            <div id="tab-users" class="tab-content hidden">
+                <div class="settings-plate">
+                    <div class="plate-header"><span>Новый пользователь</span></div>
+                    <div class="plate-body" style="display: flex; gap: 10px;">
+                        <input type="text" id="admin-new-username" placeholder="Логин" style="flex: 1;">
+                        <input type="password" id="admin-new-password" placeholder="Пароль" style="flex: 1;">
+                        <select id="admin-new-role" style="background: var(--bg-card); color: #fff; border: 1px solid var(--border-color); border-radius: 8px; padding: 0 10px;">
+                            <option value="guest">Guest</option>
+                            <option value="reporter">Reporter</option>
+                            <option value="developer">Developer</option>
+                            <option value="maintainer">Maintainer</option>
+                            <option value="owner">Owner</option>
+                        </select>
+                        <button id="btn-admin-create-user" class="btn btn-primary">Создать</button>
+                    </div>
+                </div>
+                <div id="users-table-container" style="margin-top: 20px; overflow-x: auto;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Пользователь</th>
+                                <th>Роль</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-list-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Logs Tab -->
+            <div id="tab-logs" class="tab-content hidden">
+                <div id="logs-table-container" style="max-height: 400px; overflow-y: auto;">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Время</th>
+                                <th>Кто</th>
+                                <th>Действие</th>
+                                <th>Детали</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-list-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2FA Setup Modal (remains for actual setup process) -->
+    <div id="totp-setup-modal" class="modal hidden">
+        <div class="modal-content" style="text-align: center;">
+            <span class="close-btn" id="close-totp-setup">&times;</span>
+            <h2>Setup 2FA</h2>
+            <p style="margin-top:10px; font-size:0.9em; color:#666;">Scan this QR Code with Google Authenticator</p>
+            <div id="totp-qr-container" style="margin: 20px auto; width: 200px; height: 200px; background: #fff;"></div>
+            <input type="text" id="setup-totp-code" placeholder="Enter the 6-digit code to verify" style="text-align: center; font-size:1.2em; letter-spacing: 2px;">
+            <button id="btn-verify-2fa" class="btn" style="width: 100%; margin-top: 15px;">Enable 2FA</button>
+        </div>
+    </div>
+
+    <script type="module" src="/static/js/app.js?v=4.0"></script>
+</body>
+</html>
