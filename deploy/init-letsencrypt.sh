@@ -76,17 +76,17 @@ echo "### Creating dummy certificate to bootstrap Nginx..."
 path="/etc/letsencrypt/live/$DOMAIN_NAME"
 mkdir -p "$data_path/conf/live/$DOMAIN_NAME"
 # Use environment variable to pass domain to nginx.conf template if needed
-DOMAIN_NAME=$DOMAIN_NAME $DOCKER_COMPOSE run --rm --entrypoint "\
+DOMAIN_NAME=$DOMAIN_NAME $DOCKER_COMPOSE --env-file ../.env run --rm --entrypoint "\
   openssl req -x509 -nodes -newkey rsa:1024 -days 1\
     -keyout '$path/privkey.pem' \
     -out '$path/fullchain.pem' \
     -subj '/CN=localhost'" certbot
 
 echo "### Starting Nginx (HTTP mode)..."
-DOMAIN_NAME=$DOMAIN_NAME $DOCKER_COMPOSE up --force-recreate -d nginx
+DOMAIN_NAME=$DOMAIN_NAME $DOCKER_COMPOSE --env-file ../.env up --force-recreate -d nginx
 
 echo "### Deleting dummy certificate..."
-$DOCKER_COMPOSE run --rm --entrypoint "\
+$DOCKER_COMPOSE --env-file ../.env run --rm --entrypoint "\
   rm -rf /etc/letsencrypt/live/$DOMAIN_NAME /etc/letsencrypt/archive/$DOMAIN_NAME /etc/letsencrypt/renewal/$DOMAIN_NAME.conf" certbot
 
 echo "### Requesting real certificate from Let's Encrypt..."
@@ -105,7 +105,7 @@ fi
 # Staging mode
 if [ $staging != "0" ]; then staging_arg="--staging"; fi
 
-$DOCKER_COMPOSE run --rm --entrypoint "\
+$DOCKER_COMPOSE --env-file ../.env run --rm --entrypoint "\
   certbot certonly --webroot -w /var/www/certbot \
     $staging_arg \
     $email_arg \
@@ -115,7 +115,7 @@ $DOCKER_COMPOSE run --rm --entrypoint "\
     --force-renewal" certbot
 
 echo "### Reloading Nginx with new certificates..."
-$DOCKER_COMPOSE exec nginx nginx -s reload
+$DOCKER_COMPOSE --env-file ../.env exec nginx nginx -s reload
 
 echo ""
 echo "=========================================================="

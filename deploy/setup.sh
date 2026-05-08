@@ -48,8 +48,8 @@ echo ""
 
 # 5. Build Containers
 echo "### Building and starting containers..."
-$DOCKER_COMPOSE build
-$DOCKER_COMPOSE up -d
+$DOCKER_COMPOSE --env-file ../.env build
+$DOCKER_COMPOSE --env-file ../.env up -d
 
 # 6. Ask about SSL
 echo ""

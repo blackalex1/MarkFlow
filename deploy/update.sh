@@ -22,11 +22,11 @@ cd deploy
 
 echo "### Rebuilding containers..."
 # --pull ensures we check for newer base images (like python:3.11-slim)
-$DOCKER_COMPOSE build --pull
+$DOCKER_COMPOSE --env-file ../.env build --pull
 
 echo "### Restarting services..."
 # up -d will only restart containers that have changed
-$DOCKER_COMPOSE up -d
+$DOCKER_COMPOSE --env-file ../.env up -d
 
 echo "### Cleaning up old images..."
 docker image prune -f
