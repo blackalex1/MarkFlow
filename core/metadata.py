@@ -36,6 +36,24 @@ def set_public(filepath: str, public: bool):
     data[filepath]["public"] = public
     save_metadata(data)
 
+def set_public_recursive(folder_path: str, public: bool):
+    """Recursively sets public visibility for all files in a folder."""
+    data = get_metadata()
+    folder_path = folder_path.replace('\\', '/')
+    full_folder_path = os.path.join(DOCS_DIR, folder_path)
+    
+    updated = False
+    for root, dirs, files in os.walk(full_folder_path):
+        for file in files:
+            if file.endswith('.md'):
+                rel_path = os.path.relpath(os.path.join(root, file), DOCS_DIR).replace('\\', '/')
+                if rel_path not in data: data[rel_path] = {}
+                data[rel_path]["public"] = public
+                updated = True
+    
+    if updated:
+        save_metadata(data)
+
 def get_file_status(filepath: str) -> str:
     """Returns file status (draft, in_progress, published)"""
     filepath = filepath.replace('\\', '/')

@@ -8,7 +8,7 @@ from .db.sessions import create_session, get_session, delete_session, clear_user
 from .db.settings import get_setting, set_setting
 from .db.audit import add_audit_log, get_audit_logs
 from .db.fts import update_fts_index, delete_fts_index, search_fts, reindex_all_docs, is_image_referenced
-from .metadata import is_public, set_public, get_file_status, set_file_status, rename_metadata
+from .metadata import is_public, set_public, set_public_recursive, get_file_status, set_file_status, rename_metadata
 
 import sqlite3
 

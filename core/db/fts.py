@@ -54,11 +54,23 @@ def reindex_all_docs(docs_dir: str):
                 rel_path = os.path.relpath(full_path, docs_dir).replace('\\', '/')
                 name = file.replace('.md', '')
                 try:
+                    # Try UTF-8 first
                     with open(full_path, 'r', encoding='utf-8') as f:
                         content = f.read()
+                except UnicodeDecodeError:
+                    try:
+                        # Fallback to UTF-16 (common on Windows)
+                        with open(full_path, 'r', encoding='utf-16') as f:
+                            content = f.read()
+                    except Exception:
+                        # Final fallback with replacement characters
+                        with open(full_path, 'r', encoding='utf-8', errors='replace') as f:
+                            content = f.read()
+                
+                try:
                     cursor.execute('INSERT INTO fts_docs (path, name, content) VALUES (?, ?, ?)', (rel_path, name, content))
                 except Exception as e:
-                    print(f"Failed to index {rel_path}: {e}")
+                    print(f"Failed to index content for {rel_path}: {e}")
     
     conn.commit()
     conn.close()

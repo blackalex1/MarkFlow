@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from core.config import limiter, DOCS_DIR, SECURITY_LIMITS
 from core.database import (
     update_fts_index, delete_fts_index, add_audit_log, 
-    set_public, rename_metadata, reindex_all_docs
+    set_public, set_public_recursive, rename_metadata, reindex_all_docs
 )
 from core.auth import get_developer_user, get_maintainer_user
 from .utils import get_safe_path
@@ -25,10 +25,16 @@ class MoveRequest(BaseModel):
 @router.put("/visibility")
 @limiter.limit(SECURITY_LIMITS["file_ops"])
 def set_file_visibility(request: Request, path: str, data: FileVisibility, user=Depends(get_maintainer_user)):
-    get_safe_path(DOCS_DIR, path)
-    set_public(path, data.public)
+    full_path = get_safe_path(DOCS_DIR, path)
+    if os.path.isdir(full_path):
+        set_public_recursive(path, data.public)
+        msg = f"Folder visibility set to {'public' if data.public else 'private'} (recursive)"
+    else:
+        set_public(path, data.public)
+        msg = f"Visibility updated to {'public' if data.public else 'private'}"
+        
     add_audit_log(user["username"], "visibility_changed", f"Path: {path}, Public: {data.public}", ip_address=request.client.host)
-    return {"message": f"Visibility updated to {'public' if data.public else 'private'}"}
+    return {"message": msg}
 
 @router.put("/status")
 @limiter.limit(SECURITY_LIMITS["file_ops"])

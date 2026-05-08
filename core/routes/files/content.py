@@ -37,8 +37,16 @@ def get_file_content(path: str, request: Request):
         from fastapi.responses import FileResponse
         return FileResponse(full_path)
         
-    with open(full_path, "r", encoding="utf-8") as f:
-        content = f.read()
+    try:
+        with open(full_path, "r", encoding="utf-8") as f:
+            content = f.read()
+    except UnicodeDecodeError:
+        try:
+            with open(full_path, "r", encoding="utf-16") as f:
+                content = f.read()
+        except Exception:
+            with open(full_path, "r", encoding="utf-8", errors="replace") as f:
+                content = f.read()
         
     from core.database import get_file_status
     status = get_file_status(path)
@@ -53,8 +61,16 @@ async def save_file_content(path: str, data: FileContent, request: Request, back
     image_regex = r'!\[.*?\]\((attachments/.*?)\)'
     old_content = ""
     if os.path.exists(full_path):
-        with open(full_path, "r", encoding="utf-8") as f:
-            old_content = f.read()
+        try:
+            with open(full_path, "r", encoding="utf-8") as f:
+                old_content = f.read()
+        except UnicodeDecodeError:
+            try:
+                with open(full_path, "r", encoding="utf-16") as f:
+                    old_content = f.read()
+            except Exception:
+                with open(full_path, "r", encoding="utf-8", errors="replace") as f:
+                    old_content = f.read()
             
     old_images = set(re.findall(image_regex, old_content))
     new_images = set(re.findall(image_regex, data.content))

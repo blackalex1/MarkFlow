@@ -135,15 +135,16 @@ function showContextMenu(e, node) {
                 { label: t('status_published'), cmd: 'status-published' }
             ]
         });
-        items.push({
-            icon: node.public ? 'eye' : 'lock',
-            label: t('vis_label') || 'Visibility',
-            submenu: [
-                { label: t('vis_public'), cmd: 'vis-public' },
-                { label: t('vis_private'), cmd: 'vis-private' }
-            ]
-        });
     }
+
+    items.push({
+        icon: node.public ? 'eye' : 'lock',
+        label: t('vis_label') || 'Visibility',
+        submenu: [
+            { label: t('vis_public'), cmd: 'vis-public' },
+            { label: t('vis_private'), cmd: 'vis-private' }
+        ]
+    });
 
     items.push({ icon: 'trash-2', label: t('menu_delete') || 'Delete', cmd: 'delete', danger: true });
 
@@ -248,7 +249,8 @@ async function handleMenuCommand(cmd, node) {
             body: JSON.stringify({ public: isPublic })
         });
         if (res.ok) {
-            toast.success(isPublic ? "File is now public" : "File is now private");
+            const typeStr = node.type === 'folder' ? (t('type_folder') || 'Folder') : (t('type_file') || 'File');
+            toast.success(`${typeStr} ${isPublic ? (t('vis_public') || 'is now public') : (t('vis_private') || 'is now private')}`);
             loadFileTree();
             if (node.path === state.currentFilePath) {
                 window.dispatchEvent(new CustomEvent('load-file', { detail: { path: node.path } }));
