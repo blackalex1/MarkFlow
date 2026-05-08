@@ -7,6 +7,15 @@ from core.config import DOCS_DIR
 def get_repo():
     if not os.path.exists(DOCS_DIR):
         os.makedirs(DOCS_DIR)
+    
+    # Git error: 'fatal: detected dubious ownership in repository'
+    # This happens in Docker environments. We add the directory to safe.directory.
+    try:
+        from git import Git
+        Git().config("--global", "--add", "safe.directory", DOCS_DIR.replace('\\', '/'))
+    except Exception as e:
+        print(f"Warning: Could not set git safe.directory: {e}")
+
     try:
         repo = Repo(DOCS_DIR)
         return repo
