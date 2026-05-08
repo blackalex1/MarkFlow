@@ -15,10 +15,17 @@ git pull
 echo "### Rebuilding and restarting application..."
 # Regenerate nginx.conf from template before building
 if [ -f "../.env" ]; then
-    export $(grep -v '^#' ../.env | xargs)
-    # Strip \r (CRLF) to prevent Nginx config breakage
-    DOMAIN_NAME=$(echo $DOMAIN_NAME | tr -d '\r')
-    HTTPS_PORT=$(echo $HTTPS_PORT | tr -d '\r')
+    echo "### Loading and sanitizing environment variables..."
+    # Robust way to load .env stripping \r and potential quotes
+    while IFS='=' read -r key value || [ -n "$key" ]; do
+        # Skip comments and empty lines
+        [[ $key =~ ^#.* ]] && continue
+        [[ -z $key ]] && continue
+        
+        # Clean value: remove \r, trailing/leading spaces, and quotes
+        clean_value=$(echo "$value" | tr -d '\r' | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's/^"//' -e 's/"$//')
+        export "$key"="$clean_value"
+    done < "../.env"
     
     if [ -f "./nginx.conf.template" ]; then
         echo "### Regenerating Nginx config from template..."
