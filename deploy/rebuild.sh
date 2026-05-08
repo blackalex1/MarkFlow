@@ -28,7 +28,7 @@ if [ -f "../.env" ]; then
     fi
 fi
 
-docker compose --env-file ../.env up -d --build markflow
+docker compose --env-file ../.env up -d --build
 
 # 3. Reload Nginx just in case
 echo "### Reloading Nginx configuration..."
