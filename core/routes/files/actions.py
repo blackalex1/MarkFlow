@@ -2,20 +2,21 @@ import os
 import shutil
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
-from core.config import limiter
-from core.security_config import SECURITY_LIMITS
+from core.config import limiter, DOCS_DIR, SECURITY_LIMITS
 from core.database import (
     update_fts_index, delete_fts_index, add_audit_log, 
     set_public, rename_metadata, reindex_all_docs
 )
 from core.auth import get_developer_user, get_maintainer_user
-from core.config import DOCS_DIR
 from .utils import get_safe_path
 
 router = APIRouter()
 
 class FileVisibility(BaseModel):
     public: bool
+
+class FileStatus(BaseModel):
+    status: str
 
 class MoveRequest(BaseModel):
     old_path: str
@@ -26,8 +27,17 @@ class MoveRequest(BaseModel):
 def set_file_visibility(request: Request, path: str, data: FileVisibility, user=Depends(get_maintainer_user)):
     get_safe_path(DOCS_DIR, path)
     set_public(path, data.public)
-    add_audit_log(user["username"], "visibility_changed", f"Path: {path}, Public: {data.public}")
+    add_audit_log(user["username"], "visibility_changed", f"Path: {path}, Public: {data.public}", ip_address=request.client.host)
     return {"message": f"Visibility updated to {'public' if data.public else 'private'}"}
+
+@router.put("/status")
+@limiter.limit(SECURITY_LIMITS["file_ops"])
+def set_status(request: Request, path: str, data: FileStatus, user=Depends(get_maintainer_user)):
+    from core.database import set_file_status
+    get_safe_path(DOCS_DIR, path)
+    set_file_status(path, data.status)
+    add_audit_log(user["username"], "status_changed", f"Path: {path}, Status: {data.status}", ip_address=request.client.host)
+    return {"message": f"Status updated to {data.status}"}
 
 @router.post("/create")
 @limiter.limit(SECURITY_LIMITS["file_ops"])
@@ -47,7 +57,7 @@ def create_file(request: Request, path: str, user=Depends(get_developer_user)):
         
     update_fts_index(path, os.path.basename(path).replace(".md", ""), content)
     set_public(path, False)
-    add_audit_log(user["username"], "file_created", f"Path: {path}")
+    add_audit_log(user["username"], "file_created", f"Path: {path}", ip_address=request.client.host)
     return {"message": "File created", "path": path}
 
 @router.post("/mkdir")
@@ -57,7 +67,7 @@ def create_folder(request: Request, path: str, user=Depends(get_developer_user))
     if os.path.exists(full_path):
         raise HTTPException(status_code=400, detail="Path already exists")
     os.makedirs(full_path, exist_ok=True)
-    add_audit_log(user["username"], "folder_created", f"Path: {path}")
+    add_audit_log(user["username"], "folder_created", f"Path: {path}", ip_address=request.client.host)
     return {"message": "Folder created", "path": path}
 
 @router.post("/move")
@@ -81,13 +91,13 @@ def move_file(request: Request, data: MoveRequest, user=Depends(get_developer_us
             content = f.read()
             update_fts_index(data.new_path, os.path.basename(data.new_path).replace(".md", ""), content)
     
-    add_audit_log(user["username"], "file_moved", f"From: {data.old_path}, To: {data.new_path}")
+    add_audit_log(user["username"], "file_moved", f"From: {data.old_path}, To: {data.new_path}", ip_address=request.client.host)
     return {"message": "File moved successfully"}
 
 @router.post("/reindex")
-def manual_reindex(user=Depends(get_maintainer_user)):
+def manual_reindex(request: Request, user=Depends(get_maintainer_user)):
     reindex_all_docs(DOCS_DIR)
-    add_audit_log(user["username"], "manual_reindex")
+    add_audit_log(user["username"], "manual_reindex", ip_address=request.client.host)
     return {"message": "Reindexing complete"}
 
 @router.delete("/delete")
@@ -97,7 +107,7 @@ def delete_file(request: Request, path: str, user=Depends(get_maintainer_user)):
     if not os.path.exists(full_path):
         raise HTTPException(status_code=404, detail="File not found")
     
-    add_audit_log(user["username"], "file_deleted", f"Path: {path}")
+    add_audit_log(user["username"], "file_deleted", f"Path: {path}", ip_address=request.client.host)
     
     if os.path.isdir(full_path):
         shutil.rmtree(full_path)

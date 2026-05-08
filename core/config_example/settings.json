@@ -1,0 +1,15 @@
+{
+    "app_name": "MarkFlow",
+    "_help": "Rate limits syntax: 'X/second', 'X/minute', 'X/hour', 'X/day', 'X/month', 'X/year'. Examples: '10/m', '60/hour', '5/s'.",
+    "use_logo": false,
+    "logo_path": "/config/logo.png",
+    "favicon_path": "/config/favicon.ico",
+    "security_limits": {
+        "login": "5/minute",
+        "2fa_verify": "5/minute",
+        "change_password": "3/minute",
+        "create_user": "10/minute",
+        "file_ops": "60/minute",
+        "search": "30/minute"
+    }
+}

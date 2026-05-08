@@ -8,7 +8,7 @@ from .db.sessions import create_session, get_session, delete_session, clear_user
 from .db.settings import get_setting, set_setting
 from .db.audit import add_audit_log, get_audit_logs
 from .db.fts import update_fts_index, delete_fts_index, search_fts, reindex_all_docs, is_image_referenced
-from .metadata import is_public, set_public, rename_metadata
+from .metadata import is_public, set_public, get_file_status, set_file_status, rename_metadata
 
 import sqlite3
 
@@ -50,9 +50,14 @@ def init_db():
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
             username TEXT,
             action TEXT,
-            details TEXT
+            details TEXT,
+            ip_address TEXT
         )
     ''')
+    try:
+        cursor.execute('ALTER TABLE audit_logs ADD COLUMN ip_address TEXT')
+    except sqlite3.OperationalError:
+        pass
 
     # Create sessions table
     cursor.execute('''
@@ -66,8 +71,27 @@ def init_db():
     # Check if admin user exists
     cursor.execute('SELECT * FROM users WHERE username = ?', ('admin',))
     if not cursor.fetchone():
-        hashed_password = pwd_context.hash('admin')
-        cursor.execute('INSERT INTO users (username, password_hash, is_admin, role) VALUES (?, ?, ?, ?)', ('admin', hashed_password, True, 'owner'))
+        import secrets
+        import string
+        
+        # Generate random secure password
+        alphabet = string.ascii_letters + string.digits
+        random_password = ''.join(secrets.choice(alphabet) for _ in range(12))
+        
+        hashed_password = pwd_context.hash(random_password)
+        cursor.execute('INSERT INTO users (username, password_hash, is_admin, role) VALUES (?, ?, ?, ?)', 
+                       ('admin', hashed_password, True, 'owner'))
+        
+        print("\n" + "="*60)
+        print(" SECURITY WARNING: INITIAL SETUP ".center(60, "="))
+        print("="*60)
+        print(f" Admin user created successfully!")
+        print(f" Username: admin")
+        print(f" Password: {random_password}")
+        print("="*60)
+        print(" PLEASE SAVE THIS PASSWORD NOW! ".center(60, "="))
+        print(" It will not be shown again. ".center(60, "="))
+        print("="*60 + "\n")
     else:
         # Ensure existing admin has owner role
         cursor.execute('UPDATE users SET role = ? WHERE username = ?', ('owner', 'admin'))

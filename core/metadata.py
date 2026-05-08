@@ -24,22 +24,29 @@ def save_metadata(data):
 
 def is_public(filepath: str) -> bool:
     """Returns True if file is public, False if private (admin-only)"""
-    # Normalize path to use forward slashes
     filepath = filepath.replace('\\', '/')
-    
-    # Attachments are always public
-    if filepath.startswith("attachments/"):
-        return True
-        
+    if filepath.startswith("attachments/"): return True
     data = get_metadata()
     return data.get(filepath, {}).get("public", False)
 
 def set_public(filepath: str, public: bool):
     data = get_metadata()
     filepath = filepath.replace('\\', '/')
-    if filepath not in data:
-        data[filepath] = {}
+    if filepath not in data: data[filepath] = {}
     data[filepath]["public"] = public
+    save_metadata(data)
+
+def get_file_status(filepath: str) -> str:
+    """Returns file status (draft, in_progress, published)"""
+    filepath = filepath.replace('\\', '/')
+    data = get_metadata()
+    return data.get(filepath, {}).get("status", "published")
+
+def set_file_status(filepath: str, status: str):
+    data = get_metadata()
+    filepath = filepath.replace('\\', '/')
+    if filepath not in data: data[filepath] = {}
+    data[filepath]["status"] = status
     save_metadata(data)
 
 def rename_metadata(old_path: str, new_path: str):

@@ -33,8 +33,8 @@ async def add_security_headers(request: Request, call_next):
     csp = (
         "default-src 'self'; "
         "script-src 'self' 'unsafe-inline' https://accounts.google.com; "
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
-        "font-src 'self' data: https://fonts.gstatic.com; "
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; "
+        "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; "
         "img-src 'self' data: blob: https:; "
         "connect-src 'self'; "
         "frame-src https://accounts.google.com; "
@@ -46,7 +46,7 @@ async def add_security_headers(request: Request, call_next):
 
     # Caching for static assets
     if request.url.path.startswith(("/static/", "/branding/")):
-        # Cache for 1 year (immutable for versioned assets)
-        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        # Cache for static assets, but allow revalidation
+        response.headers["Cache-Control"] = "public, max-age=86400, must-revalidate"
     
     return response

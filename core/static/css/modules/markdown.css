@@ -28,3 +28,26 @@
 .hidden {
     display: none !important;
 }
+
+/* Video Styling */
+.video-wrapper {
+    margin: 1.5em 0;
+    width: 100%;
+    max-width: 800px;
+}
+
+.markdown-video {
+    width: 100%;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    background: #000;
+}
+
+.video-caption {
+    text-align: center;
+    font-size: 0.9em;
+    color: var(--text-muted);
+    margin-top: 8px;
+    font-style: italic;
+}

@@ -102,5 +102,26 @@ export const ru = {
     success_ssh_gen: "Новый SSH ключ успешно создан!",
     confirm_gen_ssh: "Вы уверены? Старый ключ будет удален, и вам придется обновить его в настройках GitHub.",
     btn_confirm_gen: "Сгенерировать",
-    ssh_instruction_html: "Вставьте ваши ключи выше или создайте новые. Добавьте публичный ключ в настройки <a href=\"https://github.com/settings/keys\" target=\"_blank\" style=\"color: var(--primary-color);\">GitHub</a>."
+    ssh_instruction_html: "Вставьте ваши ключи выше или создайте новые. Добавьте публичный ключ в настройки <a href=\"https://github.com/settings/keys\" target=\"_blank\" style=\"color: var(--primary-color);\">GitHub</a>.",
+    
+    // Statuses
+    status_label: "Статус",
+    status_draft: "Черновик",
+    status_in_progress: "В работе",
+    status_published: "Опубликовано",
+    status_updated: "Статус обновлен на",
+    
+    // Menu
+    menu_rename: "Переименовать",
+    menu_move: "Переместить",
+    menu_delete: "Удалить",
+    
+    // Visibility
+    vis_label: "Видимость",
+    vis_public: "Публичный",
+    vis_private: "Приватный",
+    
+    // Types
+    type_folder: "Папка",
+    type_file: "Документ"
 };

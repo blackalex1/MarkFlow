@@ -5,6 +5,7 @@ export const ui = {
     contentEditor: document.getElementById('content-editor'),
     topBar: document.getElementById('top-bar'),
     visibilityCheckbox: document.getElementById('visibility-checkbox'),
+    statusSelect: document.getElementById('status-select'),
     breadcrumb: document.getElementById('breadcrumb'),
     btnEdit: document.getElementById('btn-edit'),
     btnDelete: document.getElementById('btn-delete'),

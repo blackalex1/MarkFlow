@@ -103,6 +103,7 @@ export async function loadLogs() {
                     <td style="font-size: 11px; white-space: nowrap;">${date}</td>
                     <td style="font-weight: 600;">${l.username}</td>
                     <td><span class="tag tag-sm">${l.action}</span></td>
+                    <td style="font-family: monospace; font-size: 11px;">${l.ip_address || '-'}</td>
                     <td style="font-size: 12px; color: var(--text-muted);">${l.details || '-'}</td>
                 </tr>
             `;

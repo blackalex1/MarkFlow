@@ -1,5 +1,6 @@
 import { ui, state } from './ui.js';
 import { toast } from './toasts.js';
+import { t } from './i18n.js';
 
 export async function loadFileTree() {
     const res = await fetch('/api/files/tree');
@@ -25,8 +26,11 @@ function renderFileTree(tree) {
                 const childrenContainer = document.createElement('div');
                 childrenContainer.className = 'children' + (isOpen ? '' : ' hidden');
                 
-                item.onclick = (e) => {
+                item.onclick = async (e) => {
                     e.stopPropagation();
+                    const { loadFolderContent } = await import('./viewer.js');
+                    loadFolderContent(nodePath);
+                    
                     const isHidden = childrenContainer.classList.contains('hidden');
                     if (isHidden) {
                         childrenContainer.classList.remove('hidden');
@@ -51,8 +55,21 @@ function renderFileTree(tree) {
                 renderNode(node.children, childrenContainer, level + 1, nodePath);
             } else {
                 item.dataset.path = node.path;
+                // Icon shows Visibility
                 const icon = node.public ? 'file-text' : 'lock';
-                item.innerHTML = `<i data-lucide="${icon}" class="icon-sm"></i> <span>${node.name.replace('.md', '')}</span>`;
+                
+                // Dot shows Status
+                const isStaff = state.currentUser && ['developer', 'maintainer', 'owner'].includes(state.currentUser.role);
+                let statusDot = '';
+                if (isStaff) {
+                    const status = node.status || 'published';
+                    // Status colors: Draft (Gray), In Progress (Blue), Published (Green)
+                    let statusClass = status === 'published' ? 'public' : status; 
+                    const statusTitle = t(`status_${status}`);
+                    statusDot = `<span class="status-dot ${statusClass}" title="${statusTitle}"></span>`;
+                }
+
+                item.innerHTML = `${statusDot}<i data-lucide="${icon}" class="icon-sm"></i> <span>${node.name.replace('.md', '')}</span>`;
                 if (node.path === state.currentFilePath) item.classList.add('active');
                 
                 item.onclick = (e) => {
@@ -96,29 +113,66 @@ export function getAllFiles() {
 }
 
 function showContextMenu(e, node) {
-    // Remove existing menu
     const existing = document.querySelector('.context-menu');
     if (existing) existing.remove();
-
     const menu = document.createElement('div');
     menu.className = 'context-menu fade-in';
     menu.style.top = `${e.clientY}px`;
     menu.style.left = `${e.clientX}px`;
 
     const items = [
-        { icon: 'edit', label: 'Rename', cmd: 'rename' },
-        { icon: 'move', label: 'Move', cmd: 'move' },
-        { icon: 'trash-2', label: 'Delete', cmd: 'delete', danger: true }
+        { icon: 'edit', label: t('menu_rename') || 'Rename', cmd: 'rename' },
+        { icon: 'move', label: t('menu_move') || 'Move', cmd: 'move' }
     ];
+
+    if (node.type === 'file') {
+        items.push({ 
+            icon: 'activity', 
+            label: t('status_label') || 'Status', 
+            submenu: [
+                { label: t('status_draft'), cmd: 'status-draft' },
+                { label: t('status_in_progress'), cmd: 'status-in_progress' },
+                { label: t('status_published'), cmd: 'status-published' }
+            ]
+        });
+        items.push({
+            icon: node.public ? 'eye' : 'lock',
+            label: t('vis_label') || 'Visibility',
+            submenu: [
+                { label: t('vis_public'), cmd: 'vis-public' },
+                { label: t('vis_private'), cmd: 'vis-private' }
+            ]
+        });
+    }
+
+    items.push({ icon: 'trash-2', label: t('menu_delete') || 'Delete', cmd: 'delete', danger: true });
 
     items.forEach(it => {
         const item = document.createElement('div');
-        item.className = `context-menu-item ${it.danger ? 'danger' : ''}`;
+        item.className = `context-menu-item ${it.danger ? 'danger' : ''} ${it.submenu ? 'has-submenu' : ''}`;
         item.innerHTML = `<i data-lucide="${it.icon}" class="icon-sm"></i> <span>${it.label}</span>`;
-        item.onclick = () => {
-            handleMenuCommand(it.cmd, node);
-            menu.remove();
-        };
+        
+        if (it.submenu) {
+            const sub = document.createElement('div');
+            sub.className = 'submenu';
+            it.submenu.forEach(sit => {
+                const sitem = document.createElement('div');
+                sitem.className = 'context-menu-item';
+                sitem.textContent = sit.label;
+                sitem.onclick = (ev) => {
+                    ev.stopPropagation();
+                    handleMenuCommand(sit.cmd, node);
+                    menu.remove();
+                };
+                sub.appendChild(sitem);
+            });
+            item.appendChild(sub);
+        } else {
+            item.onclick = () => {
+                handleMenuCommand(it.cmd, node);
+                menu.remove();
+            };
+        }
         menu.appendChild(item);
     });
 
@@ -168,6 +222,39 @@ async function handleMenuCommand(cmd, node) {
         } else {
             const err = await res.json();
             toast.error(err.detail || "Failed to move");
+        }
+    } else if (cmd.startsWith('status-')) {
+        const status = cmd.replace('status-', '');
+        const res = await fetch(`/api/files/status?path=${encodeURIComponent(node.path)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status })
+        });
+        if (res.ok) {
+            toast.success(`${t('status_updated') || 'Status updated to'} ${t(`status_${status}`)}`);
+            loadFileTree();
+            // Trigger refresh in viewer if active
+            if (node.path === state.currentFilePath) {
+                window.dispatchEvent(new CustomEvent('load-file', { detail: { path: node.path } }));
+            }
+        } else {
+            toast.error("Failed to update status");
+        }
+    } else if (cmd.startsWith('vis-')) {
+        const isPublic = cmd === 'vis-public';
+        const res = await fetch(`/api/files/visibility?path=${encodeURIComponent(node.path)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ public: isPublic })
+        });
+        if (res.ok) {
+            toast.success(isPublic ? "File is now public" : "File is now private");
+            loadFileTree();
+            if (node.path === state.currentFilePath) {
+                window.dispatchEvent(new CustomEvent('load-file', { detail: { path: node.path } }));
+            }
+        } else {
+            toast.error("Failed to update visibility");
         }
     }
 }

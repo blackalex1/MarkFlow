@@ -8,7 +8,14 @@ import { generateTOC, updateBreadcrumbs, addCopyButtons, updateNavigation } from
 
 initMarked();
 
-if (window.mermaid) mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+if (window.mermaid) {
+    mermaid.initialize({ 
+        startOnLoad: false, 
+        theme: 'dark',
+        securityLevel: 'loose',
+        logLevel: 5 // Fatal errors only
+    });
+}
 
 export async function loadFileContent(path, pushState = true, hash = null) {
     ui.contentViewer.classList.add('fade-out');
@@ -23,6 +30,9 @@ export async function loadFileContent(path, pushState = true, hash = null) {
         const res = await fetch(`/api/files/content?path=${encodeURIComponent(path)}`);
         if (res.ok) {
             const data = await res.json();
+            if (data.is_folder) {
+                return loadFolderContent(path);
+            }
             const cleanHTML = DOMPurify.sanitize(marked.parse(data.content), {
                 ADD_ATTR: ['target', 'data-target', 'data-tab-id', 'data-lucide', 'id', 'class'],
                 USE_PROFILES: { html: true, mathMl: true, svg: true }
@@ -52,7 +62,16 @@ export async function loadFileContent(path, pushState = true, hash = null) {
             updateBreadcrumbs(path);
             
             if (window.mermaid) {
-                try { mermaid.init(undefined, ui.contentViewer.querySelectorAll('.mermaid')); } catch (e) {}
+                requestAnimationFrame(() => {
+                    try {
+                        mermaid.run({
+                            nodes: ui.contentViewer.querySelectorAll('.mermaid'),
+                            suppressErrors: true
+                        });
+                    } catch (e) {
+                        console.error('Mermaid error:', e);
+                    }
+                });
             }
             if (window.lucide) lucide.createIcons();
             
@@ -77,11 +96,30 @@ export async function loadFileContent(path, pushState = true, hash = null) {
             if (state.currentUser && state.currentUser.role !== 'guest' && state.currentUser.role !== 'reporter') {
                 ui.topBar.classList.remove('hidden');
                 if (ui.visibilityCheckbox) ui.visibilityCheckbox.checked = data.public;
+                if (ui.statusSelect) ui.statusSelect.value = data.status || 'published';
             } else ui.topBar.classList.add('hidden');
             
             tree.updateTreeHighlighting(path);
         } else renderErrorPage(res.status, path);
     }, 300);
+}
+
+export async function loadFolderContent(path) {
+    const res = await fetch(`/api/files/folder?path=${encodeURIComponent(path)}`);
+    if (res.ok) {
+        const data = await res.json();
+        const { renderFolderGrid, updateBreadcrumbs } = await import('./viewer_ui.js');
+        renderFolderGrid(data);
+        updateBreadcrumbs(path);
+        
+        ui.viewModeContainer.classList.remove('hidden');
+        if (ui.contentEditor) ui.contentEditor.classList.add('hidden');
+        ui.topBar.classList.add('hidden');
+        if (ui.pageNav) ui.pageNav.classList.add('hidden');
+        if (ui.tocSidebar) ui.tocSidebar.classList.add('hidden');
+        
+        tree.updateTreeHighlighting(path);
+    }
 }
 
 function renderErrorPage(status, path) {

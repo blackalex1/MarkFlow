@@ -52,6 +52,7 @@ if (ui.btnDelete) ui.btnDelete.onclick = viewer.deleteCurrentFile;
 if (ui.btnCancel) ui.btnCancel.onclick = () => editor.toggleEditMode(false);
 if (ui.btnSave) ui.btnSave.onclick = editor.saveFile;
 if (ui.visibilityCheckbox) ui.visibilityCheckbox.onchange = editor.updateVisibility;
+if (ui.statusSelect) ui.statusSelect.onchange = editor.updateStatus;
 
 if (ui.btnLangToggle) {
     ui.btnLangToggle.onclick = () => {

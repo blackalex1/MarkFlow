@@ -22,8 +22,8 @@ def get_authenticated_url(url: str, token: str = None) -> str:
         return clean_url.replace("https://", f"https://{token}@")
     return url
 
-def sync_repository(username: str):
-    add_audit_log(username, "git_sync_start")
+def sync_repository(username: str, ip_address: str = ""):
+    add_audit_log(username, "git_sync_start", ip_address=ip_address)
     repo = get_repo()
     url = get_setting("git_url")
     token = get_setting("git_token")
@@ -135,5 +135,5 @@ def sync_repository(username: str):
         repo.git.push(auth_url, push_branch)
 
     reindex_all_docs(DOCS_DIR)
-    add_audit_log(username, "git_sync_success")
+    add_audit_log(username, "git_sync_success", ip_address=ip_address)
     return {"message": "Sync successful"}

@@ -1,35 +1,39 @@
-# Ignore everything by default
+# MarkFlow GitIgnore
+# Using "Ignore All, Allow Specific" strategy for maximum security
+
+# 1. Ignore everything
 *
 
-# Allow the .gitignore and README file
+# 2. Allow Essential Project Files
 !.gitignore
 !README.md
+!requirements.txt
+!.env_example
 
-# Allow the 'core' directory and everything inside it
+# 3. Allow Source Code
 !core/
 !core/**
 
-# Optional: if you want to include some root files later, add them here
-# !requirements.txt
-# !README.md
+# 4. Allow Deployment Folder
+!deploy/
+!deploy/**
 
-# --- Standard ignore rules for things inside 'core' ---
-# Even though we allowed 'core', we still want to ignore junk inside it
-core/**/__pycache__/
-core/**/*.py[cod]
-core/**/.DS_Store
+# 5. Standard Python / OS exclusions
+**/__pycache__/
+**/*.py[cod]
+**/.DS_Store
+venv/
+.env
+../.env
 
-# EXTREMELY IMPORTANT: Keep the database out of Git!
-core/app.db
-core/*.db
-
-# Branding and customization
-core/branding/
-!core/branding_example/
-
-# Vendor libraries (handled by vendor_service.py)
+# 6. Exclude User Data & Secrets (CRITICAL)
+app.db
+*.db
+config/
+certbot/
+markdown_docs/
 core/static/vendor/
 
-# Root files
-!requirements.txt
-!main.py
+# 7. Allow Internal Templates
+!core/config_example/
+!core/config_example/**

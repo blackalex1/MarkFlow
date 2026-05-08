@@ -89,6 +89,12 @@ function toggleQuickSwitcher(show) {
     }
 }
 
+function escapeHTML(str) {
+    const p = document.createElement('p');
+    p.textContent = str;
+    return p.innerHTML;
+}
+
 async function performSearch(q, container) {
     try {
         const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
@@ -98,8 +104,8 @@ async function performSearch(q, container) {
         if (data && data.results && data.results.length > 0) {
             container.innerHTML = data.results.map((r, idx) => `
                 <div class="search-result ${idx === 0 && container === ui.qsResults ? 'active' : ''}" data-path="${r.path}">
-                    <div class="search-item-name">${r.name}</div>
-                    <div class="search-item-snippet">${r.snippet}</div>
+                    <div class="search-item-name">${escapeHTML(r.name)}</div>
+                    <div class="search-item-snippet">${DOMPurify.sanitize(r.snippet)}</div>
                 </div>
             `).join('');
             

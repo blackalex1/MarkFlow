@@ -1,6 +1,41 @@
 import { ui, state } from './ui.js';
 import * as tree from './tree.js';
 import { loadFileContent } from './viewer.js';
+import { t } from './i18n.js';
+
+export function renderFolderGrid(data) {
+    ui.contentViewer.innerHTML = `
+        <div class="folder-view fade-in">
+            <h1 class="folder-view-title">${data.name}</h1>
+            <div class="folder-grid">
+                ${data.items.map(item => {
+                    const icon = item.type === 'folder' ? 'folder' : (item.public ? 'file-text' : 'lock');
+                    const isStaff = state.currentUser && ['developer', 'maintainer', 'owner'].includes(state.currentUser.role);
+                    let statusDot = '';
+                    if (isStaff && item.type === 'file') {
+                        const status = item.status || 'published';
+                        let statusClass = status === 'published' ? 'public' : status;
+                        statusDot = `<span class="status-dot ${statusClass}"></span>`;
+                    }
+                    
+                    return `
+                        <div class="folder-card ${item.type}-card" onclick="window.dispatchEvent(new CustomEvent('load-file', { detail: { path: '${item.path}' } }))">
+                            <div class="card-icon">
+                                ${statusDot}
+                                <i data-lucide="${icon}"></i>
+                            </div>
+                            <div class="card-info">
+                                <span class="card-name">${item.name.replace('.md', '')}</span>
+                                <span class="card-meta">${item.type === 'folder' ? (t('type_folder') || 'Folder') : (t('type_file') || 'Document')}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        </div>
+    `;
+    if (window.lucide) lucide.createIcons();
+}
 
 export function generateTOC() {
     if (!ui.pageToc || !ui.tocSidebar) return;

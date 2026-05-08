@@ -6,8 +6,7 @@ from core.database import (
     update_fts_index, add_audit_log, is_public, is_image_referenced
 )
 from core.auth import get_current_user, get_developer_user, ROLES
-from core.config import DOCS_DIR, limiter
-from core.security_config import SECURITY_LIMITS
+from core.config import DOCS_DIR, limiter, SECURITY_LIMITS
 from .utils import get_safe_path
 
 router = APIRouter()
@@ -28,17 +27,22 @@ def get_file_content(path: str, request: Request):
     if not public and not can_see_private:
         raise HTTPException(status_code=403, detail="Access denied")
         
+    if os.path.isdir(full_path):
+        return {"is_folder": True}
+        
     if not os.path.exists(full_path):
         raise HTTPException(status_code=404, detail="File not found")
         
-    if path.lower().endswith((".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp")):
+    if path.lower().endswith((".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".mp4", ".webm", ".ogg")):
         from fastapi.responses import FileResponse
         return FileResponse(full_path)
         
     with open(full_path, "r", encoding="utf-8") as f:
         content = f.read()
         
-    return {"content": content, "public": public}
+    from core.database import get_file_status
+    status = get_file_status(path)
+    return {"content": content, "public": public, "status": status}
 
 @router.put("/content")
 @limiter.limit(SECURITY_LIMITS["file_ops"])
@@ -63,7 +67,7 @@ async def save_file_content(path: str, data: FileContent, request: Request, back
         f.write(data.content)
         
     update_fts_index(path, os.path.basename(path).replace(".md", ""), data.content)
-    add_audit_log(user["username"], "file_updated", f"Path: {path}")
+    add_audit_log(user["username"], "file_updated", f"Path: {path}", ip_address=request.client.host)
     return {"message": "File saved"}
 
 def cleanup_orphaned_images(orphans: list, username: str):

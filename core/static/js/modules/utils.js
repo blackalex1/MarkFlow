@@ -25,7 +25,14 @@ export function initGlobalHandlers() {
                         });
                     }
                     if (window.mermaid) {
-                        try { mermaid.init(undefined, target.querySelectorAll('.mermaid')); } catch (e) {}
+                        requestAnimationFrame(() => {
+                            try {
+                                mermaid.run({
+                                    nodes: target.querySelectorAll('.mermaid'),
+                                    suppressErrors: true
+                                });
+                            } catch (e) {}
+                        });
                     }
                 }
                 return;
@@ -48,7 +55,14 @@ export function initGlobalHandlers() {
                         });
                     }
                     if (window.mermaid) {
-                        try { mermaid.init(undefined, container.querySelectorAll('.mermaid')); } catch (e) {}
+                        requestAnimationFrame(() => {
+                            try {
+                                mermaid.run({
+                                    nodes: container.querySelectorAll('.mermaid'),
+                                    suppressErrors: true
+                                });
+                            } catch (e) {}
+                        });
                     }
                 }
             }

@@ -142,6 +142,23 @@
     color: var(--primary-color);
 }
 
+.status-select-topbar {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    outline: none;
+    transition: var(--transition);
+}
+
+.status-select-topbar:hover {
+    border-color: var(--primary-color);
+    color: #fff;
+}
+
 /* Page Transitions Base */
 .content-transition {
     transition: opacity 0.3s ease, transform 0.3s ease;

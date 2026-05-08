@@ -11,8 +11,7 @@ from core.database import (
 )
 from .dependencies import get_current_user, get_admin_user, get_owner_user
 from .utils import create_session_cookie, validate_password_complexity
-from core.config import limiter
-from core.security_config import SECURITY_LIMITS
+from core.config import limiter, SECURITY_LIMITS
 router = APIRouter()
 
 class ChangePasswordRequest(BaseModel):
@@ -41,7 +40,7 @@ class RoleUpdate(BaseModel):
 def login(request: Request, login_data: LoginRequest, response: Response):
     user = get_user_by_username(login_data.username)
     if not user or not verify_password(login_data.password, user["password_hash"]):
-        add_audit_log(login_data.username, "login_failed", f"IP: {request.client.host}")
+        add_audit_log(login_data.username, "login_failed", "", ip_address=request.client.host)
         raise HTTPException(status_code=401, detail="Invalid username or password")
     
     if user["totp_secret"]:
@@ -50,11 +49,11 @@ def login(request: Request, login_data: LoginRequest, response: Response):
         
         totp = pyotp.TOTP(user["totp_secret"])
         if not totp.verify(login_data.totp_code):
-            add_audit_log(login_data.username, "2fa_failed", f"IP: {request.client.host}")
+            add_audit_log(login_data.username, "2fa_failed", "", ip_address=request.client.host)
             raise HTTPException(status_code=401, detail="Invalid 2FA code")
             
     create_session_cookie(response, user["username"])
-    add_audit_log(user["username"], "login_success", f"IP: {request.client.host}")
+    add_audit_log(user["username"], "login_success", "", ip_address=request.client.host)
     return {"message": "Logged in successfully", "username": user["username"]}
 
 @router.get("/2fa/setup")
@@ -81,16 +80,16 @@ def verify_2fa(request: Request, data: TOTPVerifyRequest, user=Depends(get_curre
     totp = pyotp.TOTP(data.secret)
     if totp.verify(data.totp_code):
         set_user_totp_secret(user["username"], data.secret)
-        add_audit_log(user["username"], "2fa_enabled")
+        add_audit_log(user["username"], "2fa_enabled", ip_address=request.client.host)
         return {"message": "2FA successfully enabled"}
     raise HTTPException(status_code=400, detail="Invalid 2FA code")
 
 @router.post("/2fa/disable")
-def disable_2fa(user=Depends(get_current_user)):
+def disable_2fa(request: Request, user=Depends(get_current_user)):
     if not user:
         raise HTTPException(status_code=401, detail="Not logged in")
     set_user_totp_secret(user["username"], None)
-    add_audit_log(user["username"], "2fa_disabled")
+    add_audit_log(user["username"], "2fa_disabled", ip_address=request.client.host)
     return {"message": "2FA successfully disabled"}
 
 @router.post("/change-password")
@@ -105,21 +104,21 @@ def change_password(request: Request, data: ChangePasswordRequest, user=Depends(
     
     db_user = get_user_by_username(user["username"])
     if not db_user or not verify_password(data.old_password, db_user["password_hash"]):
-        add_audit_log(user["username"], "password_change_failed", "Invalid old password")
+        add_audit_log(user["username"], "password_change_failed", "Invalid old password", ip_address=request.client.host)
         raise HTTPException(status_code=400, detail="Invalid old password")
     
     update_user_password(user["username"], data.new_password)
-    add_audit_log(user["username"], "password_changed")
+    add_audit_log(user["username"], "password_changed", ip_address=request.client.host)
     clear_user_sessions(user["username"])
     
     return {"message": "Password updated successfully. All other sessions logged out."}
 
 @router.post("/logout-all")
-def logout_all(user=Depends(get_current_user), response: Response = None):
+def logout_all(request: Request, user=Depends(get_current_user), response: Response = None):
     if not user:
         raise HTTPException(status_code=401, detail="Not logged in")
     clear_user_sessions(user["username"])
-    add_audit_log(user["username"], "logout_all_devices")
+    add_audit_log(user["username"], "logout_all_devices", ip_address=request.client.host)
     if response:
         response.delete_cookie("session")
     return {"message": "Logged out from all devices"}
@@ -129,7 +128,7 @@ def logout(request: Request, response: Response):
     user = get_current_user(request)
     if user:
         delete_session(user["session_id"])
-        add_audit_log(user["username"], "logout")
+        add_audit_log(user["username"], "logout", ip_address=request.client.host)
     response.delete_cookie("session")
     return {"message": "Logged out"}
 
@@ -156,23 +155,23 @@ def api_list_users(user=Depends(get_owner_user)):
 def api_create_user(request: Request, data: UserCreate, user=Depends(get_owner_user)):
     try:
         create_user(data.username, data.password, data.role)
-        add_audit_log(user["username"], "user_created", f"User: {data.username}, Role: {data.role}")
+        add_audit_log(user["username"], "user_created", f"User: {data.username}, Role: {data.role}", ip_address=request.client.host)
         return {"message": f"User {data.username} created"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.delete("/users/{username}")
-def api_delete_user(username: str, user=Depends(get_owner_user)):
+def api_delete_user(request: Request, username: str, user=Depends(get_owner_user)):
     if username == user["username"]:
         raise HTTPException(status_code=400, detail="Cannot delete yourself")
     delete_user(username)
-    add_audit_log(user["username"], "user_deleted", f"User: {username}")
+    add_audit_log(user["username"], "user_deleted", f"User: {username}", ip_address=request.client.host)
     return {"message": "User deleted"}
 
 @router.put("/users/{username}/role")
-def api_update_role(username: str, data: RoleUpdate, user=Depends(get_owner_user)):
+def api_update_role(request: Request, username: str, data: RoleUpdate, user=Depends(get_owner_user)):
     update_user_role(username, data.role)
-    add_audit_log(user["username"], "user_role_updated", f"User: {username}, New Role: {data.role}")
+    add_audit_log(user["username"], "user_role_updated", f"User: {username}, New Role: {data.role}", ip_address=request.client.host)
     return {"message": "Role updated"}
 
 @router.get("/audit-logs")

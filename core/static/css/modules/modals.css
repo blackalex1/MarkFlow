@@ -48,7 +48,10 @@
 
 /* --- Dashboard Specific (LK) --- */
 .dashboard-content {
-    max-width: 550px !important;
+    max-width: 900px !important;
+    width: 95% !important;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 .settings-list {

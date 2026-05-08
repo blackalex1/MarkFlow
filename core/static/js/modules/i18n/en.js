@@ -102,5 +102,26 @@ export const en = {
     success_ssh_gen: "New SSH key generated successfully!",
     confirm_gen_ssh: "Are you sure? The old key will be deleted, and you will need to update it in GitHub settings.",
     btn_confirm_gen: "Generate",
-    ssh_instruction_html: "Paste your keys above or generate new ones. Add the public key to <a href=\"https://github.com/settings/keys\" target=\"_blank\" style=\"color: var(--primary-color);\">GitHub</a>."
+    ssh_instruction_html: "Paste your keys above or generate new ones. Add the public key to <a href=\"https://github.com/settings/keys\" target=\"_blank\" style=\"color: var(--primary-color);\">GitHub</a>.",
+
+    // Statuses
+    status_label: "Status",
+    status_draft: "Draft",
+    status_in_progress: "In Progress",
+    status_published: "Published",
+    status_updated: "Status updated to",
+
+    // Menu
+    menu_rename: "Rename",
+    menu_move: "Move",
+    menu_delete: "Delete",
+
+    // Visibility
+    vis_label: "Visibility",
+    vis_public: "Public",
+    vis_private: "Private",
+
+    // Types
+    type_folder: "Folder",
+    type_file: "Document"
 };

@@ -104,7 +104,8 @@ export const inlineMathExtension = {
 
 export const blockMathExtension = {
     name: 'blockMath',
-    level: 'block',
+    level: 'inline',
+    start(src) { return src.match(/\$\$/)?.index; },
     tokenizer(src) {
         const rule = /^\$\$\r?\n?([\s\S]*?)\r?\n?\$\$/;
         const match = rule.exec(src);
@@ -166,8 +167,26 @@ export function initMarked() {
         if (match && text.trim().startsWith(`[!${match[1]}]`)) return renderCallout(match[1], text);
         return `<p>${marked.parseInline(text)}</p>`;
     };
+    
+    renderer.image = function(arg1, arg2, arg3) {
+        let href = typeof arg1 === 'object' ? arg1.href : arg1;
+        let title = typeof arg1 === 'object' ? arg1.title : arg2;
+        let text = typeof arg1 === 'object' ? arg1.text : arg3;
+        
+        const videoExts = ['.mp4', '.webm', '.ogg'];
+        if (videoExts.some(ext => href.toLowerCase().endsWith(ext))) {
+            return `<div class="video-wrapper">
+                        <video controls class="markdown-video">
+                            <source src="${href}" type="video/${href.split('.').pop()}">
+                            Your browser does not support the video tag.
+                        </video>
+                        ${text ? `<div class="video-caption">${escapeHtml(text)}</div>` : ''}
+                    </div>`;
+        }
+        return `<img src="${href}" alt="${escapeHtml(text || '')}" title="${escapeHtml(title || '')}">`;
+    };
 
     marked.setOptions({ renderer, breaks: true, gfm: true, headerIds: true, mangle: false });
-    marked.use({ extensions: [tabsExtension, dropdownExtension, inlineMathExtension, blockMathExtension] });
+    marked.use({ extensions: [tabsExtension, dropdownExtension, blockMathExtension, inlineMathExtension] });
     markedInitialized = true;
 }

@@ -20,6 +20,7 @@
     color: var(--text-muted);
     cursor: pointer;
     transition: 0.2s;
+    position: relative;
 }
 
 .context-menu-item:hover {
@@ -30,4 +31,30 @@
 .context-menu-item.danger:hover {
     background: rgba(239, 68, 68, 0.1);
     color: #ef4444;
+}
+
+/* Sub-menu Support */
+.has-submenu::after {
+    content: '›';
+    margin-left: auto;
+    font-size: 16px;
+    opacity: 0.5;
+}
+
+.submenu {
+    position: absolute;
+    left: calc(100% - 4px);
+    top: -8px;
+    background: var(--bg-sidebar);
+    backdrop-filter: blur(24px);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 8px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    display: none;
+    min-width: 160px;
+}
+
+.context-menu-item:hover > .submenu {
+    display: block;
 }

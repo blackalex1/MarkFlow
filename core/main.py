@@ -17,6 +17,7 @@ from core.routes.search import router as search_router
 from core.config import APP_CONFIG, DOCS_DIR, BASE_DIR, limiter
 from core.middleware import add_security_headers
 from core.services.vendor_service import check_and_download_vendor_libs
+from core.services.setup_service import initialize_volumes
 
 class DocsHandler(FileSystemEventHandler):
     def on_modified(self, event):
@@ -43,6 +44,9 @@ class DocsHandler(FileSystemEventHandler):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Initialize environment and volumes
+    initialize_volumes()
+    
     # Auto-cache vendor libraries if missing
     check_and_download_vendor_libs()
     
@@ -76,16 +80,19 @@ app.include_router(search_router, prefix="/api/search", tags=["search"])
 # Static and Templates
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 
-# Branding with fallback
-branding_dir = os.path.join(BASE_DIR, "branding")
-if not os.path.exists(branding_dir):
-    branding_dir = os.path.join(BASE_DIR, "branding_example")
-app.mount("/branding", StaticFiles(directory=branding_dir), name="branding")
+# Config assets with fallback
+config_dir = os.path.join(os.path.dirname(BASE_DIR), "config")
+if not os.path.exists(config_dir):
+    config_dir = os.path.join(BASE_DIR, "config_example")
+app.mount("/config", StaticFiles(directory=config_dir), name="config")
 
-app.mount("/branding_default", StaticFiles(directory=os.path.join(BASE_DIR, "branding_example")), name="branding_default")
+app.mount("/config_default", StaticFiles(directory=os.path.join(BASE_DIR, "config_example")), name="config_default")
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
-templates.context_processors.append(lambda request: {"config": APP_CONFIG})
+import time
+APP_VERSION = str(int(time.time()))
+
+templates.context_processors.append(lambda request: {"config": APP_CONFIG, "app_version": APP_VERSION})
 
 @app.get("/")
 def read_root(request: Request):

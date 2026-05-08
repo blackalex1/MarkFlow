@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Request
-from core.config import limiter
-from core.security_config import SECURITY_LIMITS
+from core.config import limiter, SECURITY_LIMITS
 from core.database import search_fts, is_public
 from core.auth import get_current_user, ROLES
 

@@ -1,31 +1,56 @@
 import os
+import json
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
 limiter = Limiter(key_func=get_remote_address)
-import json
 
-def load_config():
-    branding_dir = os.path.join(os.path.dirname(__file__), "branding")
-    example_dir = os.path.join(os.path.dirname(__file__), "branding_example")
+def load_settings():
+    # 'config' is the mounted volume directory
+    config_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config")
+    # 'core/config_example' is the internal fallback
+    example_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config_example")
     
-    config_path = os.path.join(branding_dir, "config.json")
-    example_path = os.path.join(example_dir, "config.json")
+    settings_path = os.path.join(config_dir, "settings.json")
+    example_path = os.path.join(example_dir, "settings.json")
     
-    # Priority 1: User custom config (ignored by git)
-    if os.path.exists(config_path):
-        with open(config_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+    defaults = {
+        "app_name": "MarkFlow",
+        "use_logo": False,
+        "favicon_path": "",
+        "security_limits": {
+            "login": "5/minute",
+            "2fa_verify": "5/minute",
+            "change_password": "3/minute",
+            "create_user": "10/minute",
+            "file_ops": "60/minute",
+            "search": "30/minute"
+        }
+    }
     
-    # Priority 2: Example config (tracked by git)
-    if os.path.exists(example_path):
-        with open(example_path, "r", encoding="utf-8") as f:
-            return json.load(f)
+    loaded = {}
+    if os.path.exists(settings_path):
+        try:
+            with open(settings_path, "r", encoding="utf-8") as f:
+                loaded = json.load(f)
+        except:
+            pass
+    elif os.path.exists(example_path):
+        try:
+            with open(example_path, "r", encoding="utf-8") as f:
+                loaded = json.load(f)
+        except:
+            pass
             
-    # Priority 3: Hardcoded defaults
-    return {"app_name": "MarkFlow", "use_logo": False}
+    # Merge with defaults
+    res = {**defaults, **loaded}
+    if "security_limits" in loaded:
+        res["security_limits"] = {**defaults["security_limits"], **loaded["security_limits"]}
+    return res
 
-APP_CONFIG = load_config()
+SETTINGS = load_settings()
+APP_CONFIG = SETTINGS # For backward compatibility in templates
+SECURITY_LIMITS = SETTINGS["security_limits"]
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DOCS_DIR = os.path.join(os.path.dirname(BASE_DIR), "markdown_docs")

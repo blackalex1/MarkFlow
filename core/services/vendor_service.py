@@ -31,6 +31,12 @@ LIBRARIES = [
     ("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Size2-Regular.woff2", "css/fonts/KaTeX_Size2-Regular.woff2"),
     ("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Size3-Regular.woff2", "css/fonts/KaTeX_Size3-Regular.woff2"),
     ("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Size4-Regular.woff2", "css/fonts/KaTeX_Size4-Regular.woff2"),
+    
+    # FontAwesome 4.7.0 (often used by EasyMDE)
+    ("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css", "css/font-awesome.min.css"),
+    ("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/fonts/fontawesome-webfont.woff2", "fonts/fontawesome-webfont.woff2"),
+    ("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/fonts/fontawesome-webfont.woff", "fonts/fontawesome-webfont.woff"),
+    ("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/fonts/fontawesome-webfont.ttf", "fonts/fontawesome-webfont.ttf"),
 ]
 
 def check_and_download_vendor_libs():

@@ -8,8 +8,7 @@ from git import GitCommandError
 
 from core.auth import get_maintainer_user
 from core.database import get_setting, set_setting, add_audit_log
-from core.config import limiter
-from core.security_config import SECURITY_LIMITS
+from core.config import limiter, SECURITY_LIMITS
 from core.services.git_service import get_repo, sync_repository, get_authenticated_url
 from core.services.ssh_service import generate_ssh_key, save_ssh_key
 
@@ -50,7 +49,7 @@ def get_pubkey(user=Depends(get_maintainer_user)):
 @limiter.limit(SECURITY_LIMITS["file_ops"])
 def api_generate_key(request: Request, user=Depends(get_maintainer_user)):
     try:
-        return generate_ssh_key(user["username"])
+        return generate_ssh_key(user["username"], ip_address=request.client.host)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -58,7 +57,7 @@ def api_generate_key(request: Request, user=Depends(get_maintainer_user)):
 @limiter.limit(SECURITY_LIMITS["file_ops"])
 def api_set_ssh_key(request: Request, data: SSHKeyInput, user=Depends(get_maintainer_user)):
     try:
-        return save_ssh_key(user["username"], data.private_key, data.public_key)
+        return save_ssh_key(user["username"], data.private_key, data.public_key, ip_address=request.client.host)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -74,7 +73,7 @@ def set_git_remote(request: Request, config: GitConfig, user=Depends(get_maintai
         if config.branch:
             set_setting("git_branch", config.branch)
         
-        add_audit_log(user["username"], "git_config_updated")
+        add_audit_log(user["username"], "git_config_updated", ip_address=request.client.host)
 
         repo = get_repo()
         if repo.remotes:
@@ -149,12 +148,12 @@ def get_git_config(user=Depends(get_maintainer_user)):
 @limiter.limit(SECURITY_LIMITS["file_ops"])
 def api_sync_git(request: Request, user=Depends(get_maintainer_user)):
     try:
-        return sync_repository(user["username"])
+        return sync_repository(user["username"], ip_address=request.client.host)
     except GitCommandError as e:
         error_msg = str(e)
         token = get_setting("git_token")
         if token: error_msg = error_msg.replace(token, "********")
-        add_audit_log(user["username"], "git_sync_failed", error_msg[:200])
+        add_audit_log(user["username"], "git_sync_failed", error_msg[:200], ip_address=request.client.host)
         raise HTTPException(status_code=500, detail=f"Git error: {error_msg}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

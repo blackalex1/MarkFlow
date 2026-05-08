@@ -18,12 +18,28 @@ export function toggleEditMode(editing) {
         if (!easyMDE) {
             easyMDE = new EasyMDE({
                 element: ui.contentEditor, spellChecker: false, autosave: { enabled: false },
-                status: ["lines", "words", "cursor"], uploadImage: false, minHeight: "500px"
+                status: ["lines", "words", "cursor"], uploadImage: false, minHeight: "500px",
+                autoDownloadFontAwesome: false
             });
             easyMDE.codemirror.on("change", () => state.currentFilePath && localStorage.setItem(`draft_${state.currentFilePath}`, easyMDE.value()));
             easyMDE.codemirror.on("paste", (cm, e) => {
                 const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-                for (let item of items) if (item.type.includes("image")) handleImageInsert(item.getAsFile());
+                for (let item of items) {
+                    if (item.type.includes("image") || item.type.includes("video")) {
+                        handleMediaInsert(item.getAsFile());
+                    }
+                }
+            });
+            easyMDE.codemirror.on("drop", (cm, e) => {
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    e.preventDefault();
+                    for (let file of files) {
+                        if (file.type.includes("image") || file.type.includes("video")) {
+                            handleMediaInsert(file);
+                        }
+                    }
+                }
             });
             initEditorEnhancements(easyMDE.codemirror, applyFormat, applySlashCommand);
         } else document.querySelector('.EasyMDEContainer').classList.remove('hidden');
@@ -47,7 +63,7 @@ export function toggleEditMode(editing) {
 
 export async function saveFile() {
     let newContent = easyMDE ? easyMDE.value() : ui.contentEditor.value;
-    const matches = [...newContent.matchAll(/!\[([^\]]*)\]\((data:image\/[^;]+;base64,[^)]+|blob:[^)]+)\)/g)];
+    const matches = [...newContent.matchAll(/!\[([^\]]*)\]\((data:[^;]+;base64,[^)]+|blob:[^)]+)\)/g)];
     
     if (matches.length > 0) {
         ui.btnSave.disabled = true;
@@ -78,7 +94,7 @@ export async function saveFile() {
     } else toast.error("Error");
 }
 
-function handleImageInsert(file) {
+function handleMediaInsert(file) {
     const blobUrl = URL.createObjectURL(file);
     pendingImages.set(blobUrl, file);
     easyMDE.codemirror.replaceRange(`![${file.name}](${blobUrl})`, easyMDE.codemirror.getCursor());
@@ -107,5 +123,13 @@ export async function updateVisibility(e) {
         method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ public: e.target.checked })
     });
     if (!res.ok) { e.target.checked = !e.target.checked; alert("Error"); }
+    else window.dispatchEvent(new CustomEvent('tree-update-required'));
+}
+
+export async function updateStatus(e) {
+    const res = await fetch(`/api/files/status?path=${encodeURIComponent(state.currentFilePath)}`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: e.target.value })
+    });
+    if (!res.ok) { toast.error("Error updating status"); }
     else window.dispatchEvent(new CustomEvent('tree-update-required'));
 }
