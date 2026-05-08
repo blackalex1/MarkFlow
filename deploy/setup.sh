@@ -46,12 +46,16 @@ echo " - Email:      ${CERTBOT_EMAIL:-None}"
 echo "----------------------------------------------------------"
 echo ""
 
-# 5. Build Containers
+# 5. Create Host Directories (to avoid root ownership by Docker)
+echo "### Preparing host directories..."
+mkdir -p ../certbot/conf ../certbot/www ../config ../markdown_docs
+
+# 6. Build Containers
 echo "### Building and starting containers..."
 $DOCKER_COMPOSE --env-file ../.env build
 $DOCKER_COMPOSE --env-file ../.env up -d
 
-# 6. Ask about SSL
+# 7. Ask about SSL
 echo ""
 read -p "Do you want to initialize SSL certificates (Certbot) right now? (y/N): " init_ssl
 if [[ "$init_ssl" =~ ^[Yy]$ ]]; then
