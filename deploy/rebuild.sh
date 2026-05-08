@@ -16,6 +16,10 @@ echo "### Rebuilding and restarting application..."
 # Regenerate nginx.conf from template before building
 if [ -f "../.env" ]; then
     export $(grep -v '^#' ../.env | xargs)
+    # Strip \r (CRLF) to prevent Nginx config breakage
+    DOMAIN_NAME=$(echo $DOMAIN_NAME | tr -d '\r')
+    HTTPS_PORT=$(echo $HTTPS_PORT | tr -d '\r')
+    
     if [ -f "./nginx.conf.template" ]; then
         echo "### Regenerating Nginx config from template..."
         cp ./nginx.conf.template ./nginx.conf
