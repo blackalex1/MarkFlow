@@ -67,6 +67,13 @@ def set_git_remote(request: Request, config: GitConfig, user=Depends(get_maintai
     try:
         url_str = config.url.strip()
         validate_git_url(url_str)
+        
+        # Auto-convert GitHub HTTPS to SSH if possible
+        if url_str.startswith('https://github.com/'):
+            path = url_str.replace('https://github.com/', '')
+            clean_path = re.sub(r'\.git$', '', path).strip('/')
+            url_str = f"git@github.com:{clean_path}.git"
+            
         set_setting("git_url", url_str)
         if config.token is not None:
             set_setting("git_token", config.token)

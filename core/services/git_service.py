@@ -37,6 +37,12 @@ def sync_repository(username: str, ip_address: str = ""):
     url = get_setting("git_url")
     token = get_setting("git_token")
     
+    # Auto-convert GitHub HTTPS to SSH if no token is provided but SSH might work
+    if url and url.startswith('https://github.com/') and not token:
+        path = url.replace('https://github.com/', '')
+        clean_path = re.sub(r'\.git$', '', path).strip('/')
+        url = f"git@github.com:{clean_path}.git"
+    
     if not url:
         return {"message": "Local repository is ready. Please configure a Remote URL to sync."}
 
