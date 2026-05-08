@@ -49,6 +49,10 @@ async def lifespan(app: FastAPI):
     init_db()
     asyncio.create_task(asyncio.to_thread(reindex_all_docs, DOCS_DIR))
     
+    # Ensure DOCS_DIR exists for observer
+    if not os.path.exists(DOCS_DIR):
+        os.makedirs(DOCS_DIR)
+        
     observer = Observer()
     observer.schedule(DocsHandler(), DOCS_DIR, recursive=True)
     observer.start()
@@ -71,7 +75,13 @@ app.include_router(search_router, prefix="/api/search", tags=["search"])
 
 # Static and Templates
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
-app.mount("/branding", StaticFiles(directory=os.path.join(BASE_DIR, "branding")), name="branding")
+
+# Branding with fallback
+branding_dir = os.path.join(BASE_DIR, "branding")
+if not os.path.exists(branding_dir):
+    branding_dir = os.path.join(BASE_DIR, "branding_example")
+app.mount("/branding", StaticFiles(directory=branding_dir), name="branding")
+
 app.mount("/branding_default", StaticFiles(directory=os.path.join(BASE_DIR, "branding_example")), name="branding_default")
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
