@@ -11,8 +11,9 @@ async def add_security_headers(request: Request, call_next):
     # CSRF Protection for state-changing methods
     if request.method in ["POST", "PUT", "DELETE", "PATCH"]:
         origin = request.headers.get("origin")
-        referer = request.headers.get("referer")
-        base_url = f"{request.url.scheme}://{request.url.netloc}"
+        # Use X-Forwarded-Proto if behind a proxy
+        scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
+        base_url = f"{scheme}://{request.url.netloc}"
         
         # Enforce Origin check
         if origin:

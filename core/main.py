@@ -119,4 +119,4 @@ if __name__ == "__main__":
     cert_path, key_path = os.path.join(proj_root, "cert.pem"), os.path.join(proj_root, "key.pem")
     
     ssl_config = {"ssl_keyfile": key_path, "ssl_certfile": cert_path} if os.path.exists(cert_path) and os.path.exists(key_path) else {}
-    uvicorn.run("core.main:app", host="0.0.0.0", port=8000, reload=True, **ssl_config)
+    uvicorn.run("core.main:app", host="0.0.0.0", port=8000, reload=True, proxy_headers=True, forwarded_allow_ips="*", **ssl_config)
