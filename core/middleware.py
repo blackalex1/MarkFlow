@@ -11,17 +11,19 @@ async def add_security_headers(request: Request, call_next):
     # CSRF Protection for state-changing methods
     if request.method in ["POST", "PUT", "DELETE", "PATCH"]:
         origin = request.headers.get("origin")
-        # Use X-Forwarded-Proto if behind a proxy
+        referer = request.headers.get("referer")
+        # Use X-Forwarded-Proto and X-Forwarded-Host if behind a proxy
         scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
-        base_url = f"{scheme}://{request.url.netloc}"
+        host = request.headers.get("x-forwarded-host", request.url.netloc)
+        base_url = f"{scheme}://{host}"
         
-        # Enforce Origin check
+        # Enforce Origin check (lenient: check if origin contains the host)
         if origin:
-            if not origin.startswith(base_url):
-                return JSONResponse(status_code=403, content={"detail": "CSRF Attack Detected: Origin mismatch"})
-        elif request.method != "GET": # Strict check for non-GET requests without origin
-             if referer and not referer.startswith(base_url):
-                 return JSONResponse(status_code=403, content={"detail": "CSRF Attack Detected: Referer mismatch"})
+            if host not in origin:
+                return JSONResponse(status_code=403, content={"detail": f"CSRF Attack Detected: Origin mismatch. Host: {host}, Origin: {origin}"})
+        elif request.method != "GET":
+             if referer and host not in referer:
+                  return JSONResponse(status_code=403, content={"detail": "CSRF Attack Detected: Referer mismatch"})
 
     response = await call_next(request)
     response.headers["X-Content-Type-Options"] = "nosniff"
