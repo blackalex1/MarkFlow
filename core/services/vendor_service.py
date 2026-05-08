@@ -7,6 +7,7 @@ VENDOR_DIR = os.path.join(BASE_DIR, "static", "vendor")
 # (URL, Local relative path from static/vendor)
 LIBRARIES = [
     ("https://unpkg.com/lucide@0.475.0/dist/umd/lucide.min.js", "js/lucide.min.js"),
+    ("https://unpkg.com/lucide@0.475.0/dist/umd/lucide.min.js.map", "js/lucide.min.js.map"),
     ("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js", "js/highlight.min.js"),
     ("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css", "css/github-dark.min.css"),
     ("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css", "css/github.min.css"),
@@ -16,6 +17,7 @@ LIBRARIES = [
     ("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/r.min.js", "js/languages/r.min.js"),
     ("https://cdn.jsdelivr.net/npm/marked/marked.min.js", "js/marked.min.js"),
     ("https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js", "js/purify.min.js"),
+    ("https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js.map", "js/purify.min.js.map"),
     ("https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js", "js/mermaid.min.js"),
     ("https://unpkg.com/easymde/dist/easymde.min.js", "js/easymde.min.js"),
     ("https://unpkg.com/easymde/dist/easymde.min.css", "css/easymde.min.css"),

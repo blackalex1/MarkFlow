@@ -1,8 +1,7 @@
-/* --- MarkFlow Core Styles --- */
-@import url("./modules/variables.css");
-@import url("./modules/base.css");
-@import url("./modules/animations.css");
-@import url("./modules/scrollbars.css");
+/* --- MarkFlow Core/* Page Transitions Base */
+@import url("./modules/context-menu.css");
+@import url("./modules/quick-switcher.css");
+@import url("./modules/errors.css");
 
 /* Layout Components */
 @import url("./modules/layout.css");
@@ -11,8 +10,12 @@
 @import url("./modules/navigation.css");
 
 /* Content Components */
-@import url("./modules/markdown.css");
-@import url("./modules/editor.css");
+@import url("./editor/markdown.css");
+@import url("./editor/core.css");
+@import url("./editor/layout.css");
+@import url("./editor/preview.css");
+@import url("./editor/menus.css");
+@import url("./editor/status.css");
 @import url("./modules/code.css");
 @import url("./modules/tables.css");
 @import url("./modules/tabs.css");
@@ -27,8 +30,3 @@
 @import url("./modules/modals.css");
 @import url("./modules/search.css");
 @import url("./modules/toasts.css");
-@import url("./modules/context-menu.css");
-@import url("./modules/quick-switcher.css");
-@import url("./modules/slash-menu.css");
-@import url("./modules/selection-toolbar.css");
-@import url("./modules/errors.css");

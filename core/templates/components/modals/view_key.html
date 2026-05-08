@@ -1,0 +1,54 @@
+<!-- View SSH Key Modal (Slide-up drawer) -->
+<div id="modal-view-key" class="modal hidden" style="align-items: flex-end; padding-bottom: 0; z-index: 1100;">
+    <div class="modal-content key-drawer-content">
+        <span class="close-btn" id="close-view-key">&times;</span>
+        <h3 id="view-key-title" style="text-align: left; margin-bottom: 15px; font-family: 'Outfit', sans-serif;">SSH Public Key</h3>
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 15px;" id="view-key-desc">
+            Copy this key to your Git provider (GitHub/GitLab) settings.
+        </p>
+        
+        <div class="key-display-box">
+            <pre id="ssh-key-text"></pre>
+            <button id="btn-copy-ssh-key" class="btn btn-primary btn-sm">
+                <i data-lucide="copy" style="width: 14px; height: 14px;"></i>
+                <span>Copy Key</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+.key-drawer-content {
+    max-width: 600px !important;
+    width: 100% !important;
+    border-bottom-left-radius: 0 !important;
+    border-bottom-right-radius: 0 !important;
+    animation: slideUpBottom 0.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    padding: 30px !important;
+}
+
+.key-display-box {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 15px;
+    position: relative;
+}
+
+#ssh-key-text {
+    white-space: pre-wrap;
+    word-break: break-all;
+    font-family: monospace;
+    font-size: 11px;
+    color: var(--text-main);
+    max-height: 200px;
+    overflow-y: auto;
+    margin-bottom: 15px;
+    line-height: 1.4;
+}
+
+@keyframes slideUpBottom {
+    from { transform: translateY(100%); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+</style>

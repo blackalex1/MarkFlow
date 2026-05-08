@@ -116,3 +116,14 @@
     color: #ef4444 !important;
     border-color: #ef4444 !important;
 }
+
+.btn-danger {
+    background: #ef4444 !important;
+    color: #fff !important;
+    border: none !important;
+}
+
+.btn-danger:hover {
+    background: #dc2626 !important;
+    transform: translateY(-1px);
+}

@@ -1,15 +1,22 @@
 import { ui, state } from './ui.js';
 
 export function initAdmin() {
+    const tabItems = document.querySelectorAll('.tab-item');
+    const tabContents = document.querySelectorAll('.tab-content');
+
     // Tab Switching
-    ui.tabItems.forEach(tab => {
+    tabItems.forEach(tab => {
         tab.onclick = () => {
-            ui.tabItems.forEach(t => t.classList.remove('active'));
-            ui.tabContents.forEach(c => c.classList.add('hidden'));
-            tab.classList.add('active');
             const target = tab.dataset.tab;
+            
+            tabItems.forEach(t => t.classList.remove('active'));
+            tabContents.forEach(c => c.classList.add('hidden'));
+            
+            tab.classList.add('active');
             const contentEl = document.getElementById(`tab-${target}`);
-            if (contentEl) contentEl.classList.remove('hidden');
+            if (contentEl) {
+                contentEl.classList.remove('hidden');
+            }
             
             if (target === 'users') loadUsers();
             if (target === 'logs') loadLogs();
@@ -21,35 +28,39 @@ export function initAdmin() {
         ui.ownerOnlyItems.forEach(item => item.classList.remove('hidden'));
     }
 
-    ui.btnAdminCreateUser.onclick = async () => {
-        const u = ui.adminNewUsername.value.trim();
-        const p = ui.adminNewPassword.value.trim();
-        const r = ui.adminNewRole.value;
-        if (!u || !p) return alert('Заполните все поля');
-        
-        try {
-            const res = await fetch('/api/auth/users', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username: u, password: p, role: r })
-            });
-            if (res.ok) {
-                ui.adminNewUsername.value = '';
-                ui.adminNewPassword.value = '';
-                loadUsers();
-            } else {
-                const data = await res.json();
-                alert('Ошибка: ' + data.detail);
-            }
-        } catch (err) { console.error(err); }
-    };
+    if (ui.btnAdminCreateUser) {
+        ui.btnAdminCreateUser.onclick = async () => {
+            const u = ui.adminNewUsername.value.trim();
+            const p = ui.adminNewPassword.value.trim();
+            const r = ui.adminNewRole.value;
+            if (!u || !p) return alert('Заполните все поля');
+            
+            try {
+                const res = await fetch('/api/auth/users', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: u, password: p, role: r })
+                });
+                if (res.ok) {
+                    ui.adminNewUsername.value = '';
+                    ui.adminNewPassword.value = '';
+                    loadUsers();
+                } else {
+                    const data = await res.json();
+                    alert('Ошибка: ' + data.detail);
+                }
+            } catch (err) { console.error(err); }
+        };
+    }
 }
 
 export async function loadUsers() {
+    const listBody = document.getElementById('users-list-body');
+    if (!listBody) return;
     try {
         const res = await fetch('/api/auth/users');
         const users = await res.json();
-        ui.usersListBody.innerHTML = users.map(u => `
+        listBody.innerHTML = users.map(u => `
             <tr>
                 <td>${u.username}</td>
                 <td>
@@ -68,7 +79,7 @@ export async function loadUsers() {
         `).join('');
 
         // Listeners for role change
-        ui.usersListBody.querySelectorAll('.role-select').forEach(sel => {
+        listBody.querySelectorAll('.role-select').forEach(sel => {
             sel.onchange = async () => {
                 const username = sel.dataset.user;
                 const newRole = sel.value;
@@ -81,7 +92,7 @@ export async function loadUsers() {
         });
 
         // Listeners for delete
-        ui.usersListBody.querySelectorAll('.delete-user-btn').forEach(btn => {
+        listBody.querySelectorAll('.delete-user-btn').forEach(btn => {
             btn.onclick = async () => {
                 const username = btn.dataset.user;
                 if (!confirm(`Удалить пользователя ${username}?`)) return;
@@ -93,10 +104,12 @@ export async function loadUsers() {
 }
 
 export async function loadLogs() {
+    const listBody = document.getElementById('logs-list-body');
+    if (!listBody) return;
     try {
         const res = await fetch('/api/auth/audit-logs');
         const logs = await res.json();
-        ui.logsListBody.innerHTML = logs.map(l => {
+        listBody.innerHTML = logs.map(l => {
             const date = new Date(l.timestamp + 'Z').toLocaleString('ru-RU');
             return `
                 <tr>

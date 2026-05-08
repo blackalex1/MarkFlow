@@ -1,6 +1,6 @@
 import { ui, state } from './ui.js';
 import { toast } from './toasts.js';
-import * as editor from './editor.js';
+import * as editor from '../editor/core.js';
 import * as tree from './tree.js';
 import { t } from './i18n.js';
 import { initMarked } from './markdown.js';
@@ -13,7 +13,8 @@ if (window.mermaid) {
         startOnLoad: false, 
         theme: 'dark',
         securityLevel: 'loose',
-        logLevel: 5 // Fatal errors only
+        logLevel: 4, // Error only
+        fontFamily: 'inherit'
     });
 }
 
@@ -62,16 +63,20 @@ export async function loadFileContent(path, pushState = true, hash = null) {
             updateBreadcrumbs(path);
             
             if (window.mermaid) {
-                requestAnimationFrame(() => {
+                // Use a slight delay to ensure elements are visible and have dimensions
+                setTimeout(() => {
                     try {
-                        mermaid.run({
-                            nodes: ui.contentViewer.querySelectorAll('.mermaid'),
-                            suppressErrors: true
-                        });
+                        const nodes = ui.contentViewer.querySelectorAll('.mermaid');
+                        if (nodes.length > 0) {
+                            mermaid.run({
+                                nodes: nodes,
+                                suppressErrors: true
+                            });
+                        }
                     } catch (e) {
-                        console.error('Mermaid error:', e);
+                        console.error('Mermaid render error:', e);
                     }
-                });
+                }, 150);
             }
             if (window.lucide) lucide.createIcons();
             

@@ -123,5 +123,28 @@ export const ru = {
     
     // Types
     type_folder: "Папка",
-    type_file: "Документ"
+    type_file: "Документ",
+    
+    // Force Sync
+    btn_force_sync: "Force Sync (Жесткий сброс)",
+    confirm_force_sync: "ВНИМАНИЕ: Это полностью удалит все локальные изменения и заменит их состоянием из GitHub. Продолжить?",
+    
+    // Repos
+    repo_name_label: "Отображаемое имя",
+    repo_slug_label: "Имя папки (slug)",
+    repo_url_label: "Git URL",
+    btn_add_repo: "+ Добавить",
+    btn_edit_repo: "Изменить",
+    git_repos_list: "Репозитории",
+    repo_th_name: "Название",
+    repo_th_status: "Статус / Синхронизация",
+    repo_th_actions: "Действия",
+    repo_btn_activate: "Активировать",
+    repo_btn_active: "Активен",
+    repo_btn_edit: "Редактировать",
+    repo_btn_delete: "Удалить",
+    sync_never: "Ни разу не синхронизировался",
+    sync_success: "Успешно",
+    sync_failed: "Ошибка",
+    git_select_repo: "Выберите репозиторий выше"
 };

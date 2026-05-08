@@ -30,6 +30,9 @@ export function t(key) {
     return translations[currentLang][key] || key;
 }
 
+// Expose to window for dynamic JS templates
+window.i18n = { t, getLang, setLang };
+
 export function updatePage() {
     document.querySelectorAll('[data-t]').forEach(el => {
         const key = el.dataset.t;

@@ -2,11 +2,12 @@ import { ui, state } from './modules/ui.js';
 import * as auth from './modules/auth.js';
 import * as tree from './modules/tree.js';
 import * as viewer from './modules/viewer.js';
-import * as editor from './modules/editor.js';
+import * as editor from './editor/core.js';
 import { initTheme } from './modules/theme.js';
 import { initSearch } from './modules/search.js';
 import { initGlobalHandlers } from './modules/utils.js';
 import * as i18n from './modules/i18n.js';
+import { initDashboardListeners } from './modules/dashboard.js';
 
 // Initialization
 async function init() {
@@ -15,6 +16,7 @@ async function init() {
     initTheme();
     initSearch();
     initGlobalHandlers();
+    initDashboardListeners();
     
     await auth.checkAuth();
     await tree.loadFileTree();

@@ -1,4 +1,4 @@
-import { ui } from './ui.js';
+import { ui } from '../modules/ui.js';
 
 export function initEditorEnhancements(cm, applyFormat, applySlashCommand) {
     cm.on("cursorActivity", () => {

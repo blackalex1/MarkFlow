@@ -103,30 +103,121 @@
         </div>
 
         <div id="tab-git" class="tab-content hidden">
+            <!-- Repositories List Table -->
             <div class="settings-plate">
+                <div class="plate-header">
+                    <i data-lucide="database"></i>
+                    <span data-t="git_repos_list">Git Repositories</span>
+                </div>
+                <div class="plate-body" style="padding: 0;">
+                    <table class="data-table" id="git-repos-table" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th style="text-align: left; padding: 10px;" data-t="repo_th_name">Name</th>
+                                <th style="text-align: left; padding: 10px;" data-t="repo_th_status">Status / Last Sync</th>
+                                <th style="text-align: right; padding: 10px;" data-t="repo_th_actions">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="git-repos-tbody">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                    <div style="padding: 15px; border-top: 1px solid var(--border-color);">
+                        <button id="btn-add-repo" class="btn btn-sm btn-outline" style="width: 100%;" data-t="btn_add_repo">+ Add New Repository</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Repo Editor Form (Hidden by default) -->
+            <div id="repo-editor-form" class="settings-plate hidden">
+                <div class="plate-header">
+                    <i data-lucide="edit-3"></i>
+                    <span id="repo-editor-title">Edit Repository</span>
+                </div>
+                <div class="plate-body">
+                    <div class="input-group">
+                        <label data-t="repo_name_label">Display Name</label>
+                        <input type="text" id="repo-name" placeholder="My Project">
+                    </div>
+                    <div class="input-group">
+                        <label data-t="repo_url_label">Git URL</label>
+                        <input type="text" id="repo-url" placeholder="git@github.com:user/repo.git">
+                    </div>
+                    <div class="input-group">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <label data-t="git_branch_label">Branch</label>
+                            <button id="btn-repo-fetch-branches" class="btn btn-xs btn-text" style="font-size: 10px;">Fetch Branches</button>
+                        </div>
+                        <select id="repo-branch-select" style="width: 100%;"></select>
+                    </div>
+                    <div class="input-group" style="margin-top: 10px;">
+                        <span style="font-size: 12px; color: var(--text-muted);">
+                            Folder: <strong id="repo-slug-display" style="color: var(--text-color);">auto-generated</strong>
+                            <input type="hidden" id="repo-slug">
+                        </span>
+                    </div>
+
+                    <div id="repo-key-type-selection" class="input-group" style="flex-direction: row; align-items: center; gap: 8px; margin-top: 15px;">
+                        <input type="checkbox" id="repo-use-global-ssh" checked style="width: 16px; height: 16px; margin: 0;">
+                        <label for="repo-use-global-ssh" style="margin: 0; font-size: 13px; cursor: pointer;">Использовать глобальный SSH-ключ</label>
+                        <button type="button" id="btn-view-global-key-hint" class="btn btn-xs btn-text" style="font-size: 10px; margin-left: auto;">View Global Key</button>
+                    </div>
+                    
+                    <div id="repo-unique-key-box" class="hidden" style="margin-top: 10px; padding: 15px; background: rgba(0,0,0,0.1); border-radius: 8px; border: 1px dashed var(--border-color);">
+                        <div id="repo-current-key-status" class="hidden" style="margin-bottom: 12px;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                                <i data-lucide="check-circle" style="color: var(--success-color); width: 16px;"></i>
+                                <span style="font-size: 12px; font-weight: 500;">Unique key is configured</span>
+                            </div>
+                            <div style="display: flex; gap: 8px;">
+                                <button type="button" id="btn-view-current-unique-key" class="btn btn-xs btn-outline">View Current Key</button>
+                                <button type="button" id="btn-trigger-regen-key" class="btn btn-xs btn-text" style="color: var(--text-muted);">Regenerate...</button>
+                            </div>
+                        </div>
+
+                        <div id="repo-key-gen-area">
+                            <button type="button" id="btn-repo-gen-unique-key" class="btn btn-xs btn-outline" style="width: 100%;">Generate Unique Key for this Repo</button>
+                            
+                            <div id="repo-unique-key-display" class="hidden" style="margin-top: 10px;">
+                                <div class="key-display-box" style="padding: 10px; background: rgba(0,0,0,0.2);">
+                                    <pre id="repo-generated-pubkey" style="font-size: 10px; max-height: 60px; overflow-y: auto; margin-bottom: 8px; word-break: break-all; white-space: pre-wrap; color: var(--text-muted);"></pre>
+                                    <button type="button" id="btn-copy-generated-key" class="btn btn-xs btn-primary" style="width: 100%;">
+                                        <i data-lucide="copy" style="width: 12px; height: 12px;"></i>
+                                        <span>Copy Public Key</span>
+                                    </button>
+                                </div>
+                                <div style="margin-top: 8px; font-size: 11px; color: var(--info-color);">
+                                    <i data-lucide="info" style="width: 12px; vertical-align: middle;"></i>
+                                    URL will be updated to SSH format automatically.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button id="btn-save-repo" class="btn btn-sm btn-primary" style="flex: 1;" data-t="btn_save">Save</button>
+                        <button id="btn-cancel-repo" class="btn btn-sm btn-outline" style="flex: 1;" data-t="btn_cancel">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="git-sync-controls" class="settings-plate">
                 <div class="plate-header">
                     <i data-lucide="git-branch"></i>
                     <span data-t="tab_git">Git Sync</span>
-                    <button id="btn-git-sync" class="btn btn-sm btn-primary" data-t="btn_sync_now">Sync Now</button>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <div id="sync-status-indicator" style="display: flex; align-items: center; gap: 5px; margin-right: 5px;">
+                            <span id="sync-status-text" style="font-size: 11px; color: var(--text-muted); opacity: 0.8;"></span>
+                            <div id="sync-status-icon"></div>
+                        </div>
+                        <button id="btn-git-sync" class="btn btn-sm btn-primary" data-t="btn_sync_now">Sync Now</button>
+                        <button id="btn-git-force-sync" class="btn btn-sm btn-danger" data-t="btn_force_sync">Force Sync</button>
+                    </div>
                 </div>
                 <div class="plate-body">
-                    <input type="text" id="git-remote-url" data-t="git_url_placeholder" placeholder="Repo URL (https://... or git@...)">
-                    
-                    <div style="display: flex; gap: 10px; align-items: center; margin-top: 10px;">
-                        <label style="font-size: 11px; color: var(--text-muted); flex: 1;" data-t="git_branch_label">Target Branch:</label>
-                        <button id="btn-fetch-branches" class="btn btn-sm btn-text" style="white-space: nowrap;" data-t="btn_fetch_branches">Fetch Branches</button>
-                    </div>
-                    <select id="git-branch-select" style="margin-top: 5px; width: 100%;"></select>
-                    <button id="btn-save-git-config" class="btn btn-sm btn-text" data-t="btn_save_config">Save Config</button>
-                    
-                    <div id="ssh-manage-section" style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px; display: flex; align-items: center; justify-content: space-between;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <div id="ssh-status-icon-container" style="display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;">
-                                <i id="ssh-status-icon" data-lucide="x-circle" style="color: #ef4444; width: 20px; height: 20px;"></i>
-                            </div>
-                            <span style="font-size: 14px; font-weight: 500;" data-t="git_creds_status_label">Credentials Status</span>
-                        </div>
-                        <button id="btn-open-ssh-modal" class="btn btn-sm btn-outline" data-t="btn_manage_creds">Manage Credentials</button>
+                    <div style="display: flex; gap: 10px; align-items: center; margin-top: 5px;">
+                        <span id="active-repo-url-display" style="font-size: 11px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1;">Select a repo above</span>
+                        <span id="active-repo-branch-display" class="tag tag-off" style="font-size: 10px;">-</span>
                     </div>
                 </div>
             </div>

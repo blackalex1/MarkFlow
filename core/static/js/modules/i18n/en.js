@@ -123,5 +123,28 @@ export const en = {
 
     // Types
     type_folder: "Folder",
-    type_file: "Document"
+    type_file: "Document",
+    
+    // Force Sync
+    btn_force_sync: "Force Sync",
+    confirm_force_sync: "WARNING: This will discard all local changes and match the remote state. Continue?",
+    
+    // Repos
+    repo_name_label: "Display Name",
+    repo_slug_label: "Folder Name (slug)",
+    repo_url_label: "Git URL",
+    btn_add_repo: "+ Add",
+    btn_edit_repo: "Edit",
+    git_repos_list: "Repositories",
+    repo_th_name: "Name",
+    repo_th_status: "Status / Last Sync",
+    repo_th_actions: "Actions",
+    repo_btn_activate: "Activate",
+    repo_btn_active: "Active",
+    repo_btn_edit: "Edit",
+    repo_btn_delete: "Delete",
+    sync_never: "Never synced",
+    sync_success: "Success",
+    sync_failed: "Failed",
+    git_select_repo: "Select a repository above"
 };

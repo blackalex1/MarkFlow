@@ -6,6 +6,10 @@ from .db.users import (
 )
 from .db.sessions import create_session, get_session, delete_session, clear_user_sessions
 from .db.settings import get_setting, set_setting
+from .db.repos import (
+    list_repositories, get_active_repository, get_repository, 
+    add_repository, update_repository, delete_repository, set_active_repository
+)
 from .db.audit import add_audit_log, get_audit_logs
 from .db.fts import update_fts_index, delete_fts_index, search_fts, reindex_all_docs, is_image_referenced
 from .metadata import is_public, set_public, set_public_recursive, get_file_status, set_file_status, rename_metadata
@@ -67,6 +71,58 @@ def init_db():
             expires_at DATETIME
         )
     ''')
+
+    # Create git_repositories table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS git_repositories (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            slug TEXT UNIQUE NOT NULL,
+            url TEXT NOT NULL,
+            branch TEXT DEFAULT 'master',
+            ssh_private_key TEXT,
+            ssh_public_key TEXT,
+            is_active BOOLEAN DEFAULT 0
+        )
+    ''')
+    
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS temp_ssh_keys (
+            id TEXT PRIMARY KEY,
+            private_key TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    try:
+        cursor.execute('ALTER TABLE git_repositories ADD COLUMN slug TEXT')
+        cursor.execute('UPDATE git_repositories SET slug = "repo_" || id WHERE slug IS NULL')
+    except sqlite3.OperationalError:
+        pass
+    try:
+        cursor.execute('ALTER TABLE git_repositories ADD COLUMN last_sync_status TEXT')
+        cursor.execute('ALTER TABLE git_repositories ADD COLUMN last_sync_error TEXT')
+        cursor.execute('ALTER TABLE git_repositories ADD COLUMN last_sync_at DATETIME')
+    except sqlite3.OperationalError:
+        pass
+
+    # Migration: Check if we have existing git config in settings and move it to git_repositories
+    cursor.execute("SELECT COUNT(*) FROM git_repositories")
+    if cursor.fetchone()[0] == 0:
+        cursor.execute("SELECT value FROM settings WHERE key = 'git_url'")
+        url_row = cursor.fetchone()
+        if url_row and url_row[0]:
+            cursor.execute("SELECT value FROM settings WHERE key = 'git_branch'")
+            branch_row = cursor.fetchone()
+            cursor.execute("SELECT value FROM settings WHERE key = 'git_ssh_private_key'")
+            priv_row = cursor.fetchone()
+            cursor.execute("SELECT value FROM settings WHERE key = 'git_ssh_public_key'")
+            pub_row = cursor.fetchone()
+
+            cursor.execute('''
+                INSERT INTO git_repositories (name, slug, url, branch, ssh_private_key, ssh_public_key, is_active)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            ''', ('Default Repo', 'main', url_row[0], branch_row[0] if branch_row else 'master', 
+                  priv_row[0] if priv_row else None, pub_row[0] if pub_row else None, 1))
     
     # Check if admin user exists
     cursor.execute('SELECT * FROM users WHERE username = ?', ('admin',))

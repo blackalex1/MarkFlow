@@ -1,6 +1,6 @@
-import { ui, state } from './ui.js';
-import { toast } from './toasts.js';
-import { initEditorEnhancements } from './editor_ui.js';
+import { ui, state } from '../modules/ui.js';
+import { toast } from '../modules/toasts.js';
+import { initEditorEnhancements } from './ui.js';
 
 export let easyMDE = null;
 const pendingImages = new Map();
@@ -41,6 +41,45 @@ export function toggleEditMode(editing) {
                     }
                 }
             });
+            // Sync layout with side-by-side and fullscreen
+            const syncLayout = () => {
+                setTimeout(() => {
+                    const isSided = easyMDE.isSideBySideActive();
+                    const isFS = easyMDE.isFullscreenActive();
+                    const active = isSided || isFS;
+                    
+                    document.body.classList.toggle('editor-side-by-side', active);
+                    
+                    if (ui.tocSidebar) {
+                        // Hide TOC in ALL editing modes (normal or side-by-side)
+                        const isEditing = ui.viewModeContainer.classList.contains('hidden');
+                        ui.tocSidebar.classList.toggle('hidden', isEditing || active);
+                    }
+                    
+                    if (ui.sidebar) {
+                        // Only hide main sidebar in sided or fullscreen mode
+                        ui.sidebar.classList.toggle('hidden', active);
+                    }
+                    
+                    easyMDE.codemirror.refresh();
+                }, 50);
+            };
+
+            const oldSideBySide = easyMDE.toggleSideBySide;
+            easyMDE.toggleSideBySide = function() {
+                oldSideBySide.call(this);
+                syncLayout();
+            };
+            
+            const oldFullScreen = easyMDE.toggleFullScreen;
+            easyMDE.toggleFullScreen = function() {
+                oldFullScreen.call(this);
+                syncLayout();
+            };
+
+            // Also check on refresh just in case
+            easyMDE.codemirror.on("refresh", syncLayout);
+
             initEditorEnhancements(easyMDE.codemirror, applyFormat, applySlashCommand);
         } else document.querySelector('.EasyMDEContainer').classList.remove('hidden');
 

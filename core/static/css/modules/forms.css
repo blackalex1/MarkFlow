@@ -132,3 +132,28 @@ input:focus, textarea:focus, select:focus {
 .blur-sensitive:focus {
     filter: blur(0);
 }
+
+.ssh-key-blur {
+    width: 100%;
+    height: 80px;
+    font-family: monospace;
+    font-size: 11px;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-color);
+    filter: blur(5px);
+    transition: filter 0.3s ease, background 0.3s ease;
+    cursor: pointer;
+    user-select: none;
+    overflow: hidden;
+    resize: none;
+}
+
+.ssh-key-blur.revealed {
+    filter: blur(0);
+    background: rgba(0, 0, 0, 0.4);
+    user-select: all;
+    overflow-y: auto;
+}

@@ -64,6 +64,7 @@
     
     {% if is_authenticated %}
     {% include 'components/modals/dashboard.html' %}
+    {% include 'components/modals/view_key.html' %}
     {% endif %}
 
     {% if user_role in ['maintainer', 'owner'] %}

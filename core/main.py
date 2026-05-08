@@ -1,4 +1,8 @@
 import os
+import mimetypes
+
+mimetypes.add_type("application/javascript", ".js")
+mimetypes.add_type("text/css", ".css")
 import asyncio
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles

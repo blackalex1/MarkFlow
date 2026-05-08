@@ -1,3 +1,4 @@
+/* --- Markdown Content Styles --- */
 #content-viewer {
     animation: slideUp 0.6s ease-out;
 }
@@ -23,10 +24,6 @@
     accent-color: var(--primary-color);
     width: 16px;
     height: 16px;
-}
-
-.hidden {
-    display: none !important;
 }
 
 /* Video Styling */
@@ -69,10 +66,7 @@
 }
 
 .markdown-body table {
-    display: block;
     width: 100%;
-    overflow-x: auto;
-    border-collapse: collapse;
     margin: 1.5em 0;
 }
 

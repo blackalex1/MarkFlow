@@ -38,16 +38,18 @@
 .main-content {
     flex: 1;
     margin-left: var(--sidebar-width);
-    padding: 40px 60px 120px;
+    padding: 40px 40px 120px;
     max-width: calc(100vw - var(--sidebar-width));
     display: flex;
-    gap: 60px;
+    gap: 40px;
+    transition: var(--transition);
 }
 
 #content-area {
     flex: 1;
     max-width: 1000px;
     margin: 0 auto;
+    min-width: 0;
 }
 
 .toc-sidebar {
@@ -200,7 +202,7 @@
 }
 
 /* Responsive */
-@media (max-width: 1200px) {
+@media (max-width: 1400px) {
     .toc-sidebar { display: none; }
     .main-content { padding: 40px; gap: 0; }
 }

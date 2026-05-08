@@ -7,43 +7,154 @@ from typing import Optional
 from git import GitCommandError
 
 from core.auth import get_maintainer_user
-from core.database import get_setting, set_setting, add_audit_log
+from core.database import (
+    get_setting, set_setting, add_audit_log,
+    list_repositories, get_active_repository, get_repository, 
+    add_repository, update_repository, delete_repository, set_active_repository, get_db
+)
 from core.config import limiter, SECURITY_LIMITS
 from core.services.git_service import get_repo, sync_repository, get_authenticated_url
 from core.services.ssh_service import generate_ssh_key, save_ssh_key
 
+def slugify(text: str) -> str:
+    # Convert to lowercase and replace non-alphanumeric with hyphens
+    text = text.lower()
+    text = re.sub(r'[^a-z0-9_\-]', '-', text)
+    # Remove multiple hyphens
+    text = re.sub(r'-+', '-', text)
+    return text.strip('-')
+
 def validate_git_url(url: str):
     if not url: return
-    # Prevent argument injection
     if url.startswith("-"):
         raise HTTPException(status_code=400, detail="Invalid Git URL: cannot start with a hyphen")
-    # Block characters that could be used for command injection or URL manipulation
     if re.search(r"[\s;`\"'|&<>]", url):
         raise HTTPException(status_code=400, detail="Invalid Git URL: illegal characters detected")
     if not (url.startswith("https://") or url.startswith("git@") or url.startswith("ssh://")):
         raise HTTPException(status_code=400, detail="Invalid Git URL: protocol not allowed")
 
+def validate_slug(slug: str):
+    if not slug:
+        raise HTTPException(status_code=400, detail="Folder name (slug) is required")
+    if slug.startswith(".") or "/" in slug or "\\" in slug:
+        raise HTTPException(status_code=400, detail="Invalid folder name: path manipulation detected")
+    if not re.match(r"^[a-z0-9_\-]+$", slug):
+        raise HTTPException(status_code=400, detail="Invalid folder name: use only lowercase letters, numbers, hyphens and underscores")
+
 router = APIRouter()
 
-class GitConfig(BaseModel):
+class RepoInput(BaseModel):
+    name: str
+    slug: str
     url: str
-    token: Optional[str] = None
-    branch: Optional[str] = "master"
+    branch: str = "master"
+    private_key: Optional[str] = None
+    public_key: Optional[str] = None
+    key_id: Optional[str] = None
 
-class SSHKeyInput(BaseModel):
-    private_key: str
-    public_key: str
+@router.get("/repos")
+def api_list_repos(user=Depends(get_maintainer_user)):
+    return list_repositories()
+
+@router.post("/repos")
+@limiter.limit(SECURITY_LIMITS["file_ops"])
+def api_add_repo(request: Request, data: RepoInput, user=Depends(get_maintainer_user)):
+    validate_git_url(data.url)
+    safe_slug = slugify(data.slug) if data.slug else slugify(data.name)
+    validate_slug(safe_slug)
+    
+    priv = data.private_key
+    if data.key_id:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT private_key FROM temp_ssh_keys WHERE id = ?", (data.key_id,))
+        row = cur.fetchone()
+        if row:
+            priv = row[0]
+            cur.execute("DELETE FROM temp_ssh_keys WHERE id = ?", (data.key_id,))
+            conn.commit()
+        conn.close()
+
+    repo_id = add_repository(data.name, safe_slug, data.url, data.branch, priv, data.public_key)
+    add_audit_log(user["username"], "git_repo_added", f"Name: {data.name}, Slug: {safe_slug}", ip_address=request.client.host)
+    return {"id": repo_id, "slug": safe_slug}
+
+@router.post("/repos/{repo_id}/activate")
+def api_activate_repo(repo_id: int, user=Depends(get_maintainer_user)):
+    set_active_repository(repo_id)
+    return {"message": "Repository activated"}
+
+@router.delete("/repos/{repo_id}")
+def api_delete_repo(repo_id: int, user=Depends(get_maintainer_user)):
+    delete_repository(repo_id)
+    return {"message": "Repository deleted"}
+
+@router.put("/repos/{repo_id}")
+def api_update_repo(repo_id: int, data: RepoInput, user=Depends(get_maintainer_user)):
+    validate_git_url(data.url)
+    safe_slug = slugify(data.slug)
+    validate_slug(safe_slug)
+    
+    priv = data.private_key
+    if data.key_id:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT private_key FROM temp_ssh_keys WHERE id = ?", (data.key_id,))
+        row = cur.fetchone()
+        if row:
+            priv = row[0]
+            cur.execute("DELETE FROM temp_ssh_keys WHERE id = ?", (data.key_id,))
+            conn.commit()
+        conn.close()
+
+    update_repository(repo_id, data.name, safe_slug, data.url, data.branch, priv, data.public_key)
+    return {"message": "Repository updated", "slug": safe_slug}
 
 @router.get("/ssh-status")
 def get_ssh_status(user=Depends(get_maintainer_user)):
-    has_priv = get_setting("git_ssh_private_key") is not None
-    has_pub = get_setting("git_ssh_public_key") is not None
-    return {"has_keys": has_priv and has_pub}
+    repo = get_active_repository()
+    if not repo: return {"has_keys": False}
+    return {"has_keys": bool(repo['ssh_private_key'] and repo['ssh_public_key'])}
 
 @router.get("/pubkey")
 def get_pubkey(user=Depends(get_maintainer_user)):
-    pub = get_setting("git_ssh_public_key")
-    return {"pubkey": pub}
+    repo = get_active_repository()
+    return {"pubkey": repo['ssh_public_key'] if repo else None}
+
+@router.get("/repos/{repo_id}/pubkey")
+def get_repo_pubkey(repo_id: int, user=Depends(get_maintainer_user)):
+    from core.database import get_repository
+    repo = get_repository(repo_id)
+    if not repo:
+        raise HTTPException(status_code=404, detail="Repository not found")
+    
+    pubkey = repo.get('ssh_public_key')
+    if not pubkey:
+        from core.database import get_setting
+        pubkey = get_setting('git_ssh_public_key')
+        return {"pubkey": pubkey, "type": "global"}
+    
+    return {"pubkey": pubkey, "type": "unique"}
+
+@router.get("/gen-key-pair")
+def api_gen_key_pair(user=Depends(get_maintainer_user)):
+    try:
+        from core.services.ssh_service import generate_key_pair
+        import uuid
+        priv, pub = generate_key_pair()
+        
+        key_id = str(uuid.uuid4())
+        conn = get_db()
+        cur = conn.cursor()
+        # Clean up old temp keys (older than 1 hour)
+        cur.execute("DELETE FROM temp_ssh_keys WHERE created_at < datetime('now', '-1 hour')")
+        cur.execute("INSERT INTO temp_ssh_keys (id, private_key) VALUES (?, ?)", (key_id, priv))
+        conn.commit()
+        conn.close()
+        
+        return {"key_id": key_id, "public_key": pub}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/generate-key")
 @limiter.limit(SECURITY_LIMITS["file_ops"])
@@ -53,6 +164,10 @@ def api_generate_key(request: Request, user=Depends(get_maintainer_user)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+class SSHKeyInput(BaseModel):
+    private_key: str
+    public_key: str
+
 @router.post("/set-ssh-key")
 @limiter.limit(SECURITY_LIMITS["file_ops"])
 def api_set_ssh_key(request: Request, data: SSHKeyInput, user=Depends(get_maintainer_user)):
@@ -61,106 +176,71 @@ def api_set_ssh_key(request: Request, data: SSHKeyInput, user=Depends(get_mainta
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/config")
-@limiter.limit(SECURITY_LIMITS["file_ops"])
-def set_git_remote(request: Request, config: GitConfig, user=Depends(get_maintainer_user)):
+@router.get("/branches")
+def get_remote_branches(url: str = None, key_id: str = None, user=Depends(get_maintainer_user)):
+    repo_data = None
+    if key_id:
+        # User just generated a key but hasn't saved yet
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT private_key FROM temp_ssh_keys WHERE id = ?", (key_id,))
+        row = cur.fetchone()
+        conn.close()
+        if row:
+            repo_data = {"url": url, "ssh_private_key": row[0], "ssh_public_key": None}
+    
+    if not repo_data and url:
+        # Try to find repo with this URL to get keys
+        conn = get_db()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM git_repositories WHERE url = ?", (url,))
+        row = cursor.fetchone()
+        conn.close()
+        if row:
+            repo_data = dict(row)
+        else:
+            # New repository, not in DB yet. Use the provided URL and global keys.
+            repo_data = {"url": url, "ssh_private_key": None, "ssh_public_key": None}
+    
+    if not repo_data:
+        repo_data = get_active_repository()
+        
+    if not repo_data or not repo_data.get('url'):
+        raise HTTPException(status_code=400, detail="No repository URL provided or active.")
+    
     try:
-        url_str = config.url.strip()
-        validate_git_url(url_str)
-        
-        # Auto-convert GitHub HTTPS to SSH if possible
-        if url_str.startswith('https://github.com/'):
-            path = url_str.replace('https://github.com/', '')
-            clean_path = re.sub(r'\.git$', '', path).strip('/')
-            url_str = f"git@github.com:{clean_path}.git"
-            
-        set_setting("git_url", url_str)
-        if config.token is not None:
-            set_setting("git_token", config.token)
-        if config.branch:
-            set_setting("git_branch", config.branch)
-        
-        add_audit_log(user["username"], "git_config_updated", ip_address=request.client.host)
-
-        repo = get_repo()
-        if repo.remotes:
-            repo.delete_remote('origin')
-        
-        clean_url = re.sub(r"https://[^@]+@", "https://", url_str)
-        repo.create_remote('origin', clean_url)
-        
-        return {"message": "Remote configured successfully"}
+        from core.services.git_service import get_remote_branches_list
+        branches = get_remote_branches_list(repo_data)
+        return {"branches": branches}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/branches")
-def get_remote_branches(user=Depends(get_maintainer_user)):
-    url = get_setting("git_url")
-    if not url:
-        raise HTTPException(status_code=400, detail="Git URL not configured")
-    
-    if url.startswith('https://github.com/'):
-        path = url.replace('https://github.com/', '')
-        clean_path = re.sub(r'\.git$', '', path).strip('/')
-        url = f"git@github.com:{clean_path}.git"
-
-    repo = get_repo()
-    is_ssh = url.startswith("git@") or "ssh://" in url
-    
-    try:
-        if is_ssh:
-            priv_key = get_setting("git_ssh_private_key")
-            if not priv_key:
-                raise HTTPException(status_code=400, detail="SSH private key not found")
-            
-            priv_key = priv_key.strip().replace('\r\n', '\n') + '\n'
-            
-            with tempfile.NamedTemporaryFile(mode='wb', delete=False) as tmp:
-                tmp.write(priv_key.encode('utf-8'))
-                tmp_path = tmp.name
-            
-            # On Linux, SSH keys MUST have strict permissions (600)
-            if os.name != 'nt':
-                os.chmod(tmp_path, 0o600)
-            
-            safe_ssh_path = tmp_path.replace("\\", "/")
-            try:
-                ssh_cmd = f'ssh -i "{safe_ssh_path}" -o StrictHostKeyChecking=no'
-                with repo.git.custom_environment(GIT_SSH_COMMAND=ssh_cmd):
-                    output = repo.git.ls_remote('--heads', url)
-            finally:
-                if os.path.exists(tmp_path):
-                    try: os.remove(tmp_path)
-                    except: pass
-        else:
-            token = get_setting("git_token")
-            auth_url = get_authenticated_url(url, token)
-            output = repo.git.ls_remote('--heads', auth_url)
-        
-        branches = [line.split('\t')[1].replace('refs/heads/', '') for line in output.splitlines() if '\t' in line]
-        return {"branches": branches}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Git error: {str(e)}")
-
 @router.get("/config")
 def get_git_config(user=Depends(get_maintainer_user)):
+    repo = get_active_repository()
+    if not repo: return {"url": "", "branch": "master", "has_ssh": False}
     return {
-        "url": get_setting("git_url") or "",
-        "branch": get_setting("git_branch") or "master",
-        "has_ssh": bool(get_setting("git_ssh_private_key")),
-        "is_valid": bool(get_setting("git_ssh_private_key"))
+        "url": repo['url'],
+        "branch": repo['branch'] or "master",
+        "has_ssh": bool(repo['ssh_private_key']),
+        "is_valid": bool(repo['ssh_private_key']),
+        "last_sync_status": repo.get('last_sync_status'),
+        "last_sync_error": repo.get('last_sync_error'),
+        "last_sync_at": repo.get('last_sync_at')
     }
 
 @router.post("/sync")
 @limiter.limit(SECURITY_LIMITS["file_ops"])
-def api_sync_git(request: Request, user=Depends(get_maintainer_user)):
+def api_sync_git(request: Request, force: bool = False, user=Depends(get_maintainer_user)):
     try:
-        return sync_repository(user["username"], ip_address=request.client.host)
+        return sync_repository(user["username"], force=force, ip_address=request.client.host)
     except GitCommandError as e:
         error_msg = str(e)
-        token = get_setting("git_token")
-        if token: error_msg = error_msg.replace(token, "********")
+        repo = get_active_repository()
+        if repo and repo['token']: error_msg = error_msg.replace(repo['token'], "********")
         add_audit_log(user["username"], "git_sync_failed", error_msg[:200], ip_address=request.client.host)
         raise HTTPException(status_code=500, detail=f"Git error: {error_msg}")
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
