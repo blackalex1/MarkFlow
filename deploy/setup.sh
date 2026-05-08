@@ -46,7 +46,13 @@ echo " - Email:      ${CERTBOT_EMAIL:-None}"
 echo "----------------------------------------------------------"
 echo ""
 
-# 5. Create Host Directories (to avoid root ownership by Docker)
+# 5. Prepare Nginx configuration
+echo "### Preparing Nginx configuration..."
+cp ./nginx.conf.template ./nginx.conf
+sed -i "s/{{DOMAIN_NAME}}/$DOMAIN_NAME/g" ./nginx.conf
+sed -i "s/{{HTTPS_PORT}}/$HTTPS_PORT/g" ./nginx.conf
+
+# 6. Create Host Directories (to avoid root ownership by Docker)
 echo "### Preparing host directories..."
 mkdir -p ../certbot/conf ../certbot/www ../config ../markdown_docs
 

@@ -68,6 +68,12 @@ fi
 mkdir -p "$data_path/conf"
 mkdir -p "$data_path/www"
 
+# Prepare Nginx configuration
+echo "### Preparing Nginx configuration..."
+cp ./nginx.conf.template ./nginx.conf
+sed -i "s/{{DOMAIN_NAME}}/$DOMAIN_NAME/g" ./nginx.conf
+sed -i "s/{{HTTPS_PORT}}/$HTTPS_PORT/g" ./nginx.conf
+
 # Ensure everyone can read/write to challenge folder so Nginx can see it
 chmod -R 777 "$data_path/www"
 
