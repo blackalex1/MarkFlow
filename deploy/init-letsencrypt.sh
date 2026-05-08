@@ -88,7 +88,7 @@ path="/etc/letsencrypt/live/$DOMAIN_NAME"
 mkdir -p "$data_path/conf/live/$DOMAIN_NAME"
 # Use environment variable to pass domain to nginx.conf template if needed
 DOMAIN_NAME=$DOMAIN_NAME $DOCKER_COMPOSE --env-file ../.env run --rm --entrypoint "\
-  openssl req -x509 -nodes -newkey rsa:1024 -days 1\
+  openssl req -x509 -nodes -newkey rsa:2048 -days 1\
     -keyout '$path/privkey.pem' \
     -out '$path/fullchain.pem' \
     -subj '/CN=localhost'" certbot
