@@ -65,9 +65,14 @@ if [ -d "$data_path" ]; then
 fi
 
 # Prepare folders and TLS params
+mkdir -p "$data_path/conf"
+mkdir -p "$data_path/www"
+
+# Ensure everyone can read/write to challenge folder so Nginx can see it
+chmod -R 777 "$data_path/www"
+
 if [ ! -e "$data_path/conf/options-ssl-nginx.conf" ] || [ ! -e "$data_path/conf/ssl-dhparams.pem" ]; then
   echo "### Downloading recommended TLS parameters..."
-  mkdir -p "$data_path/conf"
   curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf > "$data_path/conf/options-ssl-nginx.conf"
   curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem > "$data_path/conf/ssl-dhparams.pem"
 fi
