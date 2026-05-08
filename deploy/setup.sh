@@ -1,7 +1,11 @@
 #!/bin/bash
 
-# Clear screen
-clear
+# Detect Docker Compose version
+if docker compose version > /dev/null 2>&1; then
+    DOCKER_COMPOSE="docker compose"
+else
+    DOCKER_COMPOSE="docker-compose"
+fi
 
 echo "=========================================================="
 echo "          MarkFlow: Global Setup & Installation           "
@@ -44,8 +48,8 @@ echo ""
 
 # 5. Build Containers
 echo "### Building and starting containers..."
-docker-compose build
-docker-compose up -d
+$DOCKER_COMPOSE build
+$DOCKER_COMPOSE up -d
 
 # 6. Ask about SSL
 echo ""
