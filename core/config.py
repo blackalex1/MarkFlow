@@ -45,17 +45,9 @@ def load_settings():
     # Merge with defaults
     res = {**defaults, **loaded}
     
-    # Fallback for favicon if the specified file doesn't exist on disk
-    if res["favicon_path"]:
-        # Check if it starts with /config/ (meaning it's in the mounted volume)
-        if res["favicon_path"].startswith("/config/"):
-            filename = res["favicon_path"].replace("/config/", "")
-            full_path = os.path.join(config_dir, filename)
-            if not os.path.exists(full_path):
-                # Fallback to internal static favicon if exists, or nothing
-                res["favicon_path"] = "/static/favicon.ico"
-    else:
-        res["favicon_path"] = "/static/favicon.ico"
+    # Ensure favicon_path is set (no fallback to static as per user request)
+    if not res.get("favicon_path"):
+        res["favicon_path"] = "/config/favicon.ico"
 
     if "security_limits" in loaded:
         res["security_limits"] = {**defaults["security_limits"], **loaded["security_limits"]}
