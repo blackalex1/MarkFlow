@@ -90,6 +90,10 @@ DOMAIN_NAME=$DOMAIN_NAME $DOCKER_COMPOSE --env-file ../.env run --rm --entrypoin
 echo "### Starting Nginx (HTTP mode)..."
 DOMAIN_NAME=$DOMAIN_NAME $DOCKER_COMPOSE --env-file ../.env up --force-recreate -d nginx
 
+# Wait for Nginx to process templates and start listening
+echo "### Waiting for Nginx to initialize..."
+sleep 5
+
 echo "### Deleting dummy certificate..."
 $DOCKER_COMPOSE --env-file ../.env run --rm --entrypoint "\
   rm -rf /etc/letsencrypt/live/$DOMAIN_NAME /etc/letsencrypt/archive/$DOMAIN_NAME /etc/letsencrypt/renewal/$DOMAIN_NAME.conf" certbot
