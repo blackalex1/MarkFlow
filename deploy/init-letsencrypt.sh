@@ -53,7 +53,7 @@ echo ""
 # Configuration variables
 domains=($DOMAIN_NAME)
 rsa_key_size=4096
-data_path="./certbot"
+data_path="../certbot"
 email="$CERTBOT_EMAIL"
 staging=0 # Set to 1 for testing
 
