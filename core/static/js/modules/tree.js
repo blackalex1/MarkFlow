@@ -44,7 +44,9 @@ function renderFileTree(tree) {
                     if (window.lucide) lucide.createIcons();
                 };
 
+                const isStaff = state.currentUser && ['developer', 'maintainer', 'owner'].includes(state.currentUser.role);
                 item.oncontextmenu = (e) => {
+                    if (!isStaff) return;
                     e.preventDefault();
                     e.stopPropagation();
                     showContextMenu(e, { path: nodePath, type: 'folder', name: node.name });
@@ -78,6 +80,7 @@ function renderFileTree(tree) {
                 };
 
                 item.oncontextmenu = (e) => {
+                    if (!isStaff) return;
                     e.preventDefault();
                     e.stopPropagation();
                     showContextMenu(e, { path: node.path, type: 'file', name: node.name });
