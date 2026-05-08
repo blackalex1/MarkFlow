@@ -92,9 +92,10 @@ function toggleQuickSwitcher(show) {
 async function performSearch(q, container) {
     try {
         const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+        if (!res.ok) throw new Error(`Search failed: ${res.status}`);
         const data = await res.json();
         
-        if (data.results.length > 0) {
+        if (data && data.results && data.results.length > 0) {
             container.innerHTML = data.results.map((r, idx) => `
                 <div class="search-result ${idx === 0 && container === ui.qsResults ? 'active' : ''}" data-path="${r.path}">
                     <div class="search-item-name">${r.name}</div>

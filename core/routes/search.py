@@ -6,7 +6,7 @@ from core.auth import get_current_user, ROLES
 
 router = APIRouter()
 
-@router.get("/")
+@router.get("")
 @limiter.limit(SECURITY_LIMITS["search"])
 def search_docs(q: str, request: Request):
     if not q or len(q) < 2:

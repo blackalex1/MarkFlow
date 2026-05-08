@@ -24,7 +24,8 @@ export async function loadFileContent(path, pushState = true, hash = null) {
         if (res.ok) {
             const data = await res.json();
             const cleanHTML = DOMPurify.sanitize(marked.parse(data.content), {
-                ADD_ATTR: ['target', 'data-target', 'data-tab-id', 'id', 'class']
+                ADD_ATTR: ['target', 'data-target', 'data-tab-id', 'data-lucide', 'id', 'class'],
+                USE_PROFILES: { html: true, mathMl: true, svg: true }
             });
             
             ui.contentViewer.innerHTML = cleanHTML;

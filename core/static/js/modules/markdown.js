@@ -27,13 +27,12 @@ export function renderCallout(type, content) {
 export const tabsExtension = {
     name: 'tabs',
     level: 'block',
-    start(src) { return src.match(/@tabs/)?.index; },
     tokenizer(src) {
-        const rule = /^@tabs\s*\n([\s\S]*?)\n@endtabs/;
+        const rule = /^@tabs[ \t]*\r?\n([\s\S]*?)\r?\n@endtabs(?:\r?\n|$)/;
         const match = rule.exec(src);
         if (match) {
             const token = { type: 'tabs', raw: match[0], tabs: [] };
-            const tabRule = /@tab ([^\n]+)\n([\s\S]*?)(?=\n@tab|$)/g;
+            const tabRule = /@tab[ \t]+([^\r\n]+)\r?\n([\s\S]*?)(?=\r?\n@tab|$)/g;
             let tabMatch;
             while ((tabMatch = tabRule.exec(match[1])) !== null) {
                 token.tabs.push({ name: tabMatch[1].trim(), content: tabMatch[2].trim() });
@@ -53,7 +52,79 @@ export const tabsExtension = {
     }
 };
 
+export const dropdownExtension = {
+    name: 'dropdown',
+    level: 'block',
+    tokenizer(src) {
+        const rule = /^@dropdown[ \t]*([^\r\n]*)\r?\n([\s\S]*?)\r?\n@enddropdown(?:\r?\n|$)/;
+        const match = rule.exec(src);
+        if (match) {
+            return {
+                type: 'dropdown',
+                raw: match[0],
+                title: match[1].trim() || 'Details',
+                content: match[2].trim()
+            };
+        }
+    },
+    renderer(token) {
+        const id = 'dropdown-' + Math.random().toString(36).substr(2, 9);
+        return `<div id="${id}" class="dropdown-container">
+                    <div class="dropdown-header">
+                        <span class="dropdown-title">${escapeHtml(token.title)}</span>
+                        <i data-lucide="chevron-down" class="dropdown-chevron"></i>
+                    </div>
+                    <div class="dropdown-content">
+                        ${marked.parse(token.content)}
+                    </div>
+                </div>`;
+    }
+};
+
+export const inlineMathExtension = {
+    name: 'inlineMath',
+    level: 'inline',
+    start(src) { return src.match(/\$/)?.index; },
+    tokenizer(src) {
+        const rule = /^\$([^\$\n]+)\$/;
+        const match = rule.exec(src);
+        if (match) {
+            return { type: 'inlineMath', raw: match[0], text: match[1].trim() };
+        }
+    },
+    renderer(token) {
+        if (window.katex) {
+            try {
+                return window.katex.renderToString(token.text, { displayMode: false, throwOnError: false });
+            } catch (e) { return token.raw; }
+        }
+        return token.raw;
+    }
+};
+
+export const blockMathExtension = {
+    name: 'blockMath',
+    level: 'block',
+    tokenizer(src) {
+        const rule = /^\$\$\r?\n?([\s\S]*?)\r?\n?\$\$/;
+        const match = rule.exec(src);
+        if (match) {
+            return { type: 'blockMath', raw: match[0], text: match[1].trim() };
+        }
+    },
+    renderer(token) {
+        if (window.katex) {
+            try {
+                return `<div class="math-block">${window.katex.renderToString(token.text, { displayMode: true, throwOnError: false })}</div>`;
+            } catch (e) { return `<pre>${token.raw}</pre>`; }
+        }
+        return `<pre>${token.raw}</pre>`;
+    }
+};
+
+let markedInitialized = false;
 export function initMarked() {
+    if (markedInitialized) return;
     const renderer = new marked.Renderer();
 
     renderer.blockquote = function(arg1) {
@@ -96,6 +167,7 @@ export function initMarked() {
         return `<p>${marked.parseInline(text)}</p>`;
     };
 
-    marked.use({ extensions: [tabsExtension] });
     marked.setOptions({ renderer, breaks: true, gfm: true, headerIds: true, mangle: false });
+    marked.use({ extensions: [tabsExtension, dropdownExtension, inlineMathExtension, blockMathExtension] });
+    markedInitialized = true;
 }

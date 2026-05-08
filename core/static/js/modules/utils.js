@@ -24,8 +24,33 @@ export function initGlobalHandlers() {
                             }
                         });
                     }
+                    if (window.mermaid) {
+                        try { mermaid.init(undefined, target.querySelectorAll('.mermaid')); } catch (e) {}
+                    }
                 }
                 return;
+            }
+        }
+        
+        // 1.1 Dropdowns (Accordions)
+        const ddHeader = e.target.closest('.dropdown-header');
+        if (ddHeader) {
+            const container = ddHeader.closest('.dropdown-container');
+            if (container) {
+                container.classList.toggle('expanded');
+                if (container.classList.contains('expanded')) {
+                    if (typeof hljs !== 'undefined') {
+                        container.querySelectorAll('pre code').forEach(b => {
+                            if (!b.dataset.highlighted && !b.classList.contains('language-end')) {
+                                hljs.highlightElement(b);
+                                b.dataset.highlighted = "true";
+                            }
+                        });
+                    }
+                    if (window.mermaid) {
+                        try { mermaid.init(undefined, container.querySelectorAll('.mermaid')); } catch (e) {}
+                    }
+                }
             }
         }
 
