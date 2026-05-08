@@ -19,7 +19,35 @@ export function toggleEditMode(editing) {
             easyMDE = new EasyMDE({
                 element: ui.contentEditor, spellChecker: false, autosave: { enabled: false },
                 status: ["lines", "words", "cursor"], uploadImage: false, minHeight: "500px",
-                autoDownloadFontAwesome: false
+                autoDownloadFontAwesome: false,
+                previewClass: "editor-preview",
+                previewRender: function(plainText, preview) {
+                    const cleanHTML = DOMPurify.sanitize(marked.parse(plainText), {
+                        ADD_ATTR: ['target', 'data-target', 'data-tab-id', 'data-lucide', 'id', 'class'],
+                        USE_PROFILES: { html: true, mathMl: true, svg: true }
+                    });
+                    
+                    setTimeout(() => {
+                        if (!preview.classList.contains('markdown-body')) {
+                            preview.classList.add('markdown-body');
+                        }
+                        preview.querySelectorAll('pre code').forEach(b => {
+                            if (!b.dataset.highlighted && !b.classList.contains('language-end') && window.hljs) {
+                                hljs.highlightElement(b);
+                            }
+                        });
+                        if (window.renderMathInElement) {
+                            renderMathInElement(preview, { delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}], throwOnError: false });
+                        }
+                        if (window.mermaid) {
+                            const nodes = preview.querySelectorAll('.mermaid');
+                            if (nodes.length > 0) mermaid.run({ nodes: nodes, suppressErrors: true });
+                        }
+                        if (window.lucide) lucide.createIcons({ root: preview });
+                    }, 0);
+                    
+                    return cleanHTML;
+                }
             });
             easyMDE.codemirror.on("change", () => state.currentFilePath && localStorage.setItem(`draft_${state.currentFilePath}`, easyMDE.value()));
             easyMDE.codemirror.on("paste", (cm, e) => {
@@ -45,20 +73,18 @@ export function toggleEditMode(editing) {
             const syncLayout = () => {
                 setTimeout(() => {
                     const isSided = easyMDE.isSideBySideActive();
-                    const isFS = easyMDE.isFullscreenActive();
-                    const active = isSided || isFS;
+                    // EasyMDE's isFullscreenActive() returns true even when side-by-side is active!
+                    // We must explicitly ensure we are NOT in side-by-side mode to consider it pure fullscreen.
+                    const isFS = easyMDE.isFullscreenActive() && !isSided;
                     
-                    document.body.classList.toggle('editor-side-by-side', active);
+                    document.body.classList.toggle('editor-fullscreen', isFS);
                     
                     if (ui.tocSidebar) {
-                        // Hide TOC in ALL editing modes (normal or side-by-side)
-                        const isEditing = ui.viewModeContainer.classList.contains('hidden');
-                        ui.tocSidebar.classList.toggle('hidden', isEditing || active);
+                        ui.tocSidebar.classList.toggle('hidden', isFS);
                     }
                     
                     if (ui.sidebar) {
-                        // Only hide main sidebar in sided or fullscreen mode
-                        ui.sidebar.classList.toggle('hidden', active);
+                        ui.sidebar.classList.toggle('hidden', isFS);
                     }
                     
                     easyMDE.codemirror.refresh();
@@ -76,9 +102,6 @@ export function toggleEditMode(editing) {
                 oldFullScreen.call(this);
                 syncLayout();
             };
-
-            // Also check on refresh just in case
-            easyMDE.codemirror.on("refresh", syncLayout);
 
             initEditorEnhancements(easyMDE.codemirror, applyFormat, applySlashCommand);
         } else document.querySelector('.EasyMDEContainer').classList.remove('hidden');

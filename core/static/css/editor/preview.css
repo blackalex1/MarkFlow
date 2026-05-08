@@ -1,7 +1,7 @@
 /* --- Editor Preview Panel Styles --- */
 
 .editor-preview {
-    background: var(--bg-main) !important;
+    background: transparent !important;
     color: var(--text-main) !important;
     padding: 40px !important;
 }

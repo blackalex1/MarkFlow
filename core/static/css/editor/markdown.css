@@ -68,9 +68,19 @@
 .markdown-body table {
     width: 100%;
     margin: 1.5em 0;
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
 }
 
 .markdown-body p {
     line-height: 1.6;
     margin-bottom: 1em;
+    text-align: left !important;
+    direction: ltr !important;
+}
+
+.markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6 {
+    text-align: left !important;
+    direction: ltr !important;
 }

@@ -1,4 +1,10 @@
-/* --- MarkFlow Core/* Page Transitions Base */
+/* --- MarkFlow Core Styles --- */
+@import url("./modules/variables.css");
+@import url("./modules/base.css");
+@import url("./modules/animations.css");
+@import url("./modules/scrollbars.css");
+
+/* Page Transitions Base */
 @import url("./modules/context-menu.css");
 @import url("./modules/quick-switcher.css");
 @import url("./modules/errors.css");

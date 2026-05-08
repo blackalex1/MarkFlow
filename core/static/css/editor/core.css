@@ -46,7 +46,15 @@
     font-family: 'JetBrains Mono', monospace !important;
     font-size: 14px;
     line-height: 1.3 !important;
-    padding: 10px 0;
+    padding: 20px 30px !important;
+    height: calc(100vh - 350px) !important; /* Fixed height for normal mode */
+    min-height: 400px !important;
+}
+
+.CodeMirror-scroll {
+    min-height: 400px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
 }
 
 .cm-header-1 { font-size: 1.4em !important; }

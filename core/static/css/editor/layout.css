@@ -1,7 +1,7 @@
 /* --- Side-by-Side and Fullscreen Layouts --- */
 
 /* Side-by-Side Mode Grid */
-.EasyMDEContainer.editor-sided {
+.EasyMDEContainer:has(.editor-preview-active-side) {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
     grid-template-rows: auto 1fr auto !important;
@@ -23,17 +23,22 @@
     background: var(--bg-card) !important;
 }
 
-.editor-toolbar.sided {
+.EasyMDEContainer:has(.editor-preview-active-side) .editor-toolbar {
     grid-area: toolbar !important;
     width: 100% !important;
-    position: sticky !important;
-    top: 0;
-    z-index: 10 !important;
+    position: static !important;
     background: var(--bg-card) !important;
     border-bottom: 1px solid var(--border-color) !important;
+    height: auto !important;
+    opacity: 1 !important;
 }
 
-.CodeMirror-sided {
+/* Hide extra toolbars if any exist in the DOM to avoid duplication */
+.EasyMDEContainer:has(.editor-preview-active-side) .editor-toolbar ~ .editor-toolbar {
+    display: none !important;
+}
+
+.EasyMDEContainer:has(.editor-preview-active-side) .CodeMirror-sided {
     grid-area: editor !important;
     width: 100% !important;
     max-width: 100% !important;
@@ -44,22 +49,25 @@
     height: 100% !important;
 }
 
-.editor-preview-side {
+.EasyMDEContainer:has(.editor-preview-active-side) .editor-preview-active-side {
     grid-area: preview !important;
     width: 100% !important;
     max-width: 100% !important;
     position: static !important;
     display: block !important;
-    background: var(--bg-main) !important;
+    background: transparent !important;
     color: var(--text-main) !important;
     padding: 30px !important;
     overflow-y: auto !important;
+    overflow-x: hidden !important;
     box-sizing: border-box !important;
     height: 100% !important;
+    text-align: left !important;
 }
 
-.editor-statusbar {
+.EasyMDEContainer:has(.editor-preview-active-side) .editor-statusbar {
     grid-area: status !important;
+    position: static !important;
     background: var(--bg-card) !important;
     border-top: 1px solid var(--border-color) !important;
     padding: 4px 12px !important;
@@ -67,32 +75,15 @@
     font-size: 11px !important;
     display: flex !important;
     justify-content: flex-end !important;
+    width: 100% !important;
 }
 
 /* Hide side preview when NOT in sided mode */
-.EasyMDEContainer:not(.editor-sided) .editor-preview-side {
+.EasyMDEContainer:not(:has(.editor-preview-active-side)) .editor-preview-side {
     display: none !important;
 }
 
-/* Global Layout Overrides when Editor is Sided */
-body.editor-side-by-side .sidebar {
-    display: none !important;
-}
-
-body.editor-side-by-side .main-content {
-    margin-left: 0 !important;
-    max-width: 100% !important;
-    width: 100% !important;
-    padding: 20px 40px !important;
-    justify-content: center;
-}
-
-body.editor-side-by-side #content-area {
-    max-width: 1600px !important;
-    width: 100%;
-    margin: 0 auto;
-}
-
-body.editor-side-by-side .toc-sidebar {
+/* Hide original textarea to prevent it from appearing as a white box and breaking the grid */
+.EasyMDEContainer textarea {
     display: none !important;
 }
