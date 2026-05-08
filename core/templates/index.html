@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+{% include 'components/head.html' %}
+<body>
+    <div class="bg-glow"></div>
+    <div class="app-container">
+        <!-- Sidebar -->
+        {% include 'components/sidebar.html' %}
+
+        <!-- Main Content -->
+        <main class="main-content" id="main-content">
+            <div id="content-area">
+                {% include 'components/topbar.html' %}
+
+                <div id="view-mode-container">
+                    <div id="content-viewer" class="markdown-body">
+                        <h1 data-t="welcome_title">Welcome</h1>
+                        <p data-t="welcome_msg">Select a document from the sidebar to view.</p>
+                    </div>
+
+                    <!-- Page Navigation (Next/Prev) -->
+                    <div id="page-navigation" class="page-navigation hidden">
+                        <a id="nav-prev" class="nav-btn prev">
+                            <i data-lucide="chevron-left"></i>
+                            <div class="nav-info">
+                                <span class="nav-label" data-t="nav_prev">Previous</span>
+                                <span class="nav-title"></span>
+                            </div>
+                        </a>
+                        <a id="nav-next" class="nav-btn next">
+                            <div class="nav-info">
+                                <span class="nav-label" data-t="nav_next">Next</span>
+                                <span class="nav-title"></span>
+                            </div>
+                            <i data-lucide="chevron-right"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                {% if user_role in ['developer', 'maintainer', 'owner'] %}
+                <textarea id="content-editor" class="hidden"></textarea>
+                {% endif %}
+            </div>
+
+            <!-- Right TOC Sidebar -->
+            <aside class="toc-sidebar" id="toc-sidebar">
+                <div class="toc-header">
+                    <h3 data-t="toc_title">Содержание</h3>
+                </div>
+                <nav id="page-toc"></nav>
+            </aside>
+        </main>
+    </div>
+
+    <!-- Modals -->
+    {% include 'components/modals/login.html' %}
+    {% include 'components/modals/quick_switcher.html' %}
+    
+    {% if is_authenticated %}
+    {% include 'components/modals/dashboard.html' %}
+    {% endif %}
+
+    {% if user_role in ['maintainer', 'owner'] %}
+    {% include 'components/modals/ssh.html' %}
+    {% endif %}
+
+    {% if is_authenticated %}
+    {% include 'components/modals/totp_setup.html' %}
+    {% endif %}
+
+    <!-- Editor Enhancements -->
+    {% include 'components/editor_menus.html' %}
+
+    <script type="module" src="/static/js/app.js?v=4.0"></script>
+</body>
+</html>

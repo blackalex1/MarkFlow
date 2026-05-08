@@ -1,0 +1,45 @@
+<aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+        {% if config.use_logo %}
+        <div class="app-branding">
+            <img src="{{ config.logo_path }}" alt="Logo" class="app-logo" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+            <h2 style="display:none;">{{ config.app_name }}</h2>
+            <h2 class="branding-text">{{ config.app_name }}</h2>
+        </div>
+        {% else %}
+        <h2>{{ config.app_name }}</h2>
+        {% endif %}
+    </div>
+
+    <div class="sidebar-search">
+        <div class="search-input-wrapper">
+            <input type="text" id="search-input" data-t="search_placeholder" placeholder="Поиск в документах...">
+            <i data-lucide="search" class="icon-xs"></i>
+        </div>
+        <div id="search-results" class="search-results hidden"></div>
+    </div>
+
+    <nav class="file-tree" id="file-tree">
+        <!-- File tree dynamically inserted here -->
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="header-tools">
+            <button id="theme-toggle" class="btn-icon" title="Toggle Theme">
+                <i data-lucide="sun"></i>
+            </button>
+            <button id="btn-lang-toggle" class="btn-icon" title="Switch Language">
+                <span id="lang-label">RU</span>
+            </button>
+            {% if is_authenticated %}
+            <button id="btn-user-dashboard" class="btn-icon" data-t-title="dashboard_btn">
+                <i data-lucide="user"></i>
+            </button>
+            {% else %}
+            <button id="btn-login-trigger" class="btn-icon" data-t-title="login_btn">
+                <i data-lucide="log-in"></i>
+            </button>
+            {% endif %}
+        </div>
+    </div>
+</aside>

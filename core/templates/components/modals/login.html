@@ -1,0 +1,17 @@
+<div id="login-modal" class="modal hidden">
+    <div class="modal-content">
+        <span class="close-btn" id="close-login">&times;</span>
+        <h2 data-t="login_title">Admin Login</h2>
+        <form id="login-form" action="/api/auth/login" method="POST">
+            <label for="login-username" class="sr-only">Username</label>
+            <input type="text" id="login-username" name="username" autocomplete="username" data-t="username_label" placeholder="Username" required>
+            <label for="login-password" class="sr-only">Password</label>
+            <input type="password" id="login-password" name="password" autocomplete="current-password" data-t="password_label" placeholder="Password" required>
+            <div id="totp-container" class="hidden">
+                <label for="login-totp" class="sr-only">2FA Code</label>
+                <input type="text" id="login-totp" name="totp" autocomplete="one-time-code" data-t="totp_label" placeholder="2FA Code (Google Authenticator)">
+            </div>
+            <button type="submit" class="btn" style="width: 100%; margin-top: 10px;" data-t="btn_login_submit">Login</button>
+        </form>
+    </div>
+</div>

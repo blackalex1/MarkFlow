@@ -1,0 +1,10 @@
+<div id="totp-setup-modal" class="modal hidden">
+    <div class="modal-content" style="text-align: center;">
+        <span class="close-btn" id="close-totp-setup">&times;</span>
+        <h2>Setup 2FA</h2>
+        <p style="margin-top:10px; font-size:0.9em; color:#666;">Scan this QR Code with Google Authenticator</p>
+        <div id="totp-qr-container" style="margin: 20px auto; width: 200px; height: 200px; background: #fff;"></div>
+        <input type="text" id="setup-totp-code" placeholder="Enter the 6-digit code to verify" style="text-align: center; font-size:1.2em; letter-spacing: 2px;">
+        <button id="btn-verify-2fa" class="btn" style="width: 100%; margin-top: 15px;">Enable 2FA</button>
+    </div>
+</div>

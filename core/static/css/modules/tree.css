@@ -1,0 +1,62 @@
+/* --- File Tree --- */
+.file-tree {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.file-tree::-webkit-scrollbar { width: 4px; }
+.file-tree::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
+
+.tree-node {
+    margin-bottom: 2px;
+}
+
+.file-item, .folder-header {
+    padding: 6px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13.5px;
+    color: var(--text-muted);
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    user-select: none;
+}
+
+.file-item:hover, .folder-header:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+}
+
+.file-item.active {
+    background: var(--accent-glow);
+    color: var(--primary-color);
+    font-weight: 600;
+    border-left: 2px solid var(--primary-color);
+}
+
+.folder-header {
+    font-weight: 600;
+    color: #fff;
+}
+
+.chevron {
+    transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.folder-item.open > .chevron {
+    transform: rotate(90deg);
+}
+
+.icon-sm {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2px;
+}
+
+.icon-xs {
+    width: 12px;
+    height: 12px;
+}

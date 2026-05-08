@@ -1,0 +1,181 @@
+import pyotp
+import qrcode
+import qrcode.image.svg
+from io import BytesIO
+from fastapi import APIRouter, Depends, HTTPException, Response, Request
+from pydantic import BaseModel
+from core.database import (
+    verify_password, get_user_by_username, set_user_totp_secret, 
+    add_audit_log, delete_session, clear_user_sessions,
+    list_users, create_user, delete_user, update_user_role, update_user_password
+)
+from .dependencies import get_current_user, get_admin_user, get_owner_user
+from .utils import create_session_cookie, validate_password_complexity
+from core.config import limiter
+from core.security_config import SECURITY_LIMITS
+router = APIRouter()
+
+class ChangePasswordRequest(BaseModel):
+    old_password: str
+    new_password: str
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+    totp_code: str = None
+
+class TOTPVerifyRequest(BaseModel):
+    totp_code: str
+    secret: str
+
+class UserCreate(BaseModel):
+    username: str
+    password: str
+    role: str = 'guest'
+
+class RoleUpdate(BaseModel):
+    role: str
+
+@router.post("/login")
+@limiter.limit(SECURITY_LIMITS["login"])
+def login(request: Request, login_data: LoginRequest, response: Response):
+    user = get_user_by_username(login_data.username)
+    if not user or not verify_password(login_data.password, user["password_hash"]):
+        add_audit_log(login_data.username, "login_failed", f"IP: {request.client.host}")
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    
+    if user["totp_secret"]:
+        if not login_data.totp_code:
+            raise HTTPException(status_code=401, detail="2fa_required")
+        
+        totp = pyotp.TOTP(user["totp_secret"])
+        if not totp.verify(login_data.totp_code):
+            add_audit_log(login_data.username, "2fa_failed", f"IP: {request.client.host}")
+            raise HTTPException(status_code=401, detail="Invalid 2FA code")
+            
+    create_session_cookie(response, user["username"])
+    add_audit_log(user["username"], "login_success", f"IP: {request.client.host}")
+    return {"message": "Logged in successfully", "username": user["username"]}
+
+@router.get("/2fa/setup")
+def setup_2fa(user=Depends(get_current_user)):
+    if not user:
+        raise HTTPException(status_code=401, detail="Not logged in")
+    secret = pyotp.random_base32()
+    totp = pyotp.TOTP(secret)
+    provisioning_uri = totp.provisioning_uri(name=user["username"], issuer_name="MarkFlow")
+    
+    factory = qrcode.image.svg.SvgPathImage
+    img = qrcode.make(provisioning_uri, image_factory=factory)
+    stream = BytesIO()
+    img.save(stream)
+    svg_data = stream.getvalue().decode('utf-8')
+    
+    return {"secret": secret, "qr_svg": svg_data}
+
+@router.post("/2fa/verify")
+@limiter.limit(SECURITY_LIMITS["2fa_verify"])
+def verify_2fa(request: Request, data: TOTPVerifyRequest, user=Depends(get_current_user)):
+    if not user:
+        raise HTTPException(status_code=401, detail="Not logged in")
+    totp = pyotp.TOTP(data.secret)
+    if totp.verify(data.totp_code):
+        set_user_totp_secret(user["username"], data.secret)
+        add_audit_log(user["username"], "2fa_enabled")
+        return {"message": "2FA successfully enabled"}
+    raise HTTPException(status_code=400, detail="Invalid 2FA code")
+
+@router.post("/2fa/disable")
+def disable_2fa(user=Depends(get_current_user)):
+    if not user:
+        raise HTTPException(status_code=401, detail="Not logged in")
+    set_user_totp_secret(user["username"], None)
+    add_audit_log(user["username"], "2fa_disabled")
+    return {"message": "2FA successfully disabled"}
+
+@router.post("/change-password")
+@limiter.limit(SECURITY_LIMITS["change_password"])
+def change_password(request: Request, data: ChangePasswordRequest, user=Depends(get_current_user)):
+    if not user:
+        raise HTTPException(status_code=401, detail="Not logged in")
+    
+    err = validate_password_complexity(data.new_password)
+    if err:
+        raise HTTPException(status_code=400, detail=err)
+    
+    db_user = get_user_by_username(user["username"])
+    if not db_user or not verify_password(data.old_password, db_user["password_hash"]):
+        add_audit_log(user["username"], "password_change_failed", "Invalid old password")
+        raise HTTPException(status_code=400, detail="Invalid old password")
+    
+    update_user_password(user["username"], data.new_password)
+    add_audit_log(user["username"], "password_changed")
+    clear_user_sessions(user["username"])
+    
+    return {"message": "Password updated successfully. All other sessions logged out."}
+
+@router.post("/logout-all")
+def logout_all(user=Depends(get_current_user), response: Response = None):
+    if not user:
+        raise HTTPException(status_code=401, detail="Not logged in")
+    clear_user_sessions(user["username"])
+    add_audit_log(user["username"], "logout_all_devices")
+    if response:
+        response.delete_cookie("session")
+    return {"message": "Logged out from all devices"}
+
+@router.post("/logout")
+def logout(request: Request, response: Response):
+    user = get_current_user(request)
+    if user:
+        delete_session(user["session_id"])
+        add_audit_log(user["username"], "logout")
+    response.delete_cookie("session")
+    return {"message": "Logged out"}
+
+@router.get("/me")
+def get_me(request: Request):
+    user = get_current_user(request)
+    if not user:
+        return {"logged_in": False}
+    
+    return {
+        "logged_in": True, 
+        "username": user["username"], 
+        "is_admin": user.get("is_admin", False),
+        "role": user.get("role", "guest"),
+        "two_factor_enabled": bool(user.get("totp_secret"))
+    }
+
+@router.get("/users")
+def api_list_users(user=Depends(get_owner_user)):
+    return list_users()
+
+@router.post("/users")
+@limiter.limit(SECURITY_LIMITS["create_user"])
+def api_create_user(request: Request, data: UserCreate, user=Depends(get_owner_user)):
+    try:
+        create_user(data.username, data.password, data.role)
+        add_audit_log(user["username"], "user_created", f"User: {data.username}, Role: {data.role}")
+        return {"message": f"User {data.username} created"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.delete("/users/{username}")
+def api_delete_user(username: str, user=Depends(get_owner_user)):
+    if username == user["username"]:
+        raise HTTPException(status_code=400, detail="Cannot delete yourself")
+    delete_user(username)
+    add_audit_log(user["username"], "user_deleted", f"User: {username}")
+    return {"message": "User deleted"}
+
+@router.put("/users/{username}/role")
+def api_update_role(username: str, data: RoleUpdate, user=Depends(get_owner_user)):
+    update_user_role(username, data.role)
+    add_audit_log(user["username"], "user_role_updated", f"User: {username}, New Role: {data.role}")
+    return {"message": "Role updated"}
+
+@router.get("/audit-logs")
+def api_get_logs(user=Depends(get_owner_user)):
+    from core.database import get_audit_logs
+    return get_audit_logs()

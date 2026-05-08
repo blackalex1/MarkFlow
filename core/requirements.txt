@@ -1,0 +1,17 @@
+fastapi
+uvicorn
+python-multipart
+pydantic
+GitPython
+itsdangerous
+requests
+sqlalchemy
+passlib
+bcrypt
+jinja2
+pyotp
+qrcode
+cryptography
+Pillow
+slowapi
+watchdog
