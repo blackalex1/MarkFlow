@@ -37,7 +37,7 @@ fi
 
 docker compose --env-file ../.env up -d --build
 # Explicitly restart nginx to pick up volume changes
-docker compose --env-file ../.env restart nginx_proxy
+docker compose --env-file ../.env restart nginx
 
 # 3. Reload Nginx just in case
 echo "### Reloading Nginx configuration..."
