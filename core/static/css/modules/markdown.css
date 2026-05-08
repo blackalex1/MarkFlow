@@ -51,3 +51,32 @@
     margin-top: 8px;
     font-style: italic;
 }
+
+/* Responsive Markdown Elements */
+.markdown-body img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+}
+
+.markdown-body pre {
+    max-width: 100%;
+    overflow-x: auto;
+    padding: 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+}
+
+.markdown-body table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    border-collapse: collapse;
+    margin: 1.5em 0;
+}
+
+.markdown-body p {
+    line-height: 1.6;
+    margin-bottom: 1em;
+}

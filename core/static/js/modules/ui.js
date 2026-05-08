@@ -82,6 +82,10 @@ export const ui = {
     navPrev: document.getElementById('nav-prev'),
     navNext: document.getElementById('nav-next'),
     
+    // Layout
+    sidebar: document.getElementById('sidebar'),
+    mobileToggle: document.getElementById('mobile-toggle'),
+    
     // Editor Enhancements
     slashMenu: document.getElementById('slash-menu'),
     selectionToolbar: document.getElementById('selection-toolbar')
@@ -91,5 +95,6 @@ export const state = {
     currentUser: null,
     currentFilePath: null,
     setupTotpSecret: null,
-    openFolders: new Set()
+    openFolders: new Set(),
+    isSidebarActive: false
 };

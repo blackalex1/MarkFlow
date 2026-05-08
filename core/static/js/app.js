@@ -69,5 +69,33 @@ if (ui.closeLogin) ui.closeLogin.onclick = () => ui.loginModal.classList.add('hi
 if (ui.closeTotpSetup) ui.closeTotpSetup.onclick = () => ui.totpSetupModal.classList.add('hidden');
 if (ui.btnVerify2fa) ui.btnVerify2fa.onclick = auth.verify2FA;
 
+// Mobile Navigation
+if (ui.mobileToggle) {
+    ui.mobileToggle.onclick = () => {
+        state.isSidebarActive = !state.isSidebarActive;
+        ui.sidebar.classList.toggle('active', state.isSidebarActive);
+        
+        // Change icon based on state
+        const icon = ui.mobileToggle.querySelector('i');
+        if (icon) {
+            icon.setAttribute('data-lucide', state.isSidebarActive ? 'x' : 'menu');
+            if (window.lucide) lucide.createIcons();
+        }
+    };
+}
+
+// Close sidebar on file load (mobile)
+window.addEventListener('load-file', () => {
+    if (state.isSidebarActive) {
+        state.isSidebarActive = false;
+        ui.sidebar.classList.remove('active');
+        const icon = ui.mobileToggle.querySelector('i');
+        if (icon) {
+            icon.setAttribute('data-lucide', 'menu');
+            if (window.lucide) lucide.createIcons();
+        }
+    }
+});
+
 // Start
 init();
