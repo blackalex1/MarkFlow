@@ -12,9 +12,9 @@ server {
         allow all;
     }
 
+    set $p "{{HTTPS_PORT}}";
     location / {
-        # Redirect to HTTPS, including the custom port if specified
-        return 301 "https://$host:{{HTTPS_PORT}}$request_uri";
+        return 301 https://$host:$p$request_uri;
     }
 }
 
