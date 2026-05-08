@@ -52,10 +52,4 @@ server {
 
         client_max_body_size 100M;
     }
-
-    location /config/ {
-        set $upstream markflow:8000;
-        proxy_pass http://$upstream/config/;
-    }
 }
-
