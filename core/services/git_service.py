@@ -141,6 +141,8 @@ def sync_repository(username: str, ip_address: str = ""):
                 if os.path.exists(tmp_path): os.remove(tmp_path)
     else:
         auth_url = get_authenticated_url(url, token)
+        if url.startswith("https://") and not token:
+            raise Exception("Git push failed: Personal Access Token is required for HTTPS. Please set it in Git settings.")
         repo.git.push(auth_url, push_branch)
 
     reindex_all_docs(DOCS_DIR)
