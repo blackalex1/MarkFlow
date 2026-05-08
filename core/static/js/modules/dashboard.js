@@ -166,4 +166,37 @@ export function initDashboardListeners() {
             }
         };
     }
+
+    if (ui.btnChangePassword) {
+        ui.btnChangePassword.onclick = async () => {
+            const old_password = ui.oldPassword.value, new_password = ui.newPassword.value;
+            if (!old_password || !new_password) return toast.warn('Заполните оба поля');
+            
+            try {
+                const res = await fetch('/api/auth/change-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ old_password, new_password })
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    toast.success('Пароль изменен! Пожалуйста, войдите снова.');
+                    setTimeout(() => logout(), 1500);
+                } else {
+                    toast.error(data.detail || 'Ошибка');
+                }
+            } catch (err) {
+                toast.error('Ошибка сети');
+            }
+        };
+    }
+
+    if (ui.btnLogoutAll) {
+        ui.btnLogoutAll.onclick = async () => {
+            if (confirm('Выйти со всех устройств?')) {
+                const res = await fetch('/api/auth/logout-all', { method: 'POST' });
+                if (res.ok) logout();
+            }
+        };
+    }
 }
