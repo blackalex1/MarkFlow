@@ -36,8 +36,8 @@ if [ -f "../.env" ]; then
 fi
 
 docker compose --env-file ../.env up -d --build
-# Explicitly restart nginx to pick up volume changes
-docker compose --env-file ../.env restart nginx
+# Explicitly restart services to pick up volume and code changes
+docker compose --env-file ../.env restart markflow nginx
 
 # 3. Reload Nginx just in case
 echo "### Reloading Nginx configuration..."
