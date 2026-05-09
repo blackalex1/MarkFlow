@@ -112,20 +112,28 @@ export async function loadFileContent(path, pushState = true, hash = null) {
 }
 
 export async function loadFolderContent(path) {
-    const res = await fetch(`/api/files/folder?path=${encodeURIComponent(path)}`);
-    if (res.ok) {
-        const data = await res.json();
-        const { renderFolderGrid, updateBreadcrumbs } = await import('./viewer_ui.js');
-        renderFolderGrid(data);
-        updateBreadcrumbs(path);
-        
-        ui.viewModeContainer.classList.remove('hidden');
-        ui.topBar.classList.add('hidden');
-        if (ui.pageNav) ui.pageNav.classList.add('hidden');
-        if (ui.tocSidebar) ui.tocSidebar.classList.add('hidden');
-        
-        tree.updateTreeHighlighting(path);
-    }
+    ui.contentViewer.classList.add('fade-out');
+    
+    setTimeout(async () => {
+        const res = await fetch(`/api/files/folder?path=${encodeURIComponent(path)}`);
+        if (res.ok) {
+            const data = await res.json();
+            const { renderFolderGrid, updateBreadcrumbs } = await import('./viewer_ui.js');
+            
+            renderFolderGrid(data);
+            updateBreadcrumbs(path);
+            
+            ui.contentViewer.classList.remove('fade-out');
+            ui.contentViewer.classList.add('fade-in');
+            
+            ui.viewModeContainer.classList.remove('hidden');
+            ui.topBar.classList.add('hidden');
+            if (ui.pageNav) ui.pageNav.classList.add('hidden');
+            if (ui.tocSidebar) ui.tocSidebar.classList.add('hidden');
+            
+            tree.updateTreeHighlighting(path);
+        } else renderErrorPage(res.status, path);
+    }, 300);
 }
 
 function renderErrorPage(status, path) {

@@ -18,14 +18,14 @@ export const saveContent = async () => {
     let content = getEditorValue();
 
     if (!path) {
-        toast('No file selected', 'error');
+        toast(t('toast_no_file'), 'error');
         return;
     }
 
     try {
         // 1. Upload pending files first
         const { uploadPendingFiles } = await import(`./image-handler.js?v=${window.APP_VERSION || Date.now()}`);
-        toast('Uploading attachments...', 'info');
+        toast(t('toast_uploading'), 'info');
         content = await uploadPendingFiles(content);
 
         // 2. Save final content
@@ -38,7 +38,7 @@ export const saveContent = async () => {
 
         if (!response.ok) throw new Error(await response.text());
 
-        toast('File saved successfully', 'success');
+        toast(t('toast_save_success'), 'success');
         
         // Wait a bit and reload content to see changes in viewer
         setTimeout(() => {
@@ -46,7 +46,7 @@ export const saveContent = async () => {
         }, 500);
     } catch (error) {
         console.error('Save failed:', error);
-        toast(error.message || 'Failed to save file', 'error');
+        toast(t('toast_save_failed'), 'error');
     }
 };
 
@@ -56,7 +56,7 @@ export const enterEditMode = async () => {
 
     try {
         const res = await fetch(`/api/files/content?path=${encodeURIComponent(path)}`);
-        if (!res.ok) throw new Error('Failed to load content');
+        if (!res.ok) throw new Error(t('toast_load_failed'));
         const data = await res.json();
 
         // Use cache-busting version for dynamic imports
@@ -114,7 +114,7 @@ export const enterEditMode = async () => {
 
     } catch (error) {
         console.error('Edit mode error:', error);
-        toast('Failed to enter edit mode', 'error');
+        toast(t('toast_edit_mode_error'), 'error');
     }
 };
 
@@ -156,9 +156,9 @@ export const updateVisibility = async (public_flag) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ public: public_flag })
         });
-        if (res.ok) toast('Visibility updated', 'success');
+        if (res.ok) toast(t('toast_visibility_updated'), 'success');
     } catch (e) {
-        toast('Failed to update visibility', 'error');
+        toast(t('toast_visibility_failed'), 'error');
     }
 };
 
@@ -170,8 +170,8 @@ export const updateStatus = async (status) => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status })
         });
-        if (res.ok) toast('Status updated', 'success');
+        if (res.ok) toast(t('toast_status_updated'), 'success');
     } catch (e) {
-        toast('Failed to update status', 'error');
+        toast(t('toast_status_failed'), 'error');
     }
 };

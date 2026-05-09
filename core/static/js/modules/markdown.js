@@ -195,7 +195,11 @@ export function initMarked() {
         let text = typeof arg1 === 'object' ? arg1.text : arg3;
         
         const resolvedPath = resolveRelativePath(state.currentFilePath, href);
-        const finalUrl = resolvedPath.startsWith('blob:') ? resolvedPath : `/api/files/content?path=${encodeURIComponent(resolvedPath)}`;
+        
+        let finalUrl = resolvedPath;
+        if (!resolvedPath.startsWith('http') && !resolvedPath.startsWith('blob:') && !resolvedPath.startsWith('data:') && !resolvedPath.startsWith('/api/')) {
+            finalUrl = `/api/files/content?path=${encodeURIComponent(resolvedPath)}`;
+        }
 
         const videoExts = ['.mp4', '.webm', '.ogg'];
         if (videoExts.some(ext => href.toLowerCase().endsWith(ext))) {

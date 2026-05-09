@@ -198,5 +198,18 @@ export const ru = {
     repo_view_key_title: "Текущий уникальный ключ",
     repo_confirm_regen_msg: "ВНИМАНИЕ: Это удалит текущий SSH ключ и создаст новый. Вам нужно будет обновить публичный ключ в настройках вашего Git-хостинга (GitHub/GitLab). Продолжить?",
     btn_confirm_gen: "Пересоздать",
-    toast_sync_success: "Синхронизация завершена успешно"
+    toast_sync_success: "Синхронизация завершена успешно",
+    toast_visibility_updated: "Видимость обновлена",
+    toast_no_file: "Файл не выбран",
+    toast_uploading: "Загрузка вложений...",
+    toast_save_success: "Файл успешно сохранен",
+    toast_save_failed: "Ошибка при сохранении файла",
+    toast_load_failed: "Ошибка при загрузке контента",
+    toast_edit_mode_error: "Не удалось войти в режим редактирования",
+    toast_visibility_failed: "Ошибка обновления видимости",
+    toast_status_updated: "Статус обновлен",
+    toast_status_failed: "Ошибка обновления статуса",
+    toast_draft_found: "Найден несохраненный черновик",
+    btn_restore: "Восстановить",
+    toast_draft_restored: "Черновик восстановлен"
 };

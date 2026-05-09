@@ -27,19 +27,18 @@ def init_db():
             username TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
             is_admin BOOLEAN NOT NULL DEFAULT 0,
-            totp_secret TEXT DEFAULT NULL
+            totp_secret TEXT DEFAULT NULL,
+            role TEXT DEFAULT "guest"
         )
     ''')
     
-    # Add missing columns if they don't exist
+    # Migrations for older installations
     try:
         cursor.execute('ALTER TABLE users ADD COLUMN totp_secret TEXT DEFAULT NULL')
-    except sqlite3.OperationalError:
-        pass
+    except sqlite3.OperationalError: pass
     try:
         cursor.execute('ALTER TABLE users ADD COLUMN role TEXT DEFAULT "guest"')
-    except sqlite3.OperationalError:
-        pass
+    except sqlite3.OperationalError: pass
     
     # Create settings table
     cursor.execute('''
@@ -62,8 +61,7 @@ def init_db():
     ''')
     try:
         cursor.execute('ALTER TABLE audit_logs ADD COLUMN ip_address TEXT')
-    except sqlite3.OperationalError:
-        pass
+    except sqlite3.OperationalError: pass
 
     # Create sessions table
     cursor.execute('''
@@ -86,12 +84,16 @@ def init_db():
             ssh_public_key TEXT,
             is_active BOOLEAN DEFAULT 0,
             auto_sync_interval INTEGER DEFAULT 0,
-            sync_strategy VARCHAR(50) DEFAULT 'rebase',
+            sync_strategy TEXT DEFAULT 'rebase',
             last_auto_sync_at DATETIME,
+            last_sync_status TEXT,
+            last_sync_error TEXT,
+            last_sync_at DATETIME,
             flatten_in_tree BOOLEAN DEFAULT 0
         )
     ''')
     
+    # Temp keys for SSH generation
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS temp_ssh_keys (
             id TEXT PRIMARY KEY,
@@ -99,20 +101,34 @@ def init_db():
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )
     ''')
+
+    # Migrations for older installations
     try:
         cursor.execute('ALTER TABLE git_repositories ADD COLUMN slug TEXT')
         cursor.execute('UPDATE git_repositories SET slug = "repo_" || id WHERE slug IS NULL')
-    except sqlite3.OperationalError:
-        pass
+    except sqlite3.OperationalError: pass
+
     try:
         cursor.execute('ALTER TABLE git_repositories ADD COLUMN last_sync_status TEXT')
+    except sqlite3.OperationalError: pass
+    try:
         cursor.execute('ALTER TABLE git_repositories ADD COLUMN last_sync_error TEXT')
+    except sqlite3.OperationalError: pass
+    try:
         cursor.execute('ALTER TABLE git_repositories ADD COLUMN last_sync_at DATETIME')
+    except sqlite3.OperationalError: pass
+    try:
         cursor.execute('ALTER TABLE git_repositories ADD COLUMN auto_sync_interval INTEGER DEFAULT 0')
+    except sqlite3.OperationalError: pass
+    try:
         cursor.execute('ALTER TABLE git_repositories ADD COLUMN sync_strategy TEXT DEFAULT "rebase"')
+    except sqlite3.OperationalError: pass
+    try:
         cursor.execute('ALTER TABLE git_repositories ADD COLUMN last_auto_sync_at DATETIME')
-    except sqlite3.OperationalError:
-        pass
+    except sqlite3.OperationalError: pass
+    try:
+        cursor.execute('ALTER TABLE git_repositories ADD COLUMN flatten_in_tree BOOLEAN DEFAULT 0')
+    except sqlite3.OperationalError: pass
 
     # Migration: Check if we have existing git config in settings and move it to git_repositories
     cursor.execute("SELECT COUNT(*) FROM git_repositories")

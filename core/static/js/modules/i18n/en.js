@@ -189,5 +189,18 @@ export const en = {
     repo_view_key_title: "Current Unique Key",
     repo_confirm_regen_msg: "WARNING: This will replace the current SSH key. You will need to update it on GitHub. Continue?",
     btn_confirm_gen: "Regenerate",
-    toast_sync_success: "Synchronization completed successfully"
+    toast_sync_success: "Synchronization completed successfully",
+    toast_visibility_updated: "Visibility updated",
+    toast_no_file: "No file selected",
+    toast_uploading: "Uploading attachments...",
+    toast_save_success: "File saved successfully",
+    toast_save_failed: "Failed to save file",
+    toast_load_failed: "Failed to load content",
+    toast_edit_mode_error: "Failed to enter edit mode",
+    toast_visibility_failed: "Failed to update visibility",
+    toast_status_updated: "Status updated",
+    toast_status_failed: "Failed to update status",
+    toast_draft_found: "Unsaved draft found",
+    btn_restore: "Restore",
+    toast_draft_restored: "Draft restored"
 };

@@ -48,10 +48,12 @@ class RepoInput(BaseModel):
     slug: str
     url: str
     branch: str = "master"
+    private_key: Optional[str] = None
     public_key: Optional[str] = None
     key_id: Optional[str] = None
     auto_sync_interval: Optional[int] = 0
     sync_strategy: Optional[str] = "rebase"
+    flatten_in_tree: Optional[bool] = False
 
 @router.get("/repos")
 def api_list_repos(user=Depends(get_maintainer_user)):
@@ -64,7 +66,8 @@ def api_add_repo(request: Request, data: RepoInput, user=Depends(get_maintainer_
     safe_slug = slugify(data.slug) if data.slug else slugify(data.name)
     validate_slug(safe_slug)
     
-    priv = data.private_key
+    priv = data.private_key if data.private_key else None
+    pub = data.public_key if data.public_key else None
     if data.key_id:
         conn = get_db()
         cur = conn.cursor()
@@ -76,7 +79,7 @@ def api_add_repo(request: Request, data: RepoInput, user=Depends(get_maintainer_
             conn.commit()
         conn.close()
 
-    repo_id = add_repository(data.name, safe_slug, data.url, data.branch, priv, data.public_key, data.auto_sync_interval, data.sync_strategy)
+    repo_id = add_repository(data.name, safe_slug, data.url, data.branch, priv, data.public_key, data.auto_sync_interval, data.sync_strategy, data.flatten_in_tree)
     add_audit_log(user["username"], "git_repo_added", f"Name: {data.name}, Slug: {safe_slug}", ip_address=request.client.host)
     return {"id": repo_id, "slug": safe_slug}
 
@@ -96,7 +99,8 @@ def api_update_repo(repo_id: int, data: RepoInput, user=Depends(get_maintainer_u
     safe_slug = slugify(data.slug)
     validate_slug(safe_slug)
     
-    priv = data.private_key
+    priv = data.private_key if data.private_key else None
+    pub = data.public_key if data.public_key else None
     if data.key_id:
         conn = get_db()
         cur = conn.cursor()
@@ -108,7 +112,7 @@ def api_update_repo(repo_id: int, data: RepoInput, user=Depends(get_maintainer_u
             conn.commit()
         conn.close()
 
-    update_repository(repo_id, data.name, safe_slug, data.url, data.branch, priv, data.public_key, data.auto_sync_interval, data.sync_strategy)
+    update_repository(repo_id, data.name, safe_slug, data.url, data.branch, priv, pub, data.auto_sync_interval, data.sync_strategy, data.flatten_in_tree)
     return {"message": "Repository updated", "slug": safe_slug}
 
 @router.get("/ssh-status")

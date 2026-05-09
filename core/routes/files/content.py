@@ -66,7 +66,8 @@ async def save_file_content(path: str, data: FileContent, request: Request, back
     os.makedirs(os.path.dirname(full_path), exist_ok=True)
     
     # Regex to find attachments in Markdown and HTML (images and videos)
-    attachment_regex = r'(?:!\[.*?\]\(|src=["\'])(attachments/[^"\s\)]+)'
+    # Matches any path containing 'attachments/'
+    attachment_regex = r'(?:!\[.*?\]\(|src=["\'])([^"\s\)]*?attachments/[^"\s\)]+)'
     old_content = ""
     if os.path.exists(full_path):
         try:
@@ -80,7 +81,8 @@ async def save_file_content(path: str, data: FileContent, request: Request, back
     orphans = old_attachments - new_attachments
     
     if orphans:
-        background_tasks.add_task(cleanup_orphaned_attachments, list(orphans), user["username"])
+        doc_dir = os.path.dirname(path)
+        background_tasks.add_task(cleanup_orphaned_attachments, list(orphans), doc_dir, user["username"])
     
     with open(full_path, "w", encoding="utf-8") as f:
         f.write(data.content)
@@ -89,14 +91,20 @@ async def save_file_content(path: str, data: FileContent, request: Request, back
     add_audit_log(user["username"], "file_updated", f"Path: {path}", ip_address=request.client.host)
     return {"message": "File saved"}
 
-def cleanup_orphaned_attachments(orphans: list, username: str):
-    for att_rel_path in orphans:
-        if not is_image_referenced(att_rel_path):
+def cleanup_orphaned_attachments(orphans: list, doc_dir: str, username: str):
+    for att_path in orphans:
+        if not is_image_referenced(att_path):
             try:
-                att_full_path = get_safe_path(DOCS_DIR, att_rel_path)
+                # Resolve relative path if necessary
+                if att_path.startswith('.'):
+                    rel_to_root = os.path.normpath(os.path.join(doc_dir, att_path)).replace('\\', '/')
+                else:
+                    rel_to_root = att_path
+                
+                att_full_path = get_safe_path(DOCS_DIR, rel_to_root)
                 if os.path.exists(att_full_path):
                     os.remove(att_full_path)
-                    add_audit_log("system", "attachment_cleanup", f"Deleted orphaned attachment: {att_rel_path} (after {username} edit)")
+                    add_audit_log("system", "attachment_cleanup", f"Deleted orphaned attachment: {rel_to_root} (after {username} edit)")
             except Exception as e:
-                print(f"Failed to cleanup attachment {att_rel_path}: {e}")
+                print(f"Failed to cleanup attachment {att_path}: {e}")
 
