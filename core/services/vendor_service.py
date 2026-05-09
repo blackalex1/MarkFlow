@@ -35,6 +35,14 @@ LIBRARIES = [
     ("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Size3-Regular.woff2", "css/fonts/KaTeX_Size3-Regular.woff2"),
     ("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Size4-Regular.woff2", "css/fonts/KaTeX_Size4-Regular.woff2"),
     
+    # Missing fonts reported by user
+    ("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Math-BoldItalic.woff2", "css/fonts/KaTeX_Math-BoldItalic.woff2"),
+    ("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Math-BoldItalic.woff", "css/fonts/KaTeX_Math-BoldItalic.woff"),
+    ("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Math-BoldItalic.ttf", "css/fonts/KaTeX_Math-BoldItalic.ttf"),
+    ("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Caligraphic-Regular.woff2", "css/fonts/KaTeX_Caligraphic-Regular.woff2"),
+    ("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Caligraphic-Regular.woff", "css/fonts/KaTeX_Caligraphic-Regular.woff"),
+    ("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Caligraphic-Regular.ttf", "css/fonts/KaTeX_Caligraphic-Regular.ttf"),
+    
     # FontAwesome 4.7.0 (for EasyMDE)
     ("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css", "css/font-awesome.min.css"),
     ("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/fonts/fontawesome-webfont.woff2", "fonts/fontawesome-webfont.woff2"),

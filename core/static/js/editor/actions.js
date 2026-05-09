@@ -68,11 +68,11 @@ export const enterEditMode = async () => {
             editorInstance = createEditor(ui.contentEditor, path);
         }
         
-        ui.contentViewer.classList.add('hidden');
-        ui.contentEditor.classList.remove('hidden');
-        ui.btnEdit.classList.add('hidden');
-        ui.btnSave.classList.remove('hidden');
-        ui.btnCancel.classList.remove('hidden');
+        if (ui.contentViewer) ui.contentViewer.classList.add('hidden');
+        if (ui.contentEditor) ui.contentEditor.classList.remove('hidden');
+        if (ui.btnEdit) ui.btnEdit.classList.add('hidden');
+        if (ui.btnSave) ui.btnSave.classList.remove('hidden');
+        if (ui.btnCancel) ui.btnCancel.classList.remove('hidden');
         
         if (ui.tocSidebar) ui.tocSidebar.classList.add('hidden');
         document.body.classList.add('is-editing');
@@ -125,11 +125,11 @@ export const exitEditMode = (reload = false, discardDraft = false) => {
         localStorage.removeItem(`mf_draft_${path}`);
     }
 
-    ui.contentViewer.classList.remove('hidden');
-    ui.contentEditor.classList.add('hidden');
-    ui.btnEdit.classList.remove('hidden');
-    ui.btnSave.classList.add('hidden');
-    ui.btnCancel.classList.add('hidden');
+    if (ui.contentViewer) ui.contentViewer.classList.remove('hidden');
+    if (ui.contentEditor) ui.contentEditor.classList.add('hidden');
+    if (ui.btnEdit) ui.btnEdit.classList.remove('hidden');
+    if (ui.btnSave) ui.btnSave.classList.add('hidden');
+    if (ui.btnCancel) ui.btnCancel.classList.add('hidden');
     
     if (ui.tocSidebar) ui.tocSidebar.classList.remove('hidden');
     document.body.classList.remove('is-editing');

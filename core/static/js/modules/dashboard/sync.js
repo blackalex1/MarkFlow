@@ -13,11 +13,17 @@ export function setSyncStatus(success, message = '') {
     }
 
     if (success) {
-        ui.syncStatusIcon.innerHTML = '<i data-lucide="check-circle" style="color: var(--success-color); width: 18px; height: 18px;"></i>';
-        if (ui.syncStatusText) ui.syncStatusText.innerText = i18n.t('sync_success') || 'Success';
+        ui.syncStatusIcon.innerHTML = '<i data-lucide="check-circle" style="color: #22c55e; width: 18px; height: 18px;"></i>';
+        if (ui.syncStatusText) {
+            ui.syncStatusText.innerText = i18n.t('sync_success') || 'Success';
+            ui.syncStatusText.style.color = '#22c55e';
+        }
     } else {
-        ui.syncStatusIcon.innerHTML = '<i data-lucide="x-circle" style="color: var(--danger-color); width: 18px; height: 18px;"></i>';
-        if (ui.syncStatusText) ui.syncStatusText.innerText = message || i18n.t('sync_failed') || 'Error';
+        ui.syncStatusIcon.innerHTML = '<i data-lucide="x-circle" style="color: #ef4444; width: 18px; height: 18px;"></i>';
+        if (ui.syncStatusText) {
+            ui.syncStatusText.innerText = message === 'Failed' ? (i18n.t('sync_failed') || 'Failed') : (message || i18n.t('sync_failed') || 'Error');
+            ui.syncStatusText.style.color = '#ef4444';
+        }
     }
     
     if (window.lucide) {
@@ -65,13 +71,16 @@ export function initSync() {
             ui.btnGitSync.innerText = i18n.t('btn_syncing') || 'Syncing...';
             
             if (ui.syncStatusIcon) ui.syncStatusIcon.innerHTML = '<div class="spinner-small"></div>';
-            if (ui.syncStatusText) ui.syncStatusText.innerText = 'Syncing...';
+            if (ui.syncStatusText) {
+                ui.syncStatusText.innerText = i18n.t('btn_syncing') || 'Syncing...';
+                ui.syncStatusText.style.color = '#f59e0b';
+            }
 
             try {
                 const res = await fetch('/api/git/sync', { method: 'POST' });
                 const data = await res.json();
                 if (res.ok) {
-                    toast.success(data.message || 'Успешно!');
+                    toast.success(i18n.t('toast_sync_success') || 'Synchronization successful!');
                     setSyncStatus(true);
                     loadRepositories();
                 } else {
@@ -89,7 +98,12 @@ export function initSync() {
 
     if (ui.btnGitForceSync) {
         ui.btnGitForceSync.onclick = async () => {
-            const confirmed = confirm(i18n.t('confirm_force_sync') || 'WARNING: This will discard all local changes and match the remote state. Continue?');
+            const confirmed = await window.confirmAction(
+                i18n.t('confirm_force_sync_title') || 'Force Sync',
+                i18n.t('confirm_force_sync') || 'WARNING: This will replace all local changes with the remote state.',
+                i18n.t('btn_force_sync') || 'Force Sync',
+                i18n.t('btn_cancel') || 'Cancel'
+            );
             if (!confirmed) return;
 
             ui.btnGitForceSync.disabled = true;
@@ -97,13 +111,16 @@ export function initSync() {
             ui.btnGitForceSync.innerText = '...';
             
             if (ui.syncStatusIcon) ui.syncStatusIcon.innerHTML = '<div class="spinner-small"></div>';
-            if (ui.syncStatusText) ui.syncStatusText.innerText = 'Syncing...';
+            if (ui.syncStatusText) {
+                ui.syncStatusText.innerText = i18n.t('btn_syncing') || 'Syncing...';
+                ui.syncStatusText.style.color = '#f59e0b';
+            }
 
             try {
                 const res = await fetch('/api/git/sync?force=true', { method: 'POST' });
                 const data = await res.json();
                 if (res.ok) {
-                    toast.success(data.message || 'Force sync successful!');
+                    toast.success(i18n.t('toast_sync_success') || 'Synchronization successful!');
                     setSyncStatus(true);
                     loadRepositories();
                     window.dispatchEvent(new CustomEvent('tree-update-required'));

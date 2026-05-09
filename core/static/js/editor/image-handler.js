@@ -3,9 +3,37 @@
  * Implements lazy loading: files are uploaded only when 'Save' is clicked.
  */
 import { toast } from '../modules/toasts.js';
+import { state } from '../modules/ui.js';
 
 // Map to store temporary Blob URLs and their corresponding File objects
 export const pendingUploads = new Map();
+
+/**
+ * Calculates a relative path from one path to another
+ */
+function getRelativePath(from, to) {
+    const fromParts = from.split('/').filter(p => p);
+    const toParts = to.split('/').filter(p => p);
+    
+    // Remove the filename from 'from'
+    fromParts.pop();
+    
+    let i = 0;
+    while (i < fromParts.length && i < toParts.length && fromParts[i] === toParts[i]) {
+        i++;
+    }
+    
+    let rel = '';
+    for (let j = i; j < fromParts.length; j++) {
+        rel += '../';
+    }
+    
+    for (let j = i; j < toParts.length; j++) {
+        rel += toParts[j] + (j < toParts.length - 1 ? '/' : '');
+    }
+    
+    return rel || './';
+}
 
 export const handleFileUpload = (editor, file) => {
     const isVideo = file.type.startsWith('video/');
@@ -34,6 +62,9 @@ export const uploadPendingFiles = async (content) => {
             const file = pendingUploads.get(blobUrl);
             const formData = new FormData();
             formData.append('file', file);
+            if (state.currentFilePath) {
+                formData.append('target_path', state.currentFilePath);
+            }
 
             try {
                 const response = await fetch('/api/files/upload-image', {
@@ -44,8 +75,14 @@ export const uploadPendingFiles = async (content) => {
                 if (!response.ok) throw new Error(await response.text());
                 const data = await response.json();
                 
-                // Replace ALL occurrences of this blob URL with the server path
-                finalContent = finalContent.split(blobUrl).join(data.path);
+                // Calculate relative path for Git portability
+                let insertPath = data.path;
+                if (state.currentFilePath) {
+                    insertPath = getRelativePath(state.currentFilePath, data.path);
+                }
+                
+                // Replace ALL occurrences of this blob URL with the relative path
+                finalContent = finalContent.split(blobUrl).join(insertPath);
                 
                 // Cleanup
                 URL.revokeObjectURL(blobUrl);

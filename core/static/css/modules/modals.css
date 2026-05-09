@@ -1,17 +1,21 @@
 /* --- Modals --- */
-.modal {
+.modal, .modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.7);
     backdrop-filter: blur(8px);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1000;
+    z-index: 99999;
     transition: var(--transition);
+}
+
+.modal-sm {
+    max-width: 400px;
 }
 
 .modal-content {
@@ -126,6 +130,12 @@
     width: 100%;
     height: 2px;
     background: var(--primary-color);
+}
+
+.modal-footer {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 12px;
 }
 
 /* Admin Tables */

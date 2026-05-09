@@ -13,7 +13,7 @@ from core.database import (
     add_repository, update_repository, delete_repository, set_active_repository, get_db
 )
 from core.config import limiter, SECURITY_LIMITS
-from core.services.git_service import get_repo, sync_repository, get_authenticated_url
+from core.services.git_service import get_repo, sync_repository
 from core.services.ssh_service import generate_ssh_key, save_ssh_key
 
 def slugify(text: str) -> str:
@@ -48,9 +48,10 @@ class RepoInput(BaseModel):
     slug: str
     url: str
     branch: str = "master"
-    private_key: Optional[str] = None
     public_key: Optional[str] = None
     key_id: Optional[str] = None
+    auto_sync_interval: Optional[int] = 0
+    sync_strategy: Optional[str] = "rebase"
 
 @router.get("/repos")
 def api_list_repos(user=Depends(get_maintainer_user)):
@@ -75,7 +76,7 @@ def api_add_repo(request: Request, data: RepoInput, user=Depends(get_maintainer_
             conn.commit()
         conn.close()
 
-    repo_id = add_repository(data.name, safe_slug, data.url, data.branch, priv, data.public_key)
+    repo_id = add_repository(data.name, safe_slug, data.url, data.branch, priv, data.public_key, data.auto_sync_interval, data.sync_strategy)
     add_audit_log(user["username"], "git_repo_added", f"Name: {data.name}, Slug: {safe_slug}", ip_address=request.client.host)
     return {"id": repo_id, "slug": safe_slug}
 
@@ -107,7 +108,7 @@ def api_update_repo(repo_id: int, data: RepoInput, user=Depends(get_maintainer_u
             conn.commit()
         conn.close()
 
-    update_repository(repo_id, data.name, safe_slug, data.url, data.branch, priv, data.public_key)
+    update_repository(repo_id, data.name, safe_slug, data.url, data.branch, priv, data.public_key, data.auto_sync_interval, data.sync_strategy)
     return {"message": "Repository updated", "slug": safe_slug}
 
 @router.get("/ssh-status")
@@ -226,18 +227,19 @@ def get_git_config(user=Depends(get_maintainer_user)):
         "is_valid": bool(repo['ssh_private_key']),
         "last_sync_status": repo.get('last_sync_status'),
         "last_sync_error": repo.get('last_sync_error'),
-        "last_sync_at": repo.get('last_sync_at')
+        "last_sync_at": repo.get('last_sync_at'),
+        "auto_sync_interval": repo.get('auto_sync_interval'),
+        "sync_strategy": repo.get('sync_strategy')
     }
 
 @router.post("/sync")
 @limiter.limit(SECURITY_LIMITS["file_ops"])
 def api_sync_git(request: Request, force: bool = False, user=Depends(get_maintainer_user)):
     try:
-        return sync_repository(user["username"], force=force, ip_address=request.client.host)
+        return sync_repository(user["username"], force=force, ip_address=request.client.host, is_auto=False)
     except GitCommandError as e:
         error_msg = str(e)
         repo = get_active_repository()
-        if repo and repo['token']: error_msg = error_msg.replace(repo['token'], "********")
         add_audit_log(user["username"], "git_sync_failed", error_msg[:200], ip_address=request.client.host)
         raise HTTPException(status_code=500, detail=f"Git error: {error_msg}")
     except Exception as e:

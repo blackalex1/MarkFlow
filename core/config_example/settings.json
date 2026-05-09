@@ -1,5 +1,6 @@
 {
     "app_name": "MarkFlow",
+    "primary_color": "#6366f1",
     "_help": "Rate limits syntax: 'X/second', 'X/minute', 'X/hour', 'X/day', 'X/month', 'X/year'. Examples: '10/m', '60/hour', '5/s'.",
     "use_logo": false,
     "logo_path": "/config/logo.png",

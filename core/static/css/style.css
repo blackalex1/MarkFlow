@@ -16,6 +16,7 @@
 @import url("./modules/navigation.css");
 
 /* Content Components */
+@import url("./modules/content.css");
 @import url("./editor/main.css");
 @import url("./modules/code.css");
 @import url("./modules/tables.css");

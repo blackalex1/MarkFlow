@@ -1,8 +1,29 @@
 import { t } from './i18n.js';
+import { state } from './ui.js';
 
 function escapeHtml(text) {
     const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
     return text.replace(/[&<>"']/g, m => map[m]);
+}
+
+function resolveRelativePath(currentPath, href) {
+    if (!href || href.startsWith('http') || href.startsWith('/') || href.startsWith('data:') || href.startsWith('blob:')) return href;
+    if (!currentPath) return href;
+
+    const currentDir = currentPath.split('/').filter(p => p);
+    currentDir.pop(); // Remove filename
+    
+    const hrefParts = href.split('/').filter(p => p);
+
+    for (const part of hrefParts) {
+        if (part === '..') {
+            if (currentDir.length > 0) currentDir.pop();
+        } else if (part !== '.') {
+            currentDir.push(part);
+        }
+    }
+
+    return currentDir.join('/');
 }
 
 const CALLOUT_MAP = {
@@ -173,17 +194,20 @@ export function initMarked() {
         let title = typeof arg1 === 'object' ? arg1.title : arg2;
         let text = typeof arg1 === 'object' ? arg1.text : arg3;
         
+        const resolvedPath = resolveRelativePath(state.currentFilePath, href);
+        const finalUrl = resolvedPath.startsWith('blob:') ? resolvedPath : `/api/files/content?path=${encodeURIComponent(resolvedPath)}`;
+
         const videoExts = ['.mp4', '.webm', '.ogg'];
         if (videoExts.some(ext => href.toLowerCase().endsWith(ext))) {
             return `<div class="video-wrapper">
                         <video controls class="markdown-video">
-                            <source src="${href}" type="video/${href.split('.').pop()}">
+                            <source src="${finalUrl}" type="video/${href.split('.').pop()}">
                             Your browser does not support the video tag.
                         </video>
                         ${text ? `<div class="video-caption">${escapeHtml(text)}</div>` : ''}
                     </div>`;
         }
-        return `<img src="${href}" alt="${escapeHtml(text || '')}" title="${escapeHtml(title || '')}">`;
+        return `<img src="${finalUrl}" alt="${escapeHtml(text || '')}" title="${escapeHtml(title || '')}">`;
     };
 
     marked.setOptions({ renderer, breaks: true, gfm: true, headerIds: true, mangle: false });

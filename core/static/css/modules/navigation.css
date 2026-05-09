@@ -44,7 +44,12 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--primary-color);
-    margin-bottom: 6px;
+    margin-bottom: 4px;
+    line-height: 1;
+}
+
+.nav-label:last-child {
+    margin-bottom: 0;
 }
 
 .nav-title {
@@ -54,6 +59,10 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+.nav-title:empty {
+    display: none;
 }
 
 .nav-btn i {

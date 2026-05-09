@@ -210,14 +210,13 @@ def initialize_volumes():
     if not os.path.exists(config_dir):
         os.makedirs(config_dir, exist_ok=True)
         
-    # Copy from example if config is essentially empty (no settings.json)
-    settings_path = os.path.join(config_dir, "settings.json")
-    if not os.path.exists(settings_path):
-        for item in os.listdir(example_dir):
-            s = os.path.join(example_dir, item)
-            d = os.path.join(config_dir, item)
-            if os.path.isdir(s):
-                if not os.path.exists(d):
-                    shutil.copytree(s, d)
-            else:
+    # Copy from example if file is missing in config
+    for item in os.listdir(example_dir):
+        s = os.path.join(example_dir, item)
+        d = os.path.join(config_dir, item)
+        if os.path.isdir(s):
+            if not os.path.exists(d):
+                shutil.copytree(s, d)
+        else:
+            if not os.path.exists(d):
                 shutil.copy2(s, d)

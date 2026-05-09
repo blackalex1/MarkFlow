@@ -42,17 +42,24 @@ export async function loadFileContent(path, pushState = true, hash = null) {
                 USE_PROFILES: { html: true, mathMl: true, svg: true }
             });
             
-            ui.contentViewer.innerHTML = cleanHTML;
-            ui.contentViewer.classList.remove('fade-out');
-            ui.contentViewer.classList.add('fade-in');
-            ui.contentViewer.querySelectorAll('pre code').forEach(b => {
-                if (!b.classList.contains('language-end')) hljs.highlightElement(b);
-            });
+            if (ui.contentViewer) {
+                ui.contentViewer.innerHTML = cleanHTML;
+                ui.contentViewer.classList.remove('fade-out');
+                ui.contentViewer.classList.add('fade-in');
+                ui.contentViewer.querySelectorAll('pre code').forEach(b => {
+                    if (!b.classList.contains('language-end')) hljs.highlightElement(b);
+                });
+            }
 
-            if (window.renderMathInElement) {
+            if (window.renderMathInElement && ui.contentViewer) {
                 renderMathInElement(ui.contentViewer, {
-                    delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}],
-                    throwOnError: false
+                    delimiters: [
+                        {left: '$$', right: '$$', display: true}, 
+                        {left: '$', right: '$', display: false}
+                    ],
+                    throwOnError: false,
+                    strict: false,
+                    trust: true
                 });
             }
 
@@ -62,7 +69,7 @@ export async function loadFileContent(path, pushState = true, hash = null) {
             addCopyButtons();
             updateBreadcrumbs(path);
             
-            if (window.mermaid) {
+            if (window.mermaid && ui.contentViewer) {
                 // Use a slight delay to ensure elements are visible and have dimensions
                 setTimeout(() => {
                     try {
@@ -80,9 +87,11 @@ export async function loadFileContent(path, pushState = true, hash = null) {
             }
             if (window.lucide) lucide.createIcons();
             
-            ui.contentViewer.querySelectorAll('.task-list-item input[type="checkbox"]').forEach(cb => {
-                cb.disabled = true;
-            });
+            if (ui.contentViewer) {
+                ui.contentViewer.querySelectorAll('.task-list-item input[type="checkbox"]').forEach(cb => {
+                    cb.disabled = true;
+                });
+            }
             
             if (hash) {
                 setTimeout(() => {
@@ -91,9 +100,11 @@ export async function loadFileContent(path, pushState = true, hash = null) {
                 }, 100);
             }
             
-            if (state.currentUser && state.currentUser.role !== 'guest' && state.currentUser.role !== 'reporter') {
-                ui.topBar.classList.remove('hidden');
-            } else ui.topBar.classList.add('hidden');
+            if (ui.topBar) {
+                if (state.currentUser && state.currentUser.role !== 'guest' && state.currentUser.role !== 'reporter') {
+                    ui.topBar.classList.remove('hidden');
+                } else ui.topBar.classList.add('hidden');
+            }
             
             tree.updateTreeHighlighting(path);
         } else renderErrorPage(res.status, path);
@@ -154,12 +165,14 @@ function initTOCObserver() {
 
 export async function deleteCurrentFile() {
     if (!state.currentFilePath) return;
-    toast.show(t("confirm_delete") || "Delete?", "warning", 0, {
-        label: t("btn_delete") || "Delete",
-        callback: async () => {
-            const res = await fetch(`/api/files/delete?path=${encodeURIComponent(state.currentFilePath)}`, { method: 'DELETE' });
-            if (res.ok) location.href = '/';
-            else toast.error('Error');
-        }
-    });
+    const confirmed = await window.confirmAction(
+        t('confirm_delete_title') || 'Delete File',
+        `${t('confirm_delete_msg') || 'Are you sure you want to delete'} "${state.currentFilePath}"?`,
+        t('btn_delete') || 'Delete',
+        t('btn_cancel') || 'Cancel'
+    );
+    if (!confirmed) return;
+    const res = await fetch(`/api/files/delete?path=${encodeURIComponent(state.currentFilePath)}`, { method: 'DELETE' });
+    if (res.ok) location.href = '/';
+    else toast.error('Error');
 }

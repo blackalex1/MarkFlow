@@ -30,4 +30,13 @@
     <script src="/static/vendor/js/auto-render.min.js"></script>
     <script>window.APP_VERSION = "{{ app_version }}";</script>
     <link rel="stylesheet" href="/static/css/editor/markflow-editor.css?v={{ app_version }}">
+    <link rel="stylesheet" href="/static/css/modules/color-picker.css?v={{ app_version }}">
+    
+    <!-- Custom Accent Color -->
+    <style id="custom-theme-vars">
+        :root {
+            --primary-color: {{ config.primary_color if config.primary_color else '#6366f1' }};
+            --primary-rgb: {{ config.primary_rgb if config.primary_rgb else '99, 102, 241' }};
+        }
+    </style>
 </head>

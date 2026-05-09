@@ -24,26 +24,26 @@ def get_repository(repo_id: int):
     conn.close()
     return dict(row) if row else None
 
-def add_repository(name: str, slug: str, url: str, branch: str = 'master', priv: str = None, pub: str = None):
+def add_repository(name: str, slug: str, url: str, branch: str = 'master', priv: str = None, pub: str = None, interval: int = 0, strategy: str = 'rebase'):
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute('''
-        INSERT INTO git_repositories (name, slug, url, branch, ssh_private_key, ssh_public_key, is_active)
-        VALUES (?, ?, ?, ?, ?, ?, 0)
-    ''', (name, slug, url, branch, priv, pub))
+        INSERT INTO git_repositories (name, slug, url, branch, ssh_private_key, ssh_public_key, is_active, auto_sync_interval, sync_strategy)
+        VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?)
+    ''', (name, slug, url, branch, priv, pub, interval, strategy))
     new_id = cursor.lastrowid
     conn.commit()
     conn.close()
     return new_id
 
-def update_repository(repo_id: int, name: str, slug: str, url: str, branch: str, priv: str = None, pub: str = None):
+def update_repository(repo_id: int, name: str, slug: str, url: str, branch: str, priv: str = None, pub: str = None, interval: int = 0, strategy: str = 'rebase'):
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute('''
         UPDATE git_repositories 
-        SET name = ?, slug = ?, url = ?, branch = ?, ssh_private_key = ?, ssh_public_key = ?
+        SET name = ?, slug = ?, url = ?, branch = ?, ssh_private_key = ?, ssh_public_key = ?, auto_sync_interval = ?, sync_strategy = ?
         WHERE id = ?
-    ''', (name, slug, url, branch, priv, pub, repo_id))
+    ''', (name, slug, url, branch, priv, pub, interval, strategy, repo_id))
     conn.commit()
     conn.close()
 

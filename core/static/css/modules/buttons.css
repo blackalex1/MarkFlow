@@ -43,9 +43,9 @@
 }
 
 .btn-outline:hover {
-    background: rgba(255,255,255,0.05);
+    background: var(--primary-color);
     color: #fff;
-    border-color: #fff;
+    border-color: var(--primary-color);
 }
 
 .btn-sm {
@@ -66,7 +66,7 @@
 }
 
 .btn-text:hover {
-    color: #fff;
+    color: var(--primary-color);
     text-decoration: underline;
 }
 .btn-primary {
@@ -107,8 +107,8 @@
 }
 
 .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff !important;
+    background: var(--border-color);
+    color: var(--text-heading) !important;
 }
 
 .btn-danger-hover:hover {

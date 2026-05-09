@@ -1,3 +1,5 @@
+import os
+import json
 import secrets
 from .db.base import get_db, pwd_context, DB_PATH
 from .db.users import (
@@ -82,7 +84,11 @@ def init_db():
             branch TEXT DEFAULT 'master',
             ssh_private_key TEXT,
             ssh_public_key TEXT,
-            is_active BOOLEAN DEFAULT 0
+            is_active BOOLEAN DEFAULT 0,
+            auto_sync_interval INTEGER DEFAULT 0,
+            sync_strategy VARCHAR(50) DEFAULT 'rebase',
+            last_auto_sync_at DATETIME,
+            flatten_in_tree BOOLEAN DEFAULT 0
         )
     ''')
     
@@ -102,6 +108,9 @@ def init_db():
         cursor.execute('ALTER TABLE git_repositories ADD COLUMN last_sync_status TEXT')
         cursor.execute('ALTER TABLE git_repositories ADD COLUMN last_sync_error TEXT')
         cursor.execute('ALTER TABLE git_repositories ADD COLUMN last_sync_at DATETIME')
+        cursor.execute('ALTER TABLE git_repositories ADD COLUMN auto_sync_interval INTEGER DEFAULT 0')
+        cursor.execute('ALTER TABLE git_repositories ADD COLUMN sync_strategy TEXT DEFAULT "rebase"')
+        cursor.execute('ALTER TABLE git_repositories ADD COLUMN last_auto_sync_at DATETIME')
     except sqlite3.OperationalError:
         pass
 
@@ -158,6 +167,22 @@ def init_db():
         if not cursor.fetchone():
             new_secret = secrets.token_urlsafe(32)
             cursor.execute('INSERT INTO settings (key, value) VALUES (?, ?)', (key_name, new_secret))
+
+    # Migration: Initial settings from JSON to DB if empty
+    cursor.execute("SELECT COUNT(*) FROM settings WHERE key = 'app_name'")
+    if cursor.fetchone()[0] == 0:
+        try:
+            example_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config_example", "settings.json")
+            if os.path.exists(example_path):
+                with open(example_path, "r", encoding="utf-8") as f:
+                    initial_settings = json.load(f)
+                    for k, v in initial_settings.items():
+                        # Store dicts/lists as JSON strings
+                        val = json.dumps(v) if isinstance(v, (dict, list)) else str(v)
+                        cursor.execute('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)', (k, val))
+                print(" Initial settings migrated to database.")
+        except Exception as e:
+            print(f" Warning: Could not migrate initial settings: {e}")
     # Create FTS5 virtual table for documentation search
     try:
         cursor.execute('CREATE VIRTUAL TABLE IF NOT EXISTS fts_docs USING fts5(path, name, content)')

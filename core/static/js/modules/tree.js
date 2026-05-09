@@ -194,7 +194,14 @@ function showContextMenu(e, node) {
 
 async function handleMenuCommand(cmd, node) {
     if (cmd === 'delete') {
-        if (confirm(`Delete ${node.type} "${node.name}"?`)) {
+        const typeStr = node.type === 'folder' ? (t('type_folder') || 'folder') : (t('type_file') || 'file');
+        const confirmed = await window.confirmAction(
+            t('confirm_delete_title') || 'Confirm Delete',
+            `${t('confirm_delete_msg') || 'Are you sure you want to delete'} ${typeStr} "${node.name}"?`,
+            t('btn_delete') || 'Delete',
+            t('btn_cancel') || 'Cancel'
+        );
+        if (confirmed) {
             const res = await fetch(`/api/files/delete?path=${encodeURIComponent(node.path)}`, { method: 'DELETE' });
             if (res.ok) {
                 toast.success(`${node.type} deleted`);

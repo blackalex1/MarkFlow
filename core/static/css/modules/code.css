@@ -1,6 +1,6 @@
 pre {
     position: relative;
-    background: var(--bg-code, #0d0d0f);
+    background: var(--bg-code);
     border: 1px solid var(--border-color);
     border-radius: 12px;
     padding: 1.5em;

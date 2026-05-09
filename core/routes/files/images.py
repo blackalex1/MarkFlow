@@ -1,17 +1,31 @@
 import os
-import uuid
 import io
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request
+import re
+import hashlib
+from typing import Optional
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Request, Form
 from PIL import Image
-from core.database import set_public, add_audit_log
+from core.database import set_public, add_audit_log, get_db
 from core.auth import get_developer_user
 from core.config import DOCS_DIR, limiter, SECURITY_LIMITS
 
 router = APIRouter()
 
+def is_git_repo(slug: str) -> bool:
+    """Checks if a slug corresponds to a registered Git repository."""
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("SELECT 1 FROM git_repositories WHERE slug = ?", (slug,))
+        exists = cur.fetchone() is not None
+        conn.close()
+        return exists
+    except Exception:
+        return False
+
 @router.post("/upload-image")
 @limiter.limit(SECURITY_LIMITS["file_ops"])
-async def upload_image(request: Request, file: UploadFile = File(...), user=Depends(get_developer_user)):
+async def upload_image(request: Request, file: UploadFile = File(...), target_path: Optional[str] = Form(None), user=Depends(get_developer_user)):
     """Securely uploads an image or video attachment."""
     ext = os.path.splitext(file.filename)[1].lower()
     image_exts = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"]
@@ -20,7 +34,16 @@ async def upload_image(request: Request, file: UploadFile = File(...), user=Depe
     if ext not in image_exts + video_exts:
         raise HTTPException(status_code=400, detail="Invalid file format")
         
-    attachments_dir = os.path.join(DOCS_DIR, "attachments")
+    # Determine save directory
+    save_base = "attachments"
+    if target_path:
+        parts = target_path.strip("/").split("/")
+        if len(parts) > 1:
+            repo_slug = parts[0]
+            if is_git_repo(repo_slug):
+                save_base = os.path.join(repo_slug, "attachments")
+    
+    attachments_dir = os.path.join(DOCS_DIR, save_base)
     os.makedirs(attachments_dir, exist_ok=True)
     
     content = await file.read()
@@ -32,7 +55,6 @@ async def upload_image(request: Request, file: UploadFile = File(...), user=Depe
         if ext in image_exts:
             if ext == ".svg":
                 svg_text = content.decode("utf-8", errors="ignore")
-                import re
                 svg_text = re.sub(r'<script.*?>.*?</script>', '', svg_text, flags=re.DOTALL | re.IGNORECASE)
                 svg_text = re.sub(r'\son\w+=".*?"', '', svg_text, flags=re.IGNORECASE)
                 svg_text = re.sub(r'\son\w+=\'.*?\'', '', svg_text, flags=re.IGNORECASE)
@@ -75,18 +97,17 @@ async def upload_image(request: Request, file: UploadFile = File(...), user=Depe
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Validation failed: {str(e)}")
 
-    # 2. Hash calculation on PROCESSED content for deduplication
-    import hashlib
+    # 2. Hash calculation
     file_hash = hashlib.sha256(content).hexdigest()
     filename = f"{file_hash}{ext}"
-    rel_path = f"attachments/{filename}"
+    rel_path = os.path.join(save_base, filename).replace("\\", "/")
     full_path = os.path.join(attachments_dir, filename)
     
     # 3. Duplicate check
     if os.path.exists(full_path):
         return {"path": rel_path, "url": f"/api/files/content?path={rel_path}"}
     
-    # 4. Save final sanitized file
+    # 4. Save
     try:
         with open(full_path, "wb") as buffer:
             buffer.write(content)

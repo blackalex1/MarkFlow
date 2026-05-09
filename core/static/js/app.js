@@ -8,6 +8,7 @@ import { initSearch } from './modules/search.js';
 import { initGlobalHandlers } from './modules/utils.js';
 import * as i18n from './modules/i18n.js';
 import { initDashboardListeners } from './modules/dashboard.js';
+import './modules/confirm.js';
 
 // Initialization
 async function init() {

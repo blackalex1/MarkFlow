@@ -22,21 +22,17 @@ def get_repo(path=DOCS_DIR):
         repo = Repo.init(path)
         return repo
 
-def get_authenticated_url(url: str, token: str = None) -> str:
-    if not token:
-        return url
-    if url.startswith("https://"):
-        clean_url = re.sub(r"https://[^@]+@", "https://", url)
-        return clean_url.replace("https://", f"https://{token}@")
-    return url
 
-def sync_repository(username: str, force: bool = False, ip_address: str = ""):
-    add_audit_log(username, "git_sync_start", f"Force: {force}", ip_address=ip_address)
-    
+
+def sync_repository(username: str, force: bool = False, ip_address: str = "", is_auto: bool = False):
     active_repo = get_active_repository()
     if not active_repo:
         return {"message": "No active repository configured."}
+    return _sync_repository_internal(active_repo, username, force, ip_address, is_auto)
 
+def _sync_repository_internal(active_repo: dict, username: str, force: bool = False, ip_address: str = "", is_auto: bool = True):
+    add_audit_log(username, "git_sync_start", f"Force: {force}, Repo: {active_repo['name']}", ip_address=ip_address)
+    
     def update_sync_status(status, error=None):
         try:
             conn = get_db()
@@ -120,9 +116,10 @@ def sync_repository(username: str, force: bool = False, ip_address: str = ""):
                         with open(gitignore_path, "w") as f: f.write("\n".join(new_ignores) + "\n")
                 except: pass
 
-                if force:
+                strategy = active_repo.get('sync_strategy', 'rebase')
+                
+                if force or strategy == 'force':
                     repo.git.fetch('origin')
-                    # Ensure we are on the correct branch locally
                     try:
                         repo.git.checkout(branch_name)
                     except:
@@ -130,28 +127,41 @@ def sync_repository(username: str, force: bool = False, ip_address: str = ""):
                     
                     repo.git.reset('--hard', f'origin/{branch_name}')
                     repo.git.clean('-fd')
-                    add_audit_log(username, "git_force_sync_success", ip_address=ip_address)
+                    add_audit_log(username, "git_force_sync_success", f"Strategy: {strategy}", ip_address=ip_address)
+                elif strategy == 'pr':
+                    # Push local changes to a NEW unique branch
+                    import time
+                    timestamp = int(time.time())
+                    pr_branch = f"auto-sync-{timestamp}"
+                    
+                    repo.git.checkout('-b', pr_branch)
+                    repo.git.add(A=True)
+                    if repo.is_dirty() or repo.untracked_files:
+                        prefix = "Auto-sync" if is_auto else "Manual sync"
+                        repo.index.commit(f"{prefix} PR branch by {username} via MarkFlow")
+                        repo.git.push('origin', pr_branch)
+                        add_audit_log(username, "git_sync_pr_pushed", f"Branch: {pr_branch}", ip_address=ip_address)
+                    
+                    # Return to original branch
+                    try: repo.git.checkout(branch_name)
+                    except: pass
                 else:
-                    # Regular Sync
+                    # Regular Sync or Rebase
                     try:
                         repo.config_writer().set_value("user", "name", "MarkFlow AutoSync").release()
                         repo.config_writer().set_value("user", "email", "sync@markflow.local").release()
                     except: pass
                     
-                    # Ensure we are on the correct branch before pull
+                    repo.git.fetch('origin')
+                    
+                    # Ensure we are on the correct branch
                     try:
                         repo.git.checkout(branch_name)
                     except:
-                        # If it's a new repo with no commits, checkout -b will work after first commit
-                        pass
-                    
-                    repo.git.fetch('origin')
-                    try:
-                        repo.git.pull('origin', branch_name, '--no-rebase', '--allow-unrelated-histories')
-                    except Exception as e:
-                        print(f"Pull warning: {e}")
-                    
-                    # Push local changes
+                        try: repo.git.checkout('-b', branch_name)
+                        except: pass
+
+                    # 1. Commit local changes first
                     repo.git.add(A=True)
                     has_commits = False
                     try:
@@ -165,23 +175,27 @@ def sync_repository(username: str, force: bool = False, ip_address: str = ""):
                             with open(readme_path, "w", encoding="utf-8") as f:
                                 f.write(f"# Documentation\n\nInitial repository setup via MarkFlow.")
                         repo.index.add(["README.md"])
-                        repo.index.commit("Initial commit from MarkFlow")
-                        # Now that we have a commit, ensure we are on the right branch
-                        try:
-                            repo.git.branch('-M', branch_name)
+                        repo.index.commit("Initial commit via MarkFlow")
+                        try: repo.git.branch('-M', branch_name)
                         except: pass
-                    elif repo.is_dirty() or repo.untracked_files:
-                        repo.index.commit(f"Auto-sync by {username} from MarkFlow")
+                    elif repo.index.diff("HEAD") or repo.untracked_files or repo.is_dirty():
+                        prefix = "Auto-sync" if is_auto else "Manual sync"
+                        repo.index.commit(f"{prefix} by {username} via MarkFlow ({strategy})")
                     
-                    # Ensure we are definitely on the right branch before push
-                    try:
-                        repo.git.checkout(branch_name)
-                    except:
-                        try: repo.git.checkout('-b', branch_name)
-                        except: pass
-
+                    # 2. Pull with strategy
+                    if strategy == 'rebase':
+                        try:
+                            repo.git.pull('origin', branch_name, '--rebase')
+                        except Exception as e:
+                            try: repo.git.rebase('--abort')
+                            except: pass
+                            raise Exception(f"Rebase conflict detected: {str(e)}. Please resolve manually or use 'PR Style' strategy.")
+                    else:
+                        repo.git.pull('origin', branch_name, '--no-rebase', '--allow-unrelated-histories')
+                    
+                    # 3. Push
                     repo.git.push('origin', branch_name)
-                    add_audit_log(username, "git_sync_success", ip_address=ip_address)
+                    add_audit_log(username, "git_sync_success", f"Strategy: {strategy}", ip_address=ip_address)
         finally:
             if os.path.exists(tmp_path): os.remove(tmp_path)
         
@@ -234,3 +248,87 @@ def get_remote_branches_list(repo_data: dict):
         if os.path.exists(tmp_path):
             try: os.remove(tmp_path)
             except: pass
+
+async def start_background_sync_worker():
+    """Background task that periodically syncs repositories with auto-sync enabled."""
+    import asyncio
+    from datetime import datetime, timedelta
+    
+    print("Git background worker starting...")
+    while True:
+        try:
+            conn = get_db()
+            cursor = conn.cursor()
+            # Only get repos that have auto_sync enabled
+            cursor.execute('''
+                SELECT * FROM git_repositories 
+                WHERE auto_sync_interval > 0
+            ''')
+            repos = [dict(row) for row in cursor.fetchall()]
+            conn.close()
+
+            if not repos:
+                # No repos with auto-sync, wait longer before checking again
+                await asyncio.sleep(60)
+                continue
+
+            for repo in repos:
+                interval = repo['auto_sync_interval']
+                last_sync = repo.get('last_auto_sync_at')
+                
+                should_sync = False
+                if not last_sync:
+                    should_sync = True
+                else:
+                    last_sync_dt = datetime.fromisoformat(last_sync)
+                    if datetime.now() - last_sync_dt >= timedelta(minutes=interval):
+                        should_sync = True
+                
+                if should_sync:
+                    print(f"Background sync triggered for repo: {repo['name']} (Strategy: {repo['sync_strategy']})")
+                    # Temporarily set this repo as active to use existing sync_repository logic
+                    # Or refactor sync_repository to accept a repo object
+                    # For simplicity, let's just use the current active repo logic but we need to be careful
+                    # Actually, sync_repository uses get_active_repository(). 
+                    # Let's modify sync_repository to accept an optional repo_id.
+                    
+                    try:
+                        # We need a way to call sync_repository for a specific repo
+                        # Let's quickly update sync_repository to take repo_id
+                        await asyncio.to_thread(sync_repository_by_id, repo['id'], "System")
+                        
+                        # Update last_auto_sync_at
+                        conn = get_db()
+                        cur = conn.cursor()
+                        cur.execute("UPDATE git_repositories SET last_auto_sync_at = ? WHERE id = ?", 
+                                    (datetime.now().isoformat(), repo['id']))
+                        conn.commit()
+                        conn.close()
+                    except Exception as e:
+                        print(f"Background sync failed for {repo['name']}: {e}")
+
+        except Exception as e:
+            print(f"Background worker error: {e}")
+            
+        await asyncio.sleep(60) # Check every minute
+
+def sync_repository_by_id(repo_id: int, username: str):
+    """Wrapper for sync_repository that targets a specific repo."""
+    # We need to temporarily mock get_active_repository or pass it directly
+    # Let's just modify sync_repository to accept an optional repo object
+    repo = None
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM git_repositories WHERE id = ?", (repo_id,))
+    row = cur.fetchone()
+    conn.close()
+    if row:
+        repo = dict(row)
+    
+    if not repo: return
+    
+    # Call the main sync logic with this repo
+    return _sync_repository_internal(repo, username)
+
+# I need to refactor sync_repository to call _sync_repository_internal
+# Let's do that in the next step to keep chunks clean.

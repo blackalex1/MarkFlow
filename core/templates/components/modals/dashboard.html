@@ -14,6 +14,9 @@
             <div class="tab-item" data-tab="users" data-t="tab_users">Users</div>
             <div class="tab-item" data-tab="git" data-t="tab_git">Git</div>
             <div class="tab-item" data-tab="logs" data-t="tab_logs">Audit Logs</div>
+            {% if user_role == 'owner' %}
+            <div class="tab-item" data-tab="system" data-t="tab_system">System</div>
+            {% endif %}
             {% endif %}
         </div>
 
@@ -104,7 +107,7 @@
 
         <div id="tab-git" class="tab-content hidden">
             <!-- Repositories List Table -->
-            <div class="settings-plate">
+            <div class="settings-plate" id="git-repos-list-container">
                 <div class="plate-header">
                     <i data-lucide="database"></i>
                     <span data-t="git_repos_list">Git Repositories</span>
@@ -135,18 +138,18 @@
                     <span id="repo-editor-title">Edit Repository</span>
                 </div>
                 <div class="plate-body">
-                    <div class="input-group">
+                    <div class="input-group-vertical">
                         <label data-t="repo_name_label">Display Name</label>
                         <input type="text" id="repo-name" placeholder="My Project">
                     </div>
-                    <div class="input-group">
+                    <div class="input-group-vertical" style="margin-top: 15px;">
                         <label data-t="repo_url_label">Git URL</label>
                         <input type="text" id="repo-url" placeholder="git@github.com:user/repo.git">
                     </div>
                     <div class="input-group">
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            <label data-t="git_branch_label">Branch</label>
-                            <button id="btn-repo-fetch-branches" class="btn btn-xs btn-text" style="font-size: 10px;">Fetch Branches</button>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <label data-t="git_branch_label" style="font-size: 13px; font-weight: 500; color: var(--text-muted);">Target Branch</label>
+                            <button id="btn-repo-fetch-branches" class="btn btn-xs" style="font-size: 11px; padding: 2px 8px; background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);" data-t="btn_fetch_branches">Fetch Branches</button>
                         </div>
                         <select id="repo-branch-select" style="width: 100%;"></select>
                     </div>
@@ -155,6 +158,55 @@
                             Folder: <strong id="repo-slug-display" style="color: var(--text-color);">auto-generated</strong>
                             <input type="hidden" id="repo-slug">
                         </span>
+                    </div>
+
+                    <div class="input-group-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+                        <div class="input-group-vertical">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 8px;">
+                                <label class="switch">
+                                    <input type="checkbox" id="repo-auto-sync-toggle">
+                                    <span class="slider"></span>
+                                </label>
+                                <label data-t="repo_auto_sync_label" style="margin: 0; cursor: pointer;" for="repo-auto-sync-toggle">Auto-Sync</label>
+                            </div>
+                            <div id="repo-interval-container" class="hidden">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <input type="number" id="repo-auto-sync-interval" value="30" min="1" style="width: 70px; height: 35px;">
+                                    <select id="repo-auto-sync-unit" style="width: 90px; height: 35px; padding: 0 8px; font-size: 12px;">
+                                        <option value="1" data-t="unit_minute">min</option>
+                                        <option value="60" data-t="unit_hour">hour</option>
+                                        <option value="1440" data-t="unit_day">day</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="input-group-vertical">
+                            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
+                                <label data-t="repo_strategy_label" style="margin: 0;">Strategy</label>
+                                <i data-lucide="help-circle" style="width: 14px; height: 14px; color: var(--text-muted); cursor: help;" id="strategy-help-icon"></i>
+                            </div>
+                            <select id="repo-sync-strategy" style="width: 100%;">
+                                <option value="rebase" data-t="strategy_rebase">Rebase</option>
+                                <option value="force" data-t="strategy_force">Force</option>
+                                <option value="pr" data-t="strategy_pr">PR Style</option>
+                            </select>
+                            <div id="strategy-info-box" style="margin-top: 8px; font-size: 11px; color: var(--text-muted); line-height: 1.4; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 6px; border: 1px solid var(--border-color);">
+                                <span id="strategy-description"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 15px; padding: 10px; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 8px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <label class="switch">
+                                    <input type="checkbox" id="repo-flatten-toggle">
+                                    <span class="slider"></span>
+                                </label>
+                                <label data-t="repo_flatten_label" style="margin: 0; font-size: 14px; font-weight: 600; cursor: pointer;" for="repo-flatten-toggle">Flatten in Tree</label>
+                            </div>
+                        </div>
+                        <p style="font-size: 11px; color: var(--text-muted); margin-top: 5px; margin-left: 50px;" data-t="repo_flatten_hint">Show repository contents directly in the root sidebar instead of a folder</p>
                     </div>
 
                     <div id="repo-key-type-selection" class="input-group" style="flex-direction: row; align-items: center; gap: 8px; margin-top: 15px;">
@@ -166,12 +218,12 @@
                     <div id="repo-unique-key-box" class="hidden" style="margin-top: 10px; padding: 15px; background: rgba(0,0,0,0.1); border-radius: 8px; border: 1px dashed var(--border-color);">
                         <div id="repo-current-key-status" class="hidden" style="margin-bottom: 12px;">
                             <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                                <i data-lucide="check-circle" style="color: var(--success-color); width: 16px;"></i>
-                                <span style="font-size: 12px; font-weight: 500;">Unique key is configured</span>
+                                <i data-lucide="check-circle" style="color: #22c55e; width: 16px;"></i>
+                                <span style="font-size: 13px; font-weight: 600;" data-t="repo_unique_key_configured">Unique key is configured</span>
                             </div>
                             <div style="display: flex; gap: 8px;">
-                                <button type="button" id="btn-view-current-unique-key" class="btn btn-xs btn-outline">View Current Key</button>
-                                <button type="button" id="btn-trigger-regen-key" class="btn btn-xs btn-text" style="color: var(--text-muted);">Regenerate...</button>
+                                <button type="button" id="btn-view-current-unique-key" class="btn btn-xs btn-outline" data-t="repo_btn_view_key">View Current Key</button>
+                                <button type="button" id="btn-trigger-regen-key" class="btn btn-xs" style="color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05);" data-t="repo_btn_regenerate">Regenerate...</button>
                             </div>
                         </div>
 
@@ -239,6 +291,162 @@
                 </table>
             </div>
         </div>
+        {% if user_role == 'owner' %}
+        <div id="tab-system" class="tab-content hidden">
+            <div class="settings-list">
+                <!-- General Settings Plate -->
+                <div class="settings-plate">
+                    <div class="plate-header">
+                        <i data-lucide="settings"></i>
+                        <span data-t="sys_general_settings">General Settings</span>
+                    </div>
+                    <div class="plate-body">
+                        <div class="input-group-vertical">
+                            <label data-t="sys_accent_color">Accent Color</label>
+                            <div class="custom-color-picker" id="accent-color-picker">
+                                <div class="color-trigger" id="sys-color-trigger">
+                                    <div class="color-preview-circle" id="sys-color-preview-circle" style="background-color: {{ config.primary_color if config.primary_color else '#6366f1' }};"></div>
+                                    <span class="color-trigger-text" id="sys-color-value">{{ config.primary_color if config.primary_color else '#6366f1' }}</span>
+                                    <i data-lucide="chevron-down" style="width: 16px; height: 16px; opacity: 0.5;"></i>
+                                </div>
+                                
+                                <div class="color-dropdown" id="sys-color-dropdown">
+                                    <div class="color-grid">
+                                        <div class="color-swatch" style="background-color: #6366f1;" data-color="#6366f1"></div>
+                                        <div class="color-swatch" style="background-color: #3b82f6;" data-color="#3b82f6"></div>
+                                        <div class="color-swatch" style="background-color: #0ea5e9;" data-color="#0ea5e9"></div>
+                                        <div class="color-swatch" style="background-color: #10b981;" data-color="#10b981"></div>
+                                        <div class="color-swatch" style="background-color: #22c55e;" data-color="#22c55e"></div>
+                                        <div class="color-swatch" style="background-color: #f59e0b;" data-color="#f59e0b"></div>
+                                        <div class="color-swatch" style="background-color: #f97316;" data-color="#f97316"></div>
+                                        <div class="color-swatch" style="background-color: #f43f5e;" data-color="#f43f5e"></div>
+                                        <div class="color-swatch" style="background-color: #ec4899;" data-color="#ec4899"></div>
+                                        <div class="color-swatch" style="background-color: #8b5cf6;" data-color="#8b5cf6"></div>
+                                        <div class="color-swatch" style="background-color: #a855f7;" data-color="#a855f7"></div>
+                                        <div class="color-swatch" style="background-color: #64748b;" data-color="#64748b"></div>
+                                    </div>
+                                    
+                                    <div class="custom-hex-input">
+                                        <label data-t="sys_custom_hex">Custom Hex</label>
+                                        <div class="hex-field-wrapper">
+                                            <input type="text" id="sys-primary-color" value="{{ config.primary_color if config.primary_color else '#6366f1' }}" maxlength="7" placeholder="#6366f1">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Branding Plate -->
+                <div class="settings-plate">
+                    <div class="plate-header">
+                        <i data-lucide="image"></i>
+                        <span data-t="sys_branding">Branding & Assets</span>
+                    </div>
+                    <div class="plate-body">
+                        <div class="input-group-vertical" style="margin-bottom: 20px;">
+                            <label data-t="sys_app_name">Name</label>
+                            <input type="text" id="sys-app-name" value="{{ config.app_name }}" placeholder="MarkFlow">
+                        </div>
+
+                        <div class="input-group-horizontal" style="margin-bottom: 20px;">
+                            <label for="sys-use-logo" data-t="sys_use_logo">Use Logo</label>
+                            <label class="switch">
+                                <input type="checkbox" id="sys-use-logo" {% if config.use_logo %}checked{% endif %}>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="input-group-vertical">
+                            <label data-t="sys_logo_path">Logo</label>
+                            <div class="asset-preview-box" id="logo-preview-box">
+                                <img id="sys-logo-preview" src="{{ config.logo_path if config.logo_path else '' }}?v={{ app_version }}" alt="Logo Preview" 
+                                     style="{% if not config.logo_path %}display: none;{% endif %}">
+                                {% if not config.logo_path %}
+                                <div class="preview-placeholder" id="logo-placeholder">
+                                    <i data-lucide="image"></i>
+                                    <span>No Logo</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="upload-group">
+                                <input type="hidden" id="sys-logo-path" value="{{ config.logo_path }}" data-current-path="{{ config.logo_path }}">
+                                <input type="file" id="sys-logo-upload" class="hidden" accept=".png,.jpg,.jpeg,.svg">
+                                <button type="button" class="btn btn-sm btn-outline" onclick="document.getElementById('sys-logo-upload').click()" style="width: 100%;">
+                                    <i data-lucide="upload"></i>
+                                    <span data-t="btn_upload">Upload Logo</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="input-group-vertical" style="margin-top: 15px;">
+                            <label data-t="sys_favicon_path">Favicon</label>
+                            <div class="asset-preview-box" id="favicon-preview-box">
+                                <img id="sys-favicon-preview" src="{{ config.favicon_path if config.favicon_path else '' }}?v={{ app_version }}" alt="Favicon Preview"
+                                     style="{% if not config.favicon_path %}display: none;{% endif %}">
+                                {% if not config.favicon_path %}
+                                <div class="preview-placeholder" id="favicon-placeholder">
+                                    <i data-lucide="image"></i>
+                                    <span>No Favicon</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="upload-group">
+                                <input type="hidden" id="sys-favicon-path" value="{{ config.favicon_path }}" data-current-path="{{ config.favicon_path }}">
+                                <input type="file" id="sys-favicon-upload" class="hidden" accept=".ico,.png,.svg">
+                                <button type="button" class="btn btn-sm btn-outline" onclick="document.getElementById('sys-favicon-upload').click()" style="width: 100%;">
+                                    <i data-lucide="upload"></i>
+                                    <span data-t="btn_upload">Upload Favicon</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Security Plate -->
+                <div class="settings-plate">
+                    <div class="plate-header">
+                        <i data-lucide="shield"></i>
+                        <span data-t="sys_security_limits">Security & Rate Limits</span>
+                    </div>
+                    <div class="plate-body">
+                        <div class="limits-grid">
+                            {% for key, label in [
+                                ('login', 'sys_limit_login'),
+                                ('2fa_verify', 'sys_limit_2fa'),
+                                ('change_password', 'sys_limit_password'),
+                                ('file_ops', 'sys_limit_files'),
+                                ('search', 'sys_limit_search'),
+                                ('create_user', 'sys_limit_users')
+                            ] %}
+                            <div class="input-group-vertical">
+                                <label data-t="{{ label }}">{{ label }}</label>
+                                <div class="limit-input-group">
+                                    {% set val = config.security_limits[key] if config.security_limits[key] else '5/minute' %}
+                                    {% set parts = val.split('/') %}
+                                    <input type="number" id="sys-limit-{{ key|replace('_', '-') }}-num" value="{{ parts[0] }}" min="1" style="width: 70px;">
+                                    <select id="sys-limit-{{ key|replace('_', '-') }}-period" style="flex: 1;">
+                                        <option value="minute" {% if parts[1] == 'minute' %}selected{% endif %} data-t="unit_minute">per minute</option>
+                                        <option value="hour" {% if parts[1] == 'hour' %}selected{% endif %} data-t="unit_hour">per hour</option>
+                                        <option value="day" {% if parts[1] == 'day' %}selected{% endif %} data-t="unit_day">per day</option>
+                                    </select>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <p class="hint-text" data-t="sys_limit_hint" style="margin-top: 15px;">
+                            Select the maximum number of requests allowed per period.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-footer" style="margin-top: 25px;">
+                <button id="btn-save-system-settings" class="btn btn-primary btn-lg" style="width: 100%;" data-t="sys_save_btn">Save System Settings</button>
+            </div>
+        </div>
+        {% endif %}
         {% endif %}
     </div>
 </div>

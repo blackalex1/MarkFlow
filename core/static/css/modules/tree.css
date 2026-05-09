@@ -60,6 +60,7 @@
     width: 16px;
     height: 16px;
     stroke-width: 2px;
+    flex-shrink: 0;
 }
 
 .icon-xs {

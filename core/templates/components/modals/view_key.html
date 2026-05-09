@@ -1,5 +1,5 @@
 <!-- View SSH Key Modal (Slide-up drawer) -->
-<div id="modal-view-key" class="modal hidden" style="align-items: flex-end; padding-bottom: 0; z-index: 1100;">
+<div id="modal-view-key" class="modal hidden" style="align-items: flex-end; padding-bottom: 0; z-index: 1000000;">
     <div class="modal-content key-drawer-content">
         <span class="close-btn" id="close-view-key">&times;</span>
         <h3 id="view-key-title" style="text-align: left; margin-bottom: 15px; font-family: 'Outfit', sans-serif;">SSH Public Key</h3>
@@ -9,9 +9,9 @@
         
         <div class="key-display-box">
             <pre id="ssh-key-text"></pre>
-            <button id="btn-copy-ssh-key" class="btn btn-primary btn-sm">
+            <button id="btn-copy-ssh-key" class="btn btn-primary btn-sm" style="background: var(--primary-color); border-color: var(--primary-color);" data-t="btn_copy_pubkey">
                 <i data-lucide="copy" style="width: 14px; height: 14px;"></i>
-                <span>Copy Key</span>
+                <span data-t="btn_copy_pubkey">Copy Key</span>
             </button>
         </div>
     </div>

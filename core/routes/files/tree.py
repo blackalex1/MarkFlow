@@ -17,6 +17,9 @@ def get_file_tree(request: Request):
     if not os.path.exists(DOCS_DIR):
         os.makedirs(DOCS_DIR)
         
+    from core.database import list_repositories
+    flattened_slugs = [r['slug'] for r in list_repositories() if r.get('flatten_in_tree')]
+        
     def has_markdown(path):
         for root, dirs, files in os.walk(path):
             for file in files:
@@ -26,7 +29,7 @@ def get_file_tree(request: Request):
                         return True
         return False
 
-    def build_tree(path):
+    def build_tree(path, is_root=False):
         nodes = []
         try:
             items = os.listdir(path)
@@ -42,6 +45,12 @@ def get_file_tree(request: Request):
             rel_path = os.path.relpath(full_path, DOCS_DIR).replace('\\', '/')
             
             if os.path.isdir(full_path):
+                # Check if this is a flattened repo at the root level
+                if is_root and item in flattened_slugs:
+                    # Merge children directly into root
+                    nodes.extend(build_tree(full_path))
+                    continue
+
                 if not has_markdown(full_path): continue
                 children = build_tree(full_path)
                 nodes.append({
@@ -63,7 +72,7 @@ def get_file_tree(request: Request):
                     })
         return nodes
 
-    return {"tree": build_tree(DOCS_DIR)}
+    return {"tree": build_tree(DOCS_DIR, is_root=True)}
 
 @router.get("/folder")
 @limiter.limit(SECURITY_LIMITS["file_ops"])

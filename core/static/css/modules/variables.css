@@ -1,15 +1,17 @@
 :root {
     /* Colors */
     --primary-color: #6366f1;
+    --primary-rgb: 99, 102, 241;
     --primary-hover: #4f46e5;
-    --bg-main: #0f172a;
-    --bg-sidebar: rgba(15, 23, 42, 0.8);
-    --bg-card: #1e293b;
+    --bg-main: #0a0a0c;
+    --bg-sidebar: rgba(10, 10, 12, 0.8);
+    --bg-card: #161618;
     --text-main: #f1f5f9;
     --text-muted: #94a3b8;
     --text-heading: #ffffff;
     --border-color: rgba(255, 255, 255, 0.1);
-    --accent-glow: rgba(99, 102, 241, 0.15);
+    --bg-code: #0d0d0f;
+    --accent-glow: rgba(var(--primary-rgb), 0.15);
     
     /* Layout */
     --sidebar-width: 280px;
@@ -31,5 +33,6 @@
     --text-muted: #64748b;
     --text-heading: #0f172a;
     --border-color: #e2e8f0;
-    --accent-glow: rgba(79, 70, 229, 0.1);
+    --bg-code: #f1f5f9;
+    --accent-glow: rgba(var(--primary-rgb), 0.1);
 }

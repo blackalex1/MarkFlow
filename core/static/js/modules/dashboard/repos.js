@@ -10,9 +10,20 @@ export async function loadRepositories() {
     if (!Array.isArray(repos)) return;
     
     ui.gitReposTbody.innerHTML = '';
-        // Import i18n if not available (should be in the file but let's check)
-        const i18n = window.i18n || {};
-        const t = (key, fallback) => (i18n.t ? i18n.t(key) : fallback);
+    const i18n = window.i18n || {};
+    const t = (key, fallback) => (i18n.t ? i18n.t(key) : fallback);
+
+    // Initialize toggle listener only once
+    if (ui.repoAutoSyncToggle && !ui.repoAutoSyncToggle.dataset.init) {
+        ui.repoAutoSyncToggle.onchange = () => {
+            if (ui.repoAutoSyncToggle.checked) {
+                ui.repoIntervalContainer.classList.remove('hidden');
+            } else {
+                ui.repoIntervalContainer.classList.add('hidden');
+            }
+        };
+        ui.repoAutoSyncToggle.dataset.init = 'true';
+    }
 
         repos.forEach(repo => {
             const row = document.createElement('tr');
@@ -23,14 +34,14 @@ export async function loadRepositories() {
                 const date = new Date(repo.last_sync_at);
                 const timeStr = date.toLocaleString();
                 const isSuccess = repo.last_sync_status === 'success';
-                const color = isSuccess ? 'var(--success-color)' : 'var(--danger-color)';
+                const color = isSuccess ? '#22c55e' : '#ef4444';
                 const icon = isSuccess ? 'check-circle' : 'x-circle';
                 
                 syncInfo = `
                     <div style="display: flex; flex-direction: column; gap: 2px;">
-                        <div style="display: flex; align-items: center; gap: 4px; color: ${color}; font-size: 12px; font-weight: 500;">
+                        <div style="display: flex; align-items: center; gap: 4px; color: ${color}; font-size: 12px; font-weight: 600;">
                             <i data-lucide="${icon}" style="width: 14px; height: 14px;"></i>
-                            <span>${isSuccess ? (t('sync_success', 'Success')) : (t('sync_failed', 'Failed'))}</span>
+                            <span>${isSuccess ? (t('sync_success', 'Успешно')) : (t('sync_failed', 'Ошибка'))}</span>
                         </div>
                         <span style="color: var(--text-muted); font-size: 10px;">${timeStr}</span>
                     </div>
@@ -64,6 +75,18 @@ export async function loadRepositories() {
 let tempKeyPair = { keyId: null, public: null };
 
 export function initRepos() {
+    const i18n = window.i18n || {};
+    const t = (key, fallback) => (i18n.t ? i18n.t(key) : fallback);
+
+    if (ui.repoSyncStrategy) {
+        ui.repoSyncStrategy.onchange = () => {
+            const val = ui.repoSyncStrategy.value;
+            if (ui.strategyDescription) {
+                ui.strategyDescription.textContent = t(`strategy_help_${val}`) || '';
+            }
+        };
+    }
+
     const convertToSsh = (url) => {
         if (!url || !url.startsWith('http')) return url;
         try {
@@ -92,9 +115,9 @@ export function initRepos() {
         const closeBtn = document.getElementById('close-view-key');
         const copyBtn = document.getElementById('btn-copy-ssh-key');
 
-        if (keyText) keyText.innerText = key;
+        if (keyText) keyText.innerText = key || '';
         if (titleEl) titleEl.innerText = title || 'SSH Public Key';
-        if (descEl) descEl.innerText = desc;
+        if (descEl) descEl.innerText = desc || '';
         modal.classList.remove('hidden');
         if (closeBtn) closeBtn.onclick = () => modal.classList.add('hidden');
         if (copyBtn) {
@@ -156,13 +179,17 @@ export function initRepos() {
                 if (ui.repoKeyGenArea) ui.repoKeyGenArea.classList.add('hidden');
                 
                 if (ui.btnViewCurrentUniqueKey) {
-                    ui.btnViewCurrentUniqueKey.onclick = () => showKeyDrawer(repo.ssh_public_key, 'Current Unique Key');
+                    ui.btnViewCurrentUniqueKey.onclick = () => showKeyDrawer(repo.ssh_public_key, t('repo_view_key_title', 'Current Unique Key'), '');
                 }
                 if (ui.btnTriggerRegenKey) {
-                    ui.btnTriggerRegenKey.onclick = () => {
-                        ui.repoCurrentKeyStatus.classList.add('hidden');
-                        ui.repoKeyGenArea.classList.remove('hidden');
-                        if (ui.repoKeyTypeSelection) ui.repoKeyTypeSelection.classList.remove('hidden');
+                    ui.btnTriggerRegenKey.onclick = async () => {
+                        const confirmed = await window.confirmAction(
+                            t('repo_confirm_regen_title', 'Regenerate SSH Key'),
+                            t('repo_confirm_regen_msg', 'WARNING: This will replace the current SSH key. You will need to update it on GitHub. Continue?'),
+                            t('btn_confirm_gen', 'Regenerate'),
+                            t('btn_cancel', 'Cancel')
+                        );
+                        if (confirmed) createKeyPair();
                     };
                 }
             } else {
@@ -176,7 +203,34 @@ export function initRepos() {
             ui.btnRepoGenUniqueKey.classList.remove('hidden');
             
             ui.repoBranchSelect.innerHTML = `<option value="${repo.branch}" selected>${repo.branch}</option>`;
+            if (ui.repoAutoSyncInterval) {
+                const totalMinutes = repo.auto_sync_interval || 0;
+                if (totalMinutes >= 1440 && totalMinutes % 1440 === 0) {
+                    ui.repoAutoSyncInterval.value = totalMinutes / 1440;
+                    ui.repoAutoSyncUnit.value = "1440";
+                } else if (totalMinutes >= 60 && totalMinutes % 60 === 0) {
+                    ui.repoAutoSyncInterval.value = totalMinutes / 60;
+                    ui.repoAutoSyncUnit.value = "60";
+                } else {
+                    ui.repoAutoSyncInterval.value = totalMinutes || 30;
+                    ui.repoAutoSyncUnit.value = "1";
+                }
+            }
+            if (ui.repoAutoSyncToggle) {
+                ui.repoAutoSyncToggle.checked = (repo.auto_sync_interval > 0);
+                if (ui.repoAutoSyncToggle.checked) ui.repoIntervalContainer.classList.remove('hidden');
+                else ui.repoIntervalContainer.classList.add('hidden');
+            }
+            if (ui.repoSyncStrategy) {
+                ui.repoSyncStrategy.value = repo.sync_strategy || 'rebase';
+                ui.repoSyncStrategy.onchange();
+            }
+            if (ui.repoFlattenToggle) ui.repoFlattenToggle.checked = !!repo.flatten_in_tree;
             tempKeyPair = { keyId: null, public: null };
+            
+            // Force translation update for newly shown fields
+            if (window.i18n && window.i18n.updatePage) window.i18n.updatePage();
+            else if (typeof updatePage === 'function') updatePage();
         }
     };
 
@@ -190,7 +244,13 @@ export function initRepos() {
     };
 
     window.deleteRepo = async (id) => {
-        if (!confirm('Delete this repository configuration?')) return;
+        const confirmed = await window.confirmAction(
+            t('confirm_delete_repo_title', 'Delete Repository'),
+            t('confirm_delete_repo', 'Are you sure you want to delete this repository configuration?'),
+            t('btn_confirm_delete', 'Delete'),
+            t('btn_cancel', 'Cancel')
+        );
+        if (!confirmed) return;
         const res = await fetch(`/api/git/repos/${id}`, { method: 'DELETE' });
         if (res.ok) {
             toast.success('Repository deleted');
@@ -304,8 +364,21 @@ export function initRepos() {
             ui.btnRepoGenUniqueKey.disabled = false;
             ui.btnRepoGenUniqueKey.innerText = 'Generate Unique Key for this Repo';
             ui.repoBranchSelect.innerHTML = '<option value="master">master</option><option value="main">main</option>';
+            if (ui.repoAutoSyncInterval) ui.repoAutoSyncInterval.value = 30;
+            if (ui.repoAutoSyncUnit) ui.repoAutoSyncUnit.value = "1";
+            if (ui.repoAutoSyncToggle) {
+                ui.repoAutoSyncToggle.checked = false;
+                ui.repoIntervalContainer.classList.add('hidden');
+            }
+            if (ui.repoSyncStrategy) {
+                ui.repoSyncStrategy.value = 'rebase';
+                ui.repoSyncStrategy.onchange();
+            }
+            if (ui.repoFlattenToggle) ui.repoFlattenToggle.checked = false;
             ui.repoName.dataset.id = '';
             tempKeyPair = { keyId: null, public: null };
+            
+            if (window.i18n && window.i18n.updatePage) window.i18n.updatePage();
         };
     }
 
@@ -326,7 +399,11 @@ export function initRepos() {
                 url: ui.repoUrl.value.trim(),
                 branch: ui.repoBranchSelect.value,
                 key_id: ui.repoUseGlobalSSH.checked ? null : tempKeyPair.keyId,
-                public_key: ui.repoUseGlobalSSH.checked ? null : tempKeyPair.public
+                public_key: ui.repoUseGlobalSSH.checked ? null : tempKeyPair.public,
+                auto_sync_interval: ui.repoAutoSyncToggle.checked ? 
+                    ((parseInt(ui.repoAutoSyncInterval.value) || 30) * parseInt(ui.repoAutoSyncUnit.value)) : 0,
+                sync_strategy: ui.repoSyncStrategy.value,
+                flatten_in_tree: ui.repoFlattenToggle ? ui.repoFlattenToggle.checked : false
             };
             if (!data.name || !data.slug || !data.url) return toast.warn('Fill Name, Slug and URL');
             const method = id ? 'PUT' : 'POST';
@@ -337,8 +414,13 @@ export function initRepos() {
                 body: JSON.stringify(data)
             });
             if (res.ok) {
-                toast.success(id ? 'Repository updated' : 'Repository added');
+                toast.success(id ? (t('toast_repo_updated', 'Repository updated')) : (t('toast_repo_added', 'Repository added')));
+                
+                // Hide editor and return to list
                 ui.repoEditorForm.classList.add('hidden');
+                const repoListContainer = document.getElementById('git-repos-list-container');
+                if (repoListContainer) repoListContainer.classList.remove('hidden');
+                
                 if (ui.repoUniqueKeyDisplay) ui.repoUniqueKeyDisplay.classList.add('hidden');
                 ui.btnRepoGenUniqueKey.classList.remove('hidden');
                 loadRepositories();

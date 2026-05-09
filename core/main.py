@@ -3,6 +3,7 @@ import mimetypes
 
 mimetypes.add_type("application/javascript", ".js")
 mimetypes.add_type("text/css", ".css")
+mimetypes.add_type("image/svg+xml", ".svg")
 import asyncio
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -18,6 +19,7 @@ from core.auth import router as auth_router, get_current_user
 from core.git_sync import router as git_router
 from core.routes.files import router as files_router
 from core.routes.search import router as search_router
+from core.routes.system import router as system_router
 from core.config import APP_CONFIG, DOCS_DIR, BASE_DIR, limiter
 from core.middleware import add_security_headers
 from core.services.vendor_service import check_and_download_vendor_libs
@@ -64,7 +66,13 @@ async def lifespan(app: FastAPI):
     observer = Observer()
     observer.schedule(DocsHandler(), DOCS_DIR, recursive=True)
     observer.start()
+
+    # Start Git Background Worker
+    from core.services.git_service import start_background_sync_worker
+    bg_task = asyncio.create_task(start_background_sync_worker())
+
     yield
+    bg_task.cancel()
     observer.stop()
     observer.join()
 
@@ -80,6 +88,7 @@ app.include_router(auth_router, prefix="/api/auth", tags=["auth"])
 app.include_router(git_router, prefix="/api/git", tags=["git"])
 app.include_router(files_router, prefix="/api/files", tags=["files"])
 app.include_router(search_router, prefix="/api/search", tags=["search"])
+app.include_router(system_router, prefix="/api/system", tags=["system"])
 
 # Static and Templates
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")

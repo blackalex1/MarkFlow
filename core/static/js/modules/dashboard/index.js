@@ -4,6 +4,7 @@ import { initPages } from './pages.js';
 import { initRepos, loadRepositories } from './repos.js';
 import { initSync } from './sync.js';
 import { initSettings } from './settings.js';
+import { initSystemSettings } from './system.js';
 import { initAdmin } from '../admin.js';
 
 import { update2FAStatusUI, updateCredsStatusUI } from './settings.js';
@@ -20,6 +21,7 @@ export function initDashboardListeners() {
     initRepos();
     initSync();
     initSettings();
+    initSystemSettings();
     initAdmin();
 
     // Load repos on dashboard open
@@ -29,6 +31,7 @@ export function initDashboardListeners() {
                 if (state.currentUser && ['maintainer', 'owner'].includes(state.currentUser.role)) {
                     loadRepositories();
                     initAdmin();
+                    initSystemSettings();
                 }
             }
         });
