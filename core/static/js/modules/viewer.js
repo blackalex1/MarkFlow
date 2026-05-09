@@ -1,6 +1,5 @@
 import { ui, state } from './ui.js';
 import { toast } from './toasts.js';
-import * as editor from '../editor/core.js';
 import * as tree from './tree.js';
 import { t } from './i18n.js';
 import { initMarked } from './markdown.js';
@@ -19,6 +18,10 @@ if (window.mermaid) {
 }
 
 export async function loadFileContent(path, pushState = true, hash = null) {
+    // Ensure we exit edit mode when switching files
+    const editor = await import('../editor/index.js');
+    if (editor && editor.actions) editor.actions.exitEditMode(false);
+
     ui.contentViewer.classList.add('fade-out');
     setTimeout(async () => {
         state.currentFilePath = path;
@@ -42,9 +45,6 @@ export async function loadFileContent(path, pushState = true, hash = null) {
             ui.contentViewer.innerHTML = cleanHTML;
             ui.contentViewer.classList.remove('fade-out');
             ui.contentViewer.classList.add('fade-in');
-            
-            if (ui.contentEditor) ui.contentEditor.value = data.content;
-            
             ui.contentViewer.querySelectorAll('pre code').forEach(b => {
                 if (!b.classList.contains('language-end')) hljs.highlightElement(b);
             });
@@ -80,15 +80,9 @@ export async function loadFileContent(path, pushState = true, hash = null) {
             }
             if (window.lucide) lucide.createIcons();
             
-            if (state.currentUser && ['developer', 'maintainer', 'owner'].includes(state.currentUser.role)) {
-                ui.contentViewer.querySelectorAll('.task-list-item input[type="checkbox"]').forEach((cb, idx) => {
-                    cb.onchange = () => toggleChecklist(idx, cb.checked);
-                });
-            } else {
-                ui.contentViewer.querySelectorAll('.task-list-item input[type="checkbox"]').forEach(cb => {
-                    cb.disabled = true;
-                });
-            }
+            ui.contentViewer.querySelectorAll('.task-list-item input[type="checkbox"]').forEach(cb => {
+                cb.disabled = true;
+            });
             
             if (hash) {
                 setTimeout(() => {
@@ -97,11 +91,8 @@ export async function loadFileContent(path, pushState = true, hash = null) {
                 }, 100);
             }
             
-            editor.toggleEditMode(false);
             if (state.currentUser && state.currentUser.role !== 'guest' && state.currentUser.role !== 'reporter') {
                 ui.topBar.classList.remove('hidden');
-                if (ui.visibilityCheckbox) ui.visibilityCheckbox.checked = data.public;
-                if (ui.statusSelect) ui.statusSelect.value = data.status || 'published';
             } else ui.topBar.classList.add('hidden');
             
             tree.updateTreeHighlighting(path);
@@ -118,7 +109,6 @@ export async function loadFolderContent(path) {
         updateBreadcrumbs(path);
         
         ui.viewModeContainer.classList.remove('hidden');
-        if (ui.contentEditor) ui.contentEditor.classList.add('hidden');
         ui.topBar.classList.add('hidden');
         if (ui.pageNav) ui.pageNav.classList.add('hidden');
         if (ui.tocSidebar) ui.tocSidebar.classList.add('hidden');
@@ -145,19 +135,6 @@ function renderErrorPage(status, path) {
     if (window.lucide) lucide.createIcons();
 }
 
-async function toggleChecklist(index, isChecked) {
-    if (!ui.contentEditor) return;
-    let content = ui.contentEditor.value, count = 0;
-    const newContent = content.replace(/^(\s*[-*+]\s+\[)([ xX])(\])/gm, (match, p1, p2, p3) => {
-        if (count++ === index) return p1 + (isChecked ? 'x' : ' ') + p3;
-        return match;
-    });
-    if (newContent !== content) {
-        ui.contentEditor.value = newContent;
-        if (editor.easyMDE) editor.easyMDE.value(newContent);
-        await editor.saveFile();
-    }
-}
 
 let tocObserver = null;
 function initTOCObserver() {

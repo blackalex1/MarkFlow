@@ -14,6 +14,7 @@ router = APIRouter()
 class FileContent(BaseModel):
     content: str
 
+
 @router.get("/content")
 @limiter.limit(SECURITY_LIMITS["file_ops"])
 def get_file_content(path: str, request: Request):
@@ -51,11 +52,17 @@ def get_file_content(path: str, request: Request):
     from core.database import get_file_status
     status = get_file_status(path)
     return {"content": content, "public": public, "status": status}
-
+    
 @router.put("/content")
 @limiter.limit(SECURITY_LIMITS["file_ops"])
 async def save_file_content(path: str, data: FileContent, request: Request, background_tasks: BackgroundTasks, user=Depends(get_developer_user)):
+    """Saves file content and handles image cleanup."""
     full_path = get_safe_path(DOCS_DIR, path)
+    
+    # Security: Ensure we don't write outside DOCS_DIR
+    if not full_path.startswith(os.path.abspath(DOCS_DIR)):
+         raise HTTPException(status_code=403, detail="Illegal path")
+
     os.makedirs(os.path.dirname(full_path), exist_ok=True)
     
     image_regex = r'!\[.*?\]\((attachments/.*?)\)'
@@ -64,13 +71,8 @@ async def save_file_content(path: str, data: FileContent, request: Request, back
         try:
             with open(full_path, "r", encoding="utf-8") as f:
                 old_content = f.read()
-        except UnicodeDecodeError:
-            try:
-                with open(full_path, "r", encoding="utf-16") as f:
-                    old_content = f.read()
-            except Exception:
-                with open(full_path, "r", encoding="utf-8", errors="replace") as f:
-                    old_content = f.read()
+        except Exception:
+            old_content = ""
             
     old_images = set(re.findall(image_regex, old_content))
     new_images = set(re.findall(image_regex, data.content))
@@ -96,3 +98,4 @@ def cleanup_orphaned_images(orphans: list, username: str):
                     add_audit_log("system", "image_cleanup", f"Deleted orphaned image: {img_rel_path} (after {username} edit)")
             except Exception as e:
                 print(f"Failed to cleanup image {img_rel_path}: {e}")
+

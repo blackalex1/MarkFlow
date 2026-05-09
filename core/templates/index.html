@@ -45,8 +45,7 @@
                 
                 {% if user_role in ['developer', 'maintainer', 'owner'] %}
                 <textarea id="content-editor" class="hidden"></textarea>
-                {% endif %}
-            </div>
+                {% endif %}            </div>
 
             <!-- Right TOC Sidebar -->
             <aside class="toc-sidebar" id="toc-sidebar">
@@ -75,8 +74,6 @@
     {% include 'components/modals/totp_setup.html' %}
     {% endif %}
 
-    <!-- Editor Enhancements -->
-    {% include 'components/editor_menus.html' %}
 
     <script type="module" src="/static/js/app.js?v={{ app_version }}"></script>
 </body>

@@ -11,16 +11,11 @@ from core.auth import get_developer_user, get_maintainer_user
 from .utils import get_safe_path
 
 router = APIRouter()
-
 class FileVisibility(BaseModel):
     public: bool
 
 class FileStatus(BaseModel):
     status: str
-
-class MoveRequest(BaseModel):
-    old_path: str
-    new_path: str
 
 @router.put("/visibility")
 @limiter.limit(SECURITY_LIMITS["file_ops"])
@@ -45,6 +40,9 @@ def set_status(request: Request, path: str, data: FileStatus, user=Depends(get_m
     add_audit_log(user["username"], "status_changed", f"Path: {path}, Status: {data.status}", ip_address=request.client.host)
     return {"message": f"Status updated to {data.status}"}
 
+class MoveRequest(BaseModel):
+    old_path: str
+    new_path: str
 @router.post("/create")
 @limiter.limit(SECURITY_LIMITS["file_ops"])
 def create_file(request: Request, path: str, user=Depends(get_developer_user)):

@@ -98,14 +98,7 @@ export function initGlobalHandlers() {
 
     // Keyboard Shortcuts
     window.addEventListener('keydown', (e) => {
-        // Ctrl + S: Save
-        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-            const btnSave = document.getElementById('btn-save');
-            if (btnSave && !btnSave.classList.contains('hidden')) {
-                e.preventDefault();
-                btnSave.click();
-            }
-        }
+
         
         // Ctrl + K or /: Search
         if (((e.ctrlKey || e.metaKey) && e.key === 'k') || (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA')) {

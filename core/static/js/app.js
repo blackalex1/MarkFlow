@@ -2,7 +2,7 @@ import { ui, state } from './modules/ui.js';
 import * as auth from './modules/auth.js';
 import * as tree from './modules/tree.js';
 import * as viewer from './modules/viewer.js';
-import * as editor from './editor/core.js';
+import * as editor from './editor/index.js';
 import { initTheme } from './modules/theme.js';
 import { initSearch } from './modules/search.js';
 import { initGlobalHandlers } from './modules/utils.js';
@@ -11,12 +11,24 @@ import { initDashboardListeners } from './modules/dashboard.js';
 
 // Initialization
 async function init() {
+    // Fix for highlight.js deprecation warnings (EasyMDE uses old API)
+    if (window.hljs && typeof window.hljs.highlight === 'function') {
+        const _origHljs = window.hljs.highlight;
+        window.hljs.highlight = function(lang, code, ignoreIllegals, continuation) {
+            if (typeof lang === 'string' && typeof code === 'string') {
+                return _origHljs.call(window.hljs, code, { language: lang, ignoreIllegals: ignoreIllegals });
+            }
+            return _origHljs.apply(window.hljs, arguments);
+        };
+    }
+
     i18n.updatePage();
     updateLangLabel();
     initTheme();
     initSearch();
     initGlobalHandlers();
     initDashboardListeners();
+    editor.init();
     
     await auth.checkAuth();
     await tree.loadFileTree();
@@ -48,13 +60,8 @@ window.addEventListener('auth-changed', () => {
     tree.loadFileTree();
 });
 
-// Editor Actions
-if (ui.btnEdit) ui.btnEdit.onclick = () => editor.toggleEditMode(true);
+// Actions
 if (ui.btnDelete) ui.btnDelete.onclick = viewer.deleteCurrentFile;
-if (ui.btnCancel) ui.btnCancel.onclick = () => editor.toggleEditMode(false);
-if (ui.btnSave) ui.btnSave.onclick = editor.saveFile;
-if (ui.visibilityCheckbox) ui.visibilityCheckbox.onchange = editor.updateVisibility;
-if (ui.statusSelect) ui.statusSelect.onchange = editor.updateStatus;
 
 if (ui.btnLangToggle) {
     ui.btnLangToggle.onclick = () => {

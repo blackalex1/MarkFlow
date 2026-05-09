@@ -1,0 +1,81 @@
+/* MarkFlow Editor - Clean Modern Style */
+:root {
+    --editor-height: 600px;
+}
+
+.EasyMDEContainer {
+    width: 100%;
+    margin-bottom: 2rem;
+    transition: opacity 0.3s ease;
+}
+
+.EasyMDEContainer.hidden {
+    display: none;
+}
+
+/* Base Styles */
+.editor-toolbar {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-color) !important;
+    border-bottom: none !important;
+    border-radius: 12px 12px 0 0 !important;
+    opacity: 1 !important;
+    padding: 8px 12px !important;
+}
+
+.CodeMirror {
+    background: var(--bg-card) !important;
+    color: var(--text-main) !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 0 0 12px 12px !important;
+    height: var(--editor-height) !important;
+    font-family: 'Fira Code', monospace !important;
+    font-size: 14px !important;
+    padding: 10px !important;
+}
+
+/* Side by Side Mode (Local) */
+/* When sideBySideFullscreen: false is used, we need to ensure the preview is styled */
+.editor-preview-side {
+    background: var(--bg-main) !important;
+    border-left: 1px solid var(--border-color) !important;
+    color: var(--text-main) !important;
+}
+
+/* Native Fullscreen Mode (Handled by library) */
+.CodeMirror-fullscreen, 
+.editor-toolbar.fullscreen {
+    z-index: 1000 !important;
+}
+
+/* Dark Mode Overrides */
+.cm-s-easymde .CodeMirror-cursor { border-left: 2px solid var(--accent-indigo) !important; }
+.cm-s-easymde span.cm-header { color: var(--accent-indigo); font-weight: bold; }
+.cm-s-easymde span.cm-url { color: var(--accent-indigo); opacity: 0.8; }
+.cm-s-easymde span.cm-link { color: var(--accent-indigo); }
+
+/* Toolbar Hover States */
+.editor-toolbar button {
+    color: var(--text-muted) !important;
+    transition: all 0.2s ease !important;
+}
+
+.editor-toolbar button:hover,
+.editor-toolbar button.active {
+    background: var(--bg-hover) !important;
+    color: var(--accent-indigo) !important;
+    border-color: transparent !important;
+}
+
+/* Scrollbar Style */
+.CodeMirror-vscrollbar::-webkit-scrollbar,
+.CodeMirror-hscrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.CodeMirror-vscrollbar::-webkit-scrollbar-thumb,
+.CodeMirror-hscrollbar::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 10px;
+}

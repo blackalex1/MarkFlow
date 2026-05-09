@@ -2,19 +2,21 @@ export const ui = {
     fileTree: document.getElementById('file-tree'),
     contentViewer: document.getElementById('content-viewer'),
     viewModeContainer: document.getElementById('view-mode-container'),
-    contentEditor: document.getElementById('content-editor'),
     topBar: document.getElementById('top-bar'),
-    visibilityCheckbox: document.getElementById('visibility-checkbox'),
-    statusSelect: document.getElementById('status-select'),
     breadcrumb: document.getElementById('breadcrumb'),
-    btnEdit: document.getElementById('btn-edit'),
     btnDelete: document.getElementById('btn-delete'),
-    btnSave: document.getElementById('btn-save'),
-    btnCancel: document.getElementById('btn-cancel'),
     btnLangToggle: document.getElementById('btn-lang-toggle'),
     langLabel: document.getElementById('lang-label'),
     searchInput: document.getElementById('search-input'),
     searchResults: document.getElementById('search-results'),
+    
+    // Editor Components
+    contentEditor: document.getElementById('content-editor'),
+    btnEdit: document.getElementById('btn-edit'),
+    btnSave: document.getElementById('btn-save'),
+    btnCancel: document.getElementById('btn-cancel'),
+    visibilityCheckbox: document.getElementById('visibility-checkbox'),
+    statusSelect: document.getElementById('status-select'),
     
     // Dashboard (LK)
     dashboardModal: document.getElementById('user-dashboard-modal'),
@@ -109,11 +111,7 @@ export const ui = {
     
     // Layout
     sidebar: document.getElementById('sidebar'),
-    mobileToggle: document.getElementById('mobile-toggle'),
-    
-    // Editor Enhancements
-    slashMenu: document.getElementById('slash-menu'),
-    selectionToolbar: document.getElementById('selection-toolbar')
+    mobileToggle: document.getElementById('mobile-toggle')
 };
 
 export const state = {

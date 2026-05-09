@@ -16,13 +16,7 @@
 @import url("./modules/navigation.css");
 
 /* Content Components */
-@import url("./editor/markdown.css");
-@import url("./editor/core.css");
-@import url("./editor/layout.css");
-@import url("./editor/fullscreen.css");
-@import url("./editor/preview.css");
-@import url("./editor/menus.css");
-@import url("./editor/status.css");
+@import url("./editor/main.css");
 @import url("./modules/code.css");
 @import url("./modules/tables.css");
 @import url("./modules/tabs.css");

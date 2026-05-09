@@ -1,0 +1,243 @@
+.mf-editor {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    min-height: 400px;
+    height: 70vh; /* Adapts to viewport height */
+    max-height: 850px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Global Layout Expansion for Editor */
+body.is-editing #content-area {
+    max-width: 100% !important;
+    padding-right: 0 !important;
+}
+
+body.is-editing .toc-sidebar {
+    display: none !important;
+}
+
+body.is-editing .main-content {
+    gap: 0 !important;
+}
+
+/* Toolbar */
+.mf-editor-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 20px;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border-color);
+    user-select: none;
+    z-index: 10;
+}
+
+.mf-editor-toolbar button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 8px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mf-editor-toolbar button:hover {
+    background: var(--bg-hover);
+    color: var(--accent-indigo);
+    transform: translateY(-1px);
+}
+
+.mf-editor-toolbar button .icon-editor {
+    width: 20px !important;
+    height: 20px !important;
+    stroke-width: 2px;
+}
+
+.mf-editor-toolbar button.active {
+    background: rgba(99, 102, 241, 0.15);
+    color: var(--accent-indigo);
+}
+
+.mf-editor-toolbar-separator {
+    width: 1px;
+    height: 24px;
+    background: var(--border-color);
+    margin: 0 4px;
+    opacity: 0.5;
+}
+
+/* Main Content Area */
+.mf-editor-main {
+    display: grid;
+    grid-template-columns: 1fr;
+    flex: 1;
+    height: 100%;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.mf-editor-main.split {
+    grid-template-columns: 1fr 1fr;
+}
+
+.mf-editor-main.preview-only .mf-editor-code {
+    display: none;
+}
+
+/* Zen Mode / Readable Width Logic */
+.mf-editor-code {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.mf-editor-preview {
+    display: none; /* Hidden by default */
+    width: 100%;
+    height: 100%;
+    overflow-y: auto;
+    background: var(--bg-main);
+    border-left: 1px solid var(--border-color);
+}
+
+/* Inner wrapper for padding in preview */
+.mf-editor .mf-editor-preview-content {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 20px 30px !important;
+    transition: all 0.3s ease;
+}
+
+.mf-editor-main.split .mf-editor-preview,
+.mf-editor-main.preview-only .mf-editor-preview {
+    display: block;
+}
+
+/* The actual scrollable content inside the pane */
+.mf-editor .CodeMirror {
+    width: 100% !important;
+    height: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 20px !important;
+    background: transparent !important;
+    transition: all 0.3s ease;
+    font-family: 'Fira Code', monospace !important;
+}
+
+.mf-editor-code {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Zen Centering - Only when explicitly needed or in Fullscreen without split */
+.mf-editor.fullscreen:not(.split) .CodeMirror,
+.mf-editor.fullscreen:not(.split) .mf-editor-preview-content {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 40px;
+}
+
+/* Full-Window State */
+.mf-editor.fullscreen {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-height: none !important; /* CRITICAL: Remove the 850px limit */
+    max-width: none !important;
+    z-index: 999999 !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    background: var(--bg-main) !important;
+}
+
+/* Hide other UI elements when editor is fullscreen in window */
+body.editor-fullscreen-active .sidebar,
+body.editor-fullscreen-active .topbar,
+body.editor-fullscreen-active .mobile-nav-toggle {
+    display: none !important;
+}
+
+.mf-editor.fullscreen .mf-editor-main {
+    background: var(--bg-main);
+}
+
+.mf-editor.fullscreen .CodeMirror {
+    background: transparent !important;
+}
+
+/* Dark Mode Overrides for CodeMirror */
+.CodeMirror-cursor { border-left: 2px solid var(--accent-indigo) !important; }
+.cm-header { color: var(--accent-indigo); font-weight: bold; }
+.cm-url { color: var(--accent-indigo); opacity: 0.8; }
+.cm-link { color: var(--accent-indigo); }
+.CodeMirror-selected { background: rgba(99, 102, 241, 0.2) !important; }
+
+/* Responsive Media Queries */
+@media screen and (max-width: 768px) {
+    .mf-editor {
+        height: 80vh;
+        min-height: 500px;
+    }
+
+    .mf-editor-toolbar {
+        padding: 6px 10px;
+        gap: 4px;
+        overflow-x: auto; /* Scrollable toolbar on mobile */
+    }
+
+    .mf-editor-toolbar button {
+        width: 30px;
+        height: 30px;
+        padding: 4px;
+    }
+
+    .mf-editor-main.split {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 1fr;
+    }
+
+    .mf-editor-preview {
+        border-left: none;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .mf-editor-preview-content {
+        padding: 20px;
+    }
+
+    .mf-editor-main.preview-only {
+        grid-template-columns: 1fr;
+    }
+
+    .CodeMirror, .mf-editor-preview-content {
+        max-width: 100% !important;
+    }
+}
+
+/* Touch Device Optimization */
+@media (pointer: coarse) {
+    .mf-editor-toolbar button {
+        width: 40px; /* Larger hit targets for fingers */
+        height: 40px;
+    }
+}

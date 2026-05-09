@@ -12,6 +12,7 @@ router = APIRouter()
 @router.post("/upload-image")
 @limiter.limit(SECURITY_LIMITS["file_ops"])
 async def upload_image(request: Request, file: UploadFile = File(...), user=Depends(get_developer_user)):
+    """Securely uploads an image or video attachment."""
     ext = os.path.splitext(file.filename)[1].lower()
     image_exts = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"]
     video_exts = [".mp4", ".webm", ".ogg"]
@@ -24,6 +25,10 @@ async def upload_image(request: Request, file: UploadFile = File(...), user=Depe
     
     import hashlib
     content = await file.read()
+    
+    if len(content) > 10 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="File too large (max 10MB)")
+
     file_hash = hashlib.sha256(content).hexdigest()
     filename = f"{file_hash}{ext}"
     rel_path = f"attachments/{filename}"
@@ -33,8 +38,10 @@ async def upload_image(request: Request, file: UploadFile = File(...), user=Depe
         return {"path": rel_path, "url": f"/api/files/content?path={rel_path}"}
     
     try:
-        if ext in image_exts:
+        if ext in image_exts and ext != ".svg":
             try:
+                img = Image.open(io.BytesIO(content))
+                img.verify()
                 img = Image.open(io.BytesIO(content))
                 output = io.BytesIO()
                 if img.mode in ("RGBA", "P"):
@@ -49,7 +56,7 @@ async def upload_image(request: Request, file: UploadFile = File(...), user=Depe
     except HTTPException as he:
         raise he
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
         
     set_public(rel_path, True)
     add_audit_log(user["username"], "attachment_uploaded", f"Path: {rel_path}", ip_address=request.client.host)

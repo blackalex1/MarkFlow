@@ -19,6 +19,7 @@ LIBRARIES = [
     ("https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js", "js/purify.min.js"),
     ("https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js.map", "js/purify.min.js.map"),
     ("https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js", "js/mermaid.min.js"),
+
     ("https://unpkg.com/easymde/dist/easymde.min.js", "js/easymde.min.js"),
     ("https://unpkg.com/easymde/dist/easymde.min.css", "css/easymde.min.css"),
     ("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js", "js/katex.min.js"),
@@ -34,7 +35,7 @@ LIBRARIES = [
     ("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Size3-Regular.woff2", "css/fonts/KaTeX_Size3-Regular.woff2"),
     ("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Size4-Regular.woff2", "css/fonts/KaTeX_Size4-Regular.woff2"),
     
-    # FontAwesome 4.7.0 (often used by EasyMDE)
+    # FontAwesome 4.7.0 (for EasyMDE)
     ("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css", "css/font-awesome.min.css"),
     ("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/fonts/fontawesome-webfont.woff2", "fonts/fontawesome-webfont.woff2"),
     ("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/fonts/fontawesome-webfont.woff", "fonts/fontawesome-webfont.woff"),
