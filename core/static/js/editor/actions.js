@@ -42,7 +42,7 @@ export const saveContent = async () => {
         
         // Wait a bit and reload content to see changes in viewer
         setTimeout(() => {
-            exitEditMode(true);
+            exitEditMode(true, true);
         }, 500);
     } catch (error) {
         console.error('Save failed:', error);
@@ -118,9 +118,12 @@ export const enterEditMode = async () => {
     }
 };
 
-export const exitEditMode = (reload = false) => {
+export const exitEditMode = (reload = false, discardDraft = false) => {
+    // Only remove draft if explicitly requested (Save/Cancel)
     const path = state.currentFilePath;
-    if (path) localStorage.removeItem(`mf_draft_${path}`);
+    if (discardDraft && path) {
+        localStorage.removeItem(`mf_draft_${path}`);
+    }
 
     ui.contentViewer.classList.remove('hidden');
     ui.contentEditor.classList.add('hidden');
@@ -132,7 +135,13 @@ export const exitEditMode = (reload = false) => {
     document.body.classList.remove('is-editing');
     
     const container = getContainer();
-    if (container) container.classList.add('hidden');
+    if (container) {
+        container.classList.add('hidden');
+        container.classList.remove('fullscreen', 'split');
+        
+        // Restore body scroll if it was locked in fullscreen
+        document.body.style.overflow = '';
+    }
 
     if (reload && state.currentFilePath) {
         loadFileContent(state.currentFilePath, false);

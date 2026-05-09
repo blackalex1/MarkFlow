@@ -14,7 +14,7 @@ export const init = () => {
     // Bind UI Actions
     if (ui.btnEdit) ui.btnEdit.onclick = actions.enterEditMode;
     if (ui.btnSave) ui.btnSave.onclick = actions.saveContent;
-    if (ui.btnCancel) ui.btnCancel.onclick = () => actions.exitEditMode(false);
+    if (ui.btnCancel) ui.btnCancel.onclick = () => actions.exitEditMode(false, true);
     
     if (ui.visibilityCheckbox) {
         ui.visibilityCheckbox.onchange = (e) => actions.updateVisibility(e.target.checked);

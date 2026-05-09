@@ -1,9 +1,9 @@
 .mf-editor {
-    display: flex;
+    display: none; /* Hidden by default */
     flex-direction: column;
     width: 100%;
     min-height: 400px;
-    height: 70vh; /* Adapts to viewport height */
+    height: 70vh;
     max-height: 850px;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -13,6 +13,7 @@
 }
 
 body.is-editing .mf-editor {
+    display: flex !important;
     height: calc(100vh - 140px);
     max-height: none;
     margin-bottom: 0;
