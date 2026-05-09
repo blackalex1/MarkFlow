@@ -1,6 +1,7 @@
 import { ui } from '../ui.js';
 import { toast } from '../toasts.js';
 import { loadSyncConfig } from './sync.js';
+import { API } from '../api.js';
 
 export async function loadRepositories() {
     if (!ui.gitReposTbody) return;
@@ -331,7 +332,7 @@ export function initRepos() {
             ui.btnRepoGenUniqueKey.disabled = true;
             ui.btnRepoGenUniqueKey.innerText = t('btn_generating', 'Generating...');
             try {
-                const res = await fetch('/api/git/gen-key-pair');
+                const res = await fetch(API.GIT_GEN_KEY_PAIR);
                 const pair = await res.json();
                 tempKeyPair = { keyId: pair.key_id, public: pair.public_key };
                 
@@ -436,7 +437,7 @@ export function initRepos() {
             };
             if (!data.name || !data.slug || !data.url) return toast.warn('Fill Name, Slug and URL');
             const method = id ? 'PUT' : 'POST';
-            const url = id ? `/api/git/repos/${id}` : '/api/git/repos';
+            const url = id ? API.GIT_REPO_BY_ID(id) : API.GIT_REPOS;
             const res = await fetch(url, {
                 method: method,
                 headers: { 'Content-Type': 'application/json' },

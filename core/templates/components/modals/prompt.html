@@ -1,0 +1,17 @@
+<div id="prompt-modal" class="modal-overlay hidden" style="z-index: 1000000;">
+    <div class="modal-content modal-sm animate-pop">
+        <div class="modal-header" style="border-bottom: none; padding-bottom: 0;">
+            <h3 id="prompt-title" style="font-size: 18px; font-weight: 700; color: var(--text-main);">Input Required</h3>
+        </div>
+        <div class="modal-body" style="padding-top: 15px;">
+            <p id="prompt-message" style="color: var(--text-muted); font-size: 13px; margin-bottom: 12px; line-height: 1.4;"></p>
+            <div class="input-group-vertical">
+                <input type="text" id="prompt-input" name="markflow-nodename" autocomplete="off" spellcheck="false" style="width: 100%; padding: 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 8px; color: #fff; font-family: 'Inter', sans-serif;">
+            </div>
+        </div>
+        <div class="modal-footer" style="border-top: none; gap: 12px; padding-top: 20px; display: flex; flex-direction: row; align-items: center;">
+            <button id="prompt-btn-cancel" class="btn btn-secondary" style="flex: 1; margin: 0; border: 1px solid var(--border-color); color: var(--text-muted); background: transparent;">Cancel</button>
+            <button id="prompt-btn-confirm" class="btn btn-primary" style="flex: 1; margin: 0;">OK</button>
+        </div>
+    </div>
+</div>

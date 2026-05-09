@@ -44,20 +44,28 @@ import { initGlobalHandlers } from './modules/utils.js';
 import * as i18n from './modules/i18n.js';
 import { initDashboardListeners } from './modules/dashboard.js';
 import './modules/confirm.js';
+import './modules/prompt.js';
 
 // --- Trusted Types Policy ---
 if (window.trustedTypes && window.trustedTypes.createPolicy) {
+    // We only create the 'default' policy if it doesn't exist.
+    // DOMPurify 3.0+ will automatically create its own 'dompurify' policy.
     if (!window.trustedTypes.defaultPolicy) {
-        window.trustedTypes.createPolicy('default', {
-            createHTML: (string) => DOMPurify.sanitize(string, { RETURN_TRUSTED_TYPE: true }),
-            createScriptURL: (string) => string, // Be careful here, usually not needed for our app
-            createScript: (string) => string // Should be avoided
-        });
+        try {
+            window.trustedTypes.createPolicy('default', {
+                createHTML: (string) => DOMPurify.sanitize(string, { 
+                    RETURN_TRUSTED_TYPE: true,
+                    ADD_TAGS: ['use', 'foreignObject'], // Required for Mermaid
+                    ADD_ATTR: ['xlink:href', 'transform', 'viewBox'],
+                    USE_PROFILES: { html: true, svg: true, svgFilters: true }
+                }),
+                createScriptURL: (string) => string,
+                createScript: (string) => string 
+            });
+        } catch (e) {
+            console.warn('Trusted Types default policy could not be created:', e);
+        }
     }
-    // Specific policy for DOMPurify
-    window.purifyPolicy = window.trustedTypes.createPolicy('dompurify', {
-        createHTML: (string) => DOMPurify.sanitize(string, { RETURN_TRUSTED_TYPE: true })
-    });
 }
 // -----------------------------
 

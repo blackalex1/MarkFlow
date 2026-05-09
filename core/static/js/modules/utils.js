@@ -25,14 +25,23 @@ export function initGlobalHandlers() {
                         });
                     }
                     if (window.mermaid) {
-                        requestAnimationFrame(() => {
+                        setTimeout(() => {
                             try {
-                                mermaid.run({
-                                    nodes: target.querySelectorAll('.mermaid'),
-                                    suppressErrors: true
+                                const nodes = target.querySelectorAll('.mermaid');
+                                nodes.forEach(n => {
+                                    if (n.dataset.code) {
+                                        n.textContent = n.dataset.code;
+                                        n.removeAttribute('data-processed');
+                                    }
                                 });
-                            } catch (e) {}
-                        });
+                                mermaid.run({
+                                    nodes: nodes,
+                                    suppressErrors: false
+                                });
+                            } catch (e) {
+                                console.error('Mermaid tab render error:', e);
+                            }
+                        }, 300);
                     }
                 }
                 return;
@@ -55,14 +64,23 @@ export function initGlobalHandlers() {
                         });
                     }
                     if (window.mermaid) {
-                        requestAnimationFrame(() => {
+                        setTimeout(() => {
                             try {
-                                mermaid.run({
-                                    nodes: container.querySelectorAll('.mermaid'),
-                                    suppressErrors: true
+                                const nodes = container.querySelectorAll('.mermaid');
+                                nodes.forEach(n => {
+                                    if (n.dataset.code) {
+                                        n.textContent = n.dataset.code;
+                                        n.removeAttribute('data-processed');
+                                    }
                                 });
-                            } catch (e) {}
-                        });
+                                mermaid.run({
+                                    nodes: nodes,
+                                    suppressErrors: false
+                                });
+                            } catch (e) {
+                                console.error('Mermaid dropdown render error:', e);
+                            }
+                        }, 300);
                     }
                 }
             }

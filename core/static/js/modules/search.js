@@ -1,5 +1,6 @@
 import { ui } from './ui.js';
 import { loadFileContent } from './viewer.js';
+import { API } from './api.js';
 
 export function initSearch() {
     let searchTimeout;
@@ -97,7 +98,7 @@ function escapeHTML(str) {
 
 async function performSearch(q, container) {
     try {
-        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+        const res = await fetch(`${API.SEARCH}?q=${encodeURIComponent(q)}`);
         if (!res.ok) throw new Error(`Search failed: ${res.status}`);
         const data = await res.json();
         

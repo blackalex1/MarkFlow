@@ -77,7 +77,13 @@ async def lifespan(app: FastAPI):
     observer.stop()
     observer.join()
 
-app = FastAPI(title=APP_CONFIG.get("app_name", "MarkFlow"), lifespan=lifespan)
+# Disable docs in production for security
+app = FastAPI(
+    title=APP_CONFIG.get("app_name", "MarkFlow"), 
+    lifespan=lifespan,
+    docs_url="/docs" if os.environ.get("DEBUG") == "true" else None,
+    redoc_url="/redoc" if os.environ.get("DEBUG") == "true" else None
+)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 

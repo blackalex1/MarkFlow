@@ -2,6 +2,7 @@ import { ui, state } from '../ui.js';
 import { toast } from '../toasts.js';
 import * as i18n from '../i18n.js';
 import { loadRepositories } from './repos.js';
+import { API } from '../api.js';
 
 export function setSyncStatus(success, message = '') {
     if (!ui.syncStatusIcon) return;
@@ -33,7 +34,7 @@ export function setSyncStatus(success, message = '') {
 
 export async function loadSyncConfig() {
     try {
-        const res = await fetch('/api/git/config');
+        const res = await fetch(API.GIT_CONFIG);
         const data = await res.json();
         if (res.ok && data.url) {
             if (ui.activeRepoUrlDisplay) ui.activeRepoUrlDisplay.innerText = data.url;
@@ -117,7 +118,7 @@ export function initSync() {
             }
 
             try {
-                const res = await fetch('/api/git/sync?force=true', { method: 'POST' });
+                const res = await fetch(`${API.GIT_SYNC}?force=true`, { method: 'POST' });
                 const data = await res.json();
                 if (res.ok) {
                     toast.success(i18n.t('toast_sync_success') || 'Synchronization successful!');

@@ -54,12 +54,12 @@ async def add_security_headers(request: Request, call_next):
     # Tightened CSP
     csp = (
         "default-src 'self'; "
-        "script-src 'self'; " # Removed 'unsafe-inline' and google
+        "script-src 'self' blob:; " # Allowed blob: for Mermaid/Workers
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; "
         "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; "
-        "img-src 'self' data: blob: https:; " # Re-allowed https: for images in docs
+        "img-src 'self' data: blob: https:; " 
         "connect-src 'self'; "
-        "frame-src 'none'; "
+        "frame-src 'self' blob: data:; " # Allowed data: for some Mermaid types
         "frame-ancestors 'none'; "
         "object-src 'none'; "
         "base-uri 'self'; "

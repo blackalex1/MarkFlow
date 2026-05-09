@@ -4,6 +4,7 @@ import * as tree from './tree.js';
 import { t } from './i18n.js';
 import { initMarked } from './markdown.js';
 import { generateTOC, updateBreadcrumbs, addCopyButtons, updateNavigation } from './viewer_ui.js';
+import { API } from './api.js';
 
 initMarked();
 
@@ -11,8 +12,7 @@ if (window.mermaid) {
     mermaid.initialize({ 
         startOnLoad: false, 
         theme: 'dark',
-        securityLevel: 'strict',
-        logLevel: 4, // Error only
+        securityLevel: 'antiscript',
         fontFamily: 'inherit'
     });
 }
@@ -31,14 +31,14 @@ export async function loadFileContent(path, pushState = true, hash = null) {
             window.history.pushState({ path }, '', url);
         }
 
-        const res = await fetch(`/api/files/content?path=${encodeURIComponent(path)}`);
+        const res = await fetch(`${API.FILE_CONTENT}?path=${encodeURIComponent(path)}`);
         if (res.ok) {
             const data = await res.json();
             if (data.is_folder) {
                 return loadFolderContent(path);
             }
             const cleanHTML = DOMPurify.sanitize(marked.parse(data.content), {
-                ADD_ATTR: ['target', 'data-target', 'data-tab-id', 'data-lucide', 'id', 'class'],
+                ADD_ATTR: ['target', 'data-target', 'data-tab-id', 'data-lucide', 'id', 'class', 'data-code'],
                 USE_PROFILES: { html: true, mathMl: true, svg: true },
                 RETURN_TRUSTED_TYPE: true // Support for Trusted Types
             });
@@ -71,14 +71,18 @@ export async function loadFileContent(path, pushState = true, hash = null) {
             updateBreadcrumbs(path);
             
             if (window.mermaid && ui.contentViewer) {
-                // Use a longer delay to ensure elements are visible and have dimensions
-                // This prevents "translate(undefined, NaN)" errors in Mermaid
+                // Ensure elements are truly visible and have dimensions
                 setTimeout(() => {
                     try {
                         const nodes = ui.contentViewer.querySelectorAll('.mermaid');
                         if (nodes.length > 0) {
-                            // Check if viewer is still visible and has width
-                            if (ui.contentViewer.offsetWidth > 0) {
+                            nodes.forEach(n => {
+                                // Store original code for re-renders in tabs/dropdowns
+                                if (!n.dataset.code) n.dataset.code = n.textContent;
+                            });
+                            // Verify viewer width to avoid "translate(undefined, NaN)" errors
+                            const rect = ui.contentViewer.getBoundingClientRect();
+                            if (rect.width > 0) {
                                 mermaid.run({
                                     nodes: nodes,
                                     suppressErrors: true
@@ -88,7 +92,7 @@ export async function loadFileContent(path, pushState = true, hash = null) {
                     } catch (e) {
                         console.error('Mermaid render error:', e);
                     }
-                }, 300); // Increased from 150ms for stability
+                }, 400); // Stable delay for complex SVG layouts
             }
             if (window.lucide) lucide.createIcons();
             
@@ -120,7 +124,7 @@ export async function loadFolderContent(path) {
     ui.contentViewer.classList.add('fade-out');
     
     setTimeout(async () => {
-        const res = await fetch(`/api/files/folder?path=${encodeURIComponent(path)}`);
+        const res = await fetch(`${API.FOLDER_CONTENT}?path=${encodeURIComponent(path)}`);
         if (res.ok) {
             const data = await res.json();
             const { renderFolderGrid, updateBreadcrumbs } = await import('./viewer_ui.js');

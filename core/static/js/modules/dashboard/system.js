@@ -1,6 +1,7 @@
 import { ui } from '../ui.js';
 import { toast } from '../toasts.js';
 import * as i18n from '../i18n.js';
+import { API } from '../api.js';
 
 export function initSystemSettings() {
     const btnSave = document.getElementById('btn-save-system-settings');
@@ -129,7 +130,7 @@ export function initSystemSettings() {
         formData.append('file', file);
 
         try {
-            const res = await fetch(`/api/system/upload-asset?type=${type}`, {
+            const res = await fetch(`${API.SYSTEM_UPLOAD_ASSET}?type=${type}`, {
                 method: 'POST',
                 body: formData
             });
@@ -206,7 +207,7 @@ export function initSystemSettings() {
         if (!app_name) return toast.warn(i18n.t('sys_name_empty'));
 
         try {
-            const res = await fetch('/api/system/settings', {
+            const res = await fetch(API.SETTINGS, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ 

@@ -1,17 +1,18 @@
 import { ui, state } from './ui.js';
 import { toast } from './toasts.js';
 import { t } from './i18n.js';
+import { API } from './api.js';
 
 export async function loadFileTree() {
     // 1. Fetch File Tree (Available to guests)
-    const treeRes = await fetch('/api/files/tree');
+    const treeRes = await fetch(API.FILE_TREE);
     const treeData = await treeRes.json();
     
     // 2. Fetch Repos only if user is Staff (for context menus)
     const isStaff = state.currentUser && ['developer', 'maintainer', 'owner'].includes(state.currentUser.role);
     if (isStaff) {
         try {
-            const reposRes = await fetch('/api/git/repos');
+            const reposRes = await fetch(API.GIT_REPOS);
             if (reposRes.ok) {
                 const reposData = await reposRes.json();
                 state.repos = Array.isArray(reposData) ? reposData : (reposData.repos || []);
@@ -136,9 +137,10 @@ export function updateTreeHighlighting(activePath) {
 export function getAllFiles() {
     const files = [];
     document.querySelectorAll('.file-item').forEach(el => {
+        const span = el.querySelector('span');
         files.push({
             path: el.dataset.path,
-            name: el.querySelector('span').textContent
+            name: span ? span.textContent : (el.dataset.path.split('/').pop() || 'Unknown')
         });
     });
     return files;
@@ -265,10 +267,10 @@ function showContextMenu(e, node) {
 
 async function handleMenuCommand(cmd, node, contextPath = '') {
     if (cmd === 'new-file') {
-        const name = prompt(t('pages_name_placeholder') || "Enter file name:");
+        const name = await window.promptAction(t('menu_new_file'), t('pages_name_placeholder') || "Enter file name:", '', t('pages_btn_create') || 'OK', t('btn_cancel'));
         if (!name) return;
         const fullPath = contextPath ? `${contextPath}/${name}` : name;
-        const res = await fetch(`/api/files/create?path=${encodeURIComponent(fullPath)}`, { method: 'POST' });
+        const res = await fetch(`${API.FILE_CREATE}?path=${encodeURIComponent(fullPath)}`, { method: 'POST' });
         if (res.ok) {
             toast.success(t('toast_save_success'));
             loadFileTree();
@@ -278,10 +280,10 @@ async function handleMenuCommand(cmd, node, contextPath = '') {
             toast.error(err.detail || "Failed to create file");
         }
     } else if (cmd === 'new-folder') {
-        const name = prompt(t('pages_name_placeholder') || "Enter folder name:");
+        const name = await window.promptAction(t('menu_new_folder'), t('pages_name_placeholder') || "Enter folder name:", '', t('pages_btn_create') || 'OK', t('btn_cancel'));
         if (!name) return;
         const fullPath = contextPath ? `${contextPath}/${name}` : name;
-        const res = await fetch(`/api/files/mkdir?path=${encodeURIComponent(fullPath)}`, { method: 'POST' });
+        const res = await fetch(`${API.FILE_MKDIR}?path=${encodeURIComponent(fullPath)}`, { method: 'POST' });
         if (res.ok) {
             toast.success(t('type_folder') + " created");
             loadFileTree();
@@ -298,7 +300,7 @@ async function handleMenuCommand(cmd, node, contextPath = '') {
             t('btn_cancel') || 'Cancel'
         );
         if (confirmed) {
-            const res = await fetch(`/api/files/delete?path=${encodeURIComponent(node.path)}`, { method: 'DELETE' });
+            const res = await fetch(`${API.FILE_DELETE}?path=${encodeURIComponent(node.path)}`, { method: 'DELETE' });
             if (res.ok) {
                 toast.success(`${node.type} deleted`);
                 loadFileTree();
@@ -310,10 +312,10 @@ async function handleMenuCommand(cmd, node, contextPath = '') {
             }
         }
     } else if (cmd === 'rename' || cmd === 'move') {
-        const newPath = prompt(`Enter new path for ${node.name}:`, node.path);
+        const newPath = await window.promptAction(t('menu_rename') || 'Rename', `Enter new path for ${node.name}:`, node.path, t('btn_save'), t('btn_cancel'));
         if (!newPath || newPath === node.path) return;
         
-        const res = await fetch(`/api/files/move`, {
+        const res = await fetch(API.FILE_MOVE, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ old_path: node.path, new_path: newPath })
@@ -331,7 +333,7 @@ async function handleMenuCommand(cmd, node, contextPath = '') {
         }
     } else if (cmd.startsWith('status-')) {
         const status = cmd.replace('status-', '');
-        const res = await fetch(`/api/files/status?path=${encodeURIComponent(node.path)}`, {
+        const res = await fetch(`${API.FILE_STATUS}?path=${encodeURIComponent(node.path)}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status })
@@ -348,7 +350,7 @@ async function handleMenuCommand(cmd, node, contextPath = '') {
         }
     } else if (cmd.startsWith('vis-')) {
         const isPublic = cmd === 'vis-public';
-        const res = await fetch(`/api/files/visibility?path=${encodeURIComponent(node.path)}`, {
+        const res = await fetch(`${API.FILE_VISIBILITY}?path=${encodeURIComponent(node.path)}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ public: isPublic })

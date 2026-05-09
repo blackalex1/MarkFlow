@@ -2,6 +2,7 @@ import { ui, state } from '../ui.js';
 import { toast } from '../toasts.js';
 import { logout } from '../auth.js';
 import * as i18n from '../i18n.js';
+import { API } from '../api.js';
 
 export function update2FAStatusUI() {
     if (!state.currentUser) return;
@@ -25,7 +26,7 @@ export function initSettings() {
     if (ui.btnOpenSSHModal) {
         ui.btnOpenSSHModal.onclick = () => {
             ui.modalSSH.classList.remove('hidden');
-            fetch('/api/git/pubkey').then(r => r.json()).then(data => { 
+            fetch(API.GIT_PUBKEY).then(r => r.json()).then(data => { 
                 ui.sshPublicKey.value = data.pubkey || ''; 
                 const privCont = document.getElementById('privkey-input-container');
                 if (privCont) privCont.classList.add('hidden');
@@ -52,7 +53,7 @@ export function initSettings() {
     if (ui.btnGenerateSSHKey) {
         ui.btnGenerateSSHKey.onclick = () => {
             toast.show(i18n.t('confirm_gen_ssh'), 'warning', 0, { label: i18n.t('btn_confirm_gen'), callback: async () => {
-                const res = await fetch('/api/git/generate-key', { method: 'POST' });
+                const res = await fetch(API.GIT_GENERATE_KEY, { method: 'POST' });
                 const data = await res.json();
                 if (res.ok) { 
                     ui.sshPublicKey.value = data.pubkey; 
@@ -68,7 +69,7 @@ export function initSettings() {
         btnSaveSSH.onclick = async () => {
             const private_key = ui.sshPrivateKey.value, public_key = ui.sshPublicKey.value;
             if (!private_key || !public_key) return toast.warn('Fill both keys');
-            const res = await fetch('/api/git/set-ssh-key', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ private_key, public_key }) });
+            const res = await fetch(API.GIT_SET_SSH_KEY, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ private_key, public_key }) });
             if (res.ok) { 
                 toast.success('Saved'); 
                 ui.sshPrivateKey.value = '';

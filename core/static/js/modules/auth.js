@@ -3,9 +3,10 @@ import { toast } from './toasts.js';
 import { initAdmin } from './admin.js';
 import * as i18n from './i18n.js';
 import { update2FAStatusUI, updateCredsStatusUI, initDashboardListeners } from './dashboard.js';
+import { API } from './api.js';
 
 export async function checkAuth() {
-    const res = await fetch('/api/auth/me');
+    const res = await fetch(API.AUTH_ME);
     const data = await res.json();
     state.currentUser = data.logged_in ? data : null;
     initAuthListeners();
@@ -22,11 +23,11 @@ export function initAuthListeners() {
             i18n.updatePage();
             if (window.lucide) lucide.createIcons();
             try {
-                const gitRes = await fetch('/api/git/config'), gitData = await gitRes.json();
+                const gitRes = await fetch(API.GIT_CONFIG), gitData = await gitRes.json();
                 ui.gitRemoteUrl.value = gitData.url || '';
                 ui.gitBranchSelect.innerHTML = `<option value="${gitData.branch || 'master'}">${gitData.branch || 'master'}</option>`;
                 updateCredsStatusUI(gitData.is_valid);
-                const sshRes = await fetch('/api/git/ssh-status'), sshData = await sshRes.json();
+                const sshRes = await fetch(API.SSH_STATUS), sshData = await sshRes.json();
                 if (sshData.has_keys) { ui.sshPublicKey.placeholder = '********'; ui.sshPrivateKey.placeholder = '********'; }
             } catch (err) {}
         };
@@ -39,7 +40,7 @@ export function initAuthListeners() {
 export async function login(e) {
     if (e) e.preventDefault();
     const payload = { username: ui.loginUsername.value, password: ui.loginPassword.value, totp_code: ui.loginTotp.value };
-    const res = await fetch('/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    const res = await fetch(API.LOGIN, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     if (res.ok) window.location.reload();
     else {
         const err = await res.json();
@@ -49,12 +50,12 @@ export async function login(e) {
 }
 
 export async function logout() {
-    await fetch('/api/auth/logout', { method: 'POST' });
+    await fetch(API.LOGOUT, { method: 'POST' });
     window.location.reload();
 }
 
 export async function setup2FA() {
-    const res = await fetch('/api/auth/2fa/setup');
+    const res = await fetch(API.SETUP_2FA);
     if (res.ok) {
         const data = await res.json();
         state.setupTotpSecret = data.secret;
@@ -64,7 +65,7 @@ export async function setup2FA() {
 }
 
 export async function verify2FA() {
-    const res = await fetch('/api/auth/2fa/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ totp_code: ui.setupTotpCode.value, secret: state.setupTotpSecret }) });
+    const res = await fetch(API.VERIFY_2FA_SETUP, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ totp_code: ui.setupTotpCode.value, secret: state.setupTotpSecret }) });
     if (res.ok) { toast.success("OK"); ui.totpSetupModal.classList.add('hidden'); state.currentUser.two_factor_enabled = true; update2FAStatusUI(); }
     else toast.error("Error");
 }
