@@ -1,9 +1,19 @@
 /* --- Editor Preview Panel Styles --- */
 
 .editor-preview {
-    background: transparent !important;
+    display: none;
+    background: var(--bg-card) !important;
     color: var(--text-main) !important;
     padding: 40px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    overflow-y: auto !important;
+    height: calc(100vh - 350px) !important;
+    min-height: 400px !important;
+}
+
+.editor-preview-active {
+    display: block !important;
 }
 
 /* Force dark theme for code blocks in preview */

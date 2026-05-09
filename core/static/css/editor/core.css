@@ -6,6 +6,7 @@
     overflow: hidden;
     margin-top: 20px;
     animation: slideUp 0.4s ease-out;
+    position: relative !important;
 }
 
 .editor-toolbar {
@@ -55,12 +56,6 @@
     min-height: 400px !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
-}
-
-.editor-preview {
-    height: calc(100vh - 350px) !important;
-    min-height: 400px !important;
-    overflow-y: auto !important;
 }
 
 .cm-header-1 { font-size: 1.4em !important; }

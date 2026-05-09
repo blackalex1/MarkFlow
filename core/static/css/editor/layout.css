@@ -89,6 +89,11 @@
     width: 100% !important;
 }
 
+/* Force hide CodeMirror when standard preview is active to prevent overlap */
+.EasyMDEContainer.preview-active .CodeMirror {
+    display: none !important;
+}
+
 /* Hide side preview when NOT in sided mode */
 .EasyMDEContainer:not(:has(.editor-preview-active-side)) .editor-preview-side {
     display: none !important;

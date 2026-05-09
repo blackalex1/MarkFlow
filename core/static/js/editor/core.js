@@ -20,6 +20,14 @@ export function toggleEditMode(editing) {
                 element: ui.contentEditor, spellChecker: false, autosave: { enabled: false },
                 status: ["lines", "words", "cursor"], uploadImage: false, minHeight: "500px",
                 autoDownloadFontAwesome: false,
+                toolbar: [
+                    "bold", "italic", "heading", "|", "quote", "unordered-list", "ordered-list", "|",
+                    "link", "image", "table", "|",
+                    { name: "preview", action: (e) => e.togglePreview(), className: "fa fa-eye no-disable", title: "Toggle Preview" },
+                    { name: "side-by-side", action: (e) => e.toggleSideBySide(), className: "fa fa-columns no-disable no-mobile", title: "Toggle Side by Side" },
+                    { name: "fullscreen", action: (e) => e.toggleFullScreen(), className: "fa fa-arrows-alt no-disable no-mobile", title: "Toggle Fullscreen" },
+                    "|", "guide"
+                ],
                 previewClass: "editor-preview",
                 previewRender: function(plainText, preview) {
                     const cleanHTML = DOMPurify.sanitize(marked.parse(plainText), {
@@ -43,7 +51,7 @@ export function toggleEditMode(editing) {
                             const nodes = preview.querySelectorAll('.mermaid');
                             if (nodes.length > 0) mermaid.run({ nodes: nodes, suppressErrors: true });
                         }
-                        if (window.lucide) lucide.createIcons({ root: preview });
+                        if (window.lucide && preview) lucide.createIcons({ root: preview });
                     }, 0);
                     
                     return cleanHTML;
@@ -73,42 +81,70 @@ export function toggleEditMode(editing) {
             const syncLayout = () => {
                 setTimeout(() => {
                     const isSided = easyMDE.isSideBySideActive();
-                    // EasyMDE's isFullscreenActive() returns true even when side-by-side is active!
-                    // We must explicitly ensure we are NOT in side-by-side mode to consider it pure fullscreen.
-                    const isFS = easyMDE.isFullscreenActive() && !isSided;
+                    const isFS = easyMDE.isFullscreenActive();
+                    const hasIntent = document.body.classList.contains('fs-intent');
                     
-                    document.body.classList.toggle('editor-fullscreen', isFS);
+                    // Zen mode logic: only if FS is active, NOT in side-by-side, AND intentional
+                    const isZen = isFS && !isSided && hasIntent;
+                    document.body.classList.toggle('editor-fullscreen', isZen);
                     
-                    if (ui.tocSidebar) {
-                        ui.tocSidebar.classList.toggle('hidden', isFS);
-                    }
-                    
-                    if (ui.sidebar) {
-                        ui.sidebar.classList.toggle('hidden', isFS);
-                    }
+                    if (ui.tocSidebar) ui.tocSidebar.classList.toggle('hidden', isZen);
+                    if (ui.sidebar) ui.sidebar.classList.toggle('hidden', isZen);
                     
                     easyMDE.codemirror.refresh();
                 }, 50);
             };
 
-            const oldSideBySide = easyMDE.toggleSideBySide;
-            easyMDE.toggleSideBySide = function() {
-                const wasSided = easyMDE.isSideBySideActive();
-                oldSideBySide.call(this);
-                // Fix native EasyMDE bug: disabling side-by-side leaves fullscreen active
-                if (wasSided && easyMDE.isFullscreenActive()) {
-                    easyMDE.toggleFullScreen();
-                }
-                syncLayout();
-            };
-            
+            let sideBySideTransition = false;
+
             const oldFullScreen = easyMDE.toggleFullScreen;
             easyMDE.toggleFullScreen = function() {
-                oldFullScreen.call(this);
+                // Only mark intent if we're NOT in a side-by-side transition
+                if (!sideBySideTransition) {
+                    if (!easyMDE.isFullscreenActive()) document.body.classList.add('fs-intent');
+                    else document.body.classList.remove('fs-intent');
+                }
+                oldFullScreen.call(easyMDE);
                 syncLayout();
             };
 
-            initEditorEnhancements(easyMDE.codemirror, applyFormat, applySlashCommand);
+            const oldSideBySide = easyMDE.toggleSideBySide;
+            easyMDE.toggleSideBySide = function() {
+                sideBySideTransition = true;
+                const wasSided = easyMDE.isSideBySideActive();
+                
+                oldSideBySide.call(easyMDE);
+                
+                // If we turned OFF side-by-side, also turn off the auto-fullscreen
+                if (wasSided && !easyMDE.isSideBySideActive() && easyMDE.isFullscreenActive()) {
+                    oldFullScreen.call(easyMDE);
+                }
+                
+                sideBySideTransition = false;
+                syncLayout();
+            };
+
+            const oldTogglePreview = easyMDE.togglePreview;
+            easyMDE.togglePreview = function() {
+                oldTogglePreview.call(easyMDE);
+                const container = document.querySelector('.EasyMDEContainer');
+                if (container) {
+                    const preview = easyMDE.codemirror.getWrapperElement().nextSibling;
+                    const isPreview = preview && preview.classList.contains('editor-preview-active');
+                    container.classList.toggle('preview-active', isPreview);
+                }
+                syncLayout();
+            };
+
+            // Re-bind keyboard shortcuts
+            const cm = easyMDE.codemirror;
+            const extraKeys = cm.getOption("extraKeys") || {};
+            extraKeys["F9"] = () => easyMDE.toggleSideBySide();
+            extraKeys["F11"] = () => easyMDE.toggleFullScreen();
+            extraKeys["F8"] = () => easyMDE.togglePreview();
+            cm.setOption("extraKeys", extraKeys);
+
+            initEditorEnhancements(cm, applyFormat, applySlashCommand);
         } else document.querySelector('.EasyMDEContainer').classList.remove('hidden');
 
         const draft = localStorage.getItem(`draft_${state.currentFilePath}`), serverContent = ui.contentEditor.value;
