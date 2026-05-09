@@ -19,6 +19,7 @@
 @import url("./editor/markdown.css");
 @import url("./editor/core.css");
 @import url("./editor/layout.css");
+@import url("./editor/fullscreen.css");
 @import url("./editor/preview.css");
 @import url("./editor/menus.css");
 @import url("./editor/status.css");
