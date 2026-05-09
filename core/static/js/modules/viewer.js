@@ -39,7 +39,8 @@ export async function loadFileContent(path, pushState = true, hash = null) {
             }
             const cleanHTML = DOMPurify.sanitize(marked.parse(data.content), {
                 ADD_ATTR: ['target', 'data-target', 'data-tab-id', 'data-lucide', 'id', 'class'],
-                USE_PROFILES: { html: true, mathMl: true, svg: true }
+                USE_PROFILES: { html: true, mathMl: true, svg: true },
+                RETURN_TRUSTED_TYPE: true // Support for Trusted Types
             });
             
             if (ui.contentViewer) {

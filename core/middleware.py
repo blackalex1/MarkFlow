@@ -62,7 +62,9 @@ async def add_security_headers(request: Request, call_next):
         "frame-src 'none'; "
         "frame-ancestors 'none'; "
         "object-src 'none'; "
-        "base-uri 'self';"
+        "base-uri 'self'; "
+        "require-trusted-types-for 'script'; "
+        "trusted-types dompurify default;"
     )
     response.headers["Content-Security-Policy"] = csp
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"

@@ -84,10 +84,23 @@ async def save_file_content(path: str, data: FileContent, request: Request, back
         doc_dir = os.path.dirname(path)
         background_tasks.add_task(cleanup_orphaned_attachments, list(orphans), doc_dir, user["username"])
     
+    # Server-side Sanitization (Basic protection as second layer)
+    sanitized_content = data.content
+    # Block dangerous tags and attributes
+    dangerous_patterns = [
+        (r'<script.*?>.*?</script>', '[REDACTED SCRIPT]'),
+        (r'on\w+\s*=', '[REDACTED EVENT]='),
+        (r'javascript:', '[REDACTED JS]:'),
+        (r'<iframe.*?>', '[REDACTED IFRAME]'),
+        (r'<object.*?>', '[REDACTED OBJECT]')
+    ]
+    for pattern, replacement in dangerous_patterns:
+        sanitized_content = re.sub(pattern, replacement, sanitized_content, flags=re.IGNORECASE | re.DOTALL)
+
     with open(full_path, "w", encoding="utf-8") as f:
-        f.write(data.content)
+        f.write(sanitized_content)
         
-    update_fts_index(path, os.path.basename(path).replace(".md", ""), data.content)
+    update_fts_index(path, os.path.basename(path).replace(".md", ""), sanitized_content)
     add_audit_log(user["username"], "file_updated", f"Path: {path}", ip_address=request.client.host)
     return {"message": "File saved"}
 

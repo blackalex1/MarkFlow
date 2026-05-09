@@ -45,6 +45,22 @@ import * as i18n from './modules/i18n.js';
 import { initDashboardListeners } from './modules/dashboard.js';
 import './modules/confirm.js';
 
+// --- Trusted Types Policy ---
+if (window.trustedTypes && window.trustedTypes.createPolicy) {
+    if (!window.trustedTypes.defaultPolicy) {
+        window.trustedTypes.createPolicy('default', {
+            createHTML: (string) => DOMPurify.sanitize(string, { RETURN_TRUSTED_TYPE: true }),
+            createScriptURL: (string) => string, // Be careful here, usually not needed for our app
+            createScript: (string) => string // Should be avoided
+        });
+    }
+    // Specific policy for DOMPurify
+    window.purifyPolicy = window.trustedTypes.createPolicy('dompurify', {
+        createHTML: (string) => DOMPurify.sanitize(string, { RETURN_TRUSTED_TYPE: true })
+    });
+}
+// -----------------------------
+
 // Initialization
 async function init() {
     const versionMeta = document.querySelector('meta[name="app-version"]');
