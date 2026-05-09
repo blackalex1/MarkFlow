@@ -7,9 +7,6 @@
         
         <div class="dashboard-tabs">
             <div class="tab-item active" data-tab="account" data-t="tab_account">Account</div>
-            {% if user_role in ['developer', 'maintainer', 'owner'] %}
-            <div class="tab-item" data-tab="pages" data-t="tab_pages">Pages</div>
-            {% endif %}
             {% if user_role in ['maintainer', 'owner'] %}
             <div class="tab-item" data-tab="users" data-t="tab_users">Users</div>
             <div class="tab-item" data-tab="git" data-t="tab_git">Git</div>
@@ -52,27 +49,6 @@
             <button id="btn-logout" class="btn btn-outline" style="width: 100%; margin-top: 20px;" data-t="logout_btn">Logout</button>
             <button id="btn-logout-all" class="btn btn-text btn-sm" style="width: 100%; margin-top: 10px; text-align: center;" data-t="logout_all_btn">Logout from all devices</button>
         </div>
-
-        {% if user_role in ['developer', 'maintainer', 'owner'] %}
-        <div id="tab-pages" class="tab-content hidden">
-            <div class="settings-plate">
-                <div class="plate-header">
-                    <i data-lucide="file-plus"></i>
-                    <span data-t="pages_create_title">Create New Content</span>
-                </div>
-                <div class="plate-body">
-                    <div class="input-group" style="margin-bottom: 10px; display: flex; gap: 10px;">
-                        <select id="new-item-type" style="width: auto;">
-                            <option value="file" data-t="pages_type_file">File (.md)</option>
-                            <option value="folder" data-t="pages_type_folder">Folder</option>
-                        </select>
-                        <input type="text" id="new-page-name" data-t="pages_name_placeholder" placeholder="Name or path (e.g. Docs/Intro)" style="flex: 1;">
-                    </div>
-                    <button id="btn-create-page" class="btn btn-sm btn-primary" style="width: 100%;" data-t="pages_btn_create">Create</button>
-                </div>
-            </div>
-        </div>
-        {% endif %}
 
         {% if user_role in ['maintainer', 'owner'] %}
         <div id="tab-users" class="tab-content hidden">
@@ -209,9 +185,12 @@
                         <p style="font-size: 11px; color: var(--text-muted); margin-top: 5px; margin-left: 50px;" data-t="repo_flatten_hint">Show repository contents directly in the root sidebar instead of a folder</p>
                     </div>
 
-                    <div id="repo-key-type-selection" class="input-group" style="flex-direction: row; align-items: center; gap: 8px; margin-top: 15px;">
-                        <input type="checkbox" id="repo-use-global-ssh" checked style="width: 16px; height: 16px; margin: 0;">
-                        <label for="repo-use-global-ssh" style="margin: 0; font-size: 13px; cursor: pointer;" data-t="git_repo_use_global">Use global SSH key</label>
+                    <div id="repo-key-type-selection" class="input-group" style="flex-direction: row; align-items: center; gap: 12px; margin-top: 15px; padding: 12px; background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-color); border-radius: 8px;">
+                        <label class="switch">
+                            <input type="checkbox" id="repo-use-global-ssh" checked>
+                            <span class="slider"></span>
+                        </label>
+                        <label for="repo-use-global-ssh" style="margin: 0; font-size: 13px; cursor: pointer; font-weight: 600;" data-t="git_repo_use_global">Use global SSH key</label>
                         <button type="button" id="btn-view-global-key-hint" class="btn btn-xs btn-text" style="font-size: 10px; margin-left: auto;" data-t="git_repo_view_global">View Global Key</button>
                     </div>
                     
@@ -228,8 +207,18 @@
                         </div>
 
                         <div id="repo-key-gen-area">
-                            <button type="button" id="btn-repo-gen-unique-key" class="btn btn-xs btn-outline" style="width: 100%;" data-t="git_repo_gen_unique">Generate Unique Key for this Repo</button>
+                            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                                <button type="button" id="btn-repo-gen-unique-key" class="btn btn-xs btn-outline" style="flex: 1;" data-t="git_repo_gen_unique">Generate Unique Key</button>
+                                <button type="button" id="btn-repo-manual-key" class="btn btn-xs btn-text" data-t="btn_set_manually">Set Manually</button>
+                            </div>
                             
+                            <div id="repo-manual-key-input" class="hidden" style="margin-top: 10px; animation: fadeIn 0.3s;">
+                                <label style="font-size: 11px; color: var(--text-muted); display: block; margin-bottom: 5px;" data-t="ssh_privkey_label">Private Key</label>
+                                <textarea id="repo-manual-private-key" style="font-family: monospace; resize: none; min-height: 100px; font-size: 10px; width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 4px; padding: 8px;" placeholder="-----BEGIN OPENSSH PRIVATE KEY-----" autocomplete="off"></textarea>
+                                <label style="font-size: 11px; color: var(--text-muted); display: block; margin-top: 10px; margin-bottom: 5px;" data-t="ssh_pubkey_label">Public Key</label>
+                                <textarea id="repo-manual-public-key" style="font-family: monospace; resize: none; min-height: 60px; font-size: 10px; width: 100%; background: rgba(0,0,0,0.2); border: 1px solid var(--border-color); border-radius: 4px; padding: 8px;" placeholder="ssh-rsa ..." autocomplete="off"></textarea>
+                            </div>
+
                             <div id="repo-unique-key-display" class="hidden" style="margin-top: 10px;">
                                 <div class="key-display-box" style="padding: 10px; background: rgba(0,0,0,0.2);">
                                     <pre id="repo-generated-pubkey" style="font-size: 10px; max-height: 60px; overflow-y: auto; margin-bottom: 8px; word-break: break-all; white-space: pre-wrap; color: var(--text-muted);"></pre>
@@ -372,8 +361,8 @@
                             </div>
                             <div class="upload-group">
                                 <input type="hidden" id="sys-logo-path" value="{{ config.logo_path }}" data-current-path="{{ config.logo_path }}">
-                                <input type="file" id="sys-logo-upload" class="hidden" accept=".png,.jpg,.jpeg,.svg">
-                                <button type="button" class="btn btn-sm btn-outline" onclick="document.getElementById('sys-logo-upload').click()" style="width: 100%;">
+                                <input type="file" id="sys-logo-upload" class="hidden" accept=".png,.jpg,.jpeg">
+                                <button type="button" id="btn-sys-logo-trigger" class="btn btn-sm btn-outline" style="width: 100%;">
                                     <i data-lucide="upload"></i>
                                     <span data-t="btn_upload">Upload Logo</span>
                                 </button>
@@ -394,8 +383,8 @@
                             </div>
                             <div class="upload-group">
                                 <input type="hidden" id="sys-favicon-path" value="{{ config.favicon_path }}" data-current-path="{{ config.favicon_path }}">
-                                <input type="file" id="sys-favicon-upload" class="hidden" accept=".ico,.png,.svg">
-                                <button type="button" class="btn btn-sm btn-outline" onclick="document.getElementById('sys-favicon-upload').click()" style="width: 100%;">
+                                <input type="file" id="sys-favicon-upload" class="hidden" accept=".ico,.png">
+                                <button type="button" id="btn-sys-favicon-trigger" class="btn btn-sm btn-outline" style="width: 100%;">
                                     <i data-lucide="upload"></i>
                                     <span data-t="btn_upload">Upload Favicon</span>
                                 </button>

@@ -3,14 +3,27 @@ import { toast } from './toasts.js';
 import { t } from './i18n.js';
 
 export async function loadFileTree() {
-    const [treeRes, reposRes] = await Promise.all([
-        fetch('/api/files/tree'),
-        fetch('/api/git/repos')
-    ]);
+    // 1. Fetch File Tree (Available to guests)
+    const treeRes = await fetch('/api/files/tree');
     const treeData = await treeRes.json();
-    const reposData = await reposRes.json();
     
-    state.repos = Array.isArray(reposData) ? reposData : (reposData.repos || []);
+    // 2. Fetch Repos only if user is Staff (for context menus)
+    const isStaff = state.currentUser && ['developer', 'maintainer', 'owner'].includes(state.currentUser.role);
+    if (isStaff) {
+        try {
+            const reposRes = await fetch('/api/git/repos');
+            if (reposRes.ok) {
+                const reposData = await reposRes.json();
+                state.repos = Array.isArray(reposData) ? reposData : (reposData.repos || []);
+            }
+        } catch (err) {
+            console.error("Failed to load repos:", err);
+            state.repos = [];
+        }
+    } else {
+        state.repos = [];
+    }
+
     renderFileTree(treeData.tree);
 }
 

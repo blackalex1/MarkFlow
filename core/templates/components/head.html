@@ -17,7 +17,6 @@
     
     <script src="/static/vendor/js/marked.min.js"></script>
     <script src="/static/vendor/js/purify.min.js"></script>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <script src="/static/vendor/js/mermaid.min.js"></script>
     
     <!-- Local Editor Assets (Bundled CodeMirror) -->
@@ -28,7 +27,7 @@
     <link rel="stylesheet" href="/static/vendor/css/katex.min.css">
     <script src="/static/vendor/js/katex.min.js"></script>
     <script src="/static/vendor/js/auto-render.min.js"></script>
-    <script>window.APP_VERSION = "{{ app_version }}";</script>
+    <meta name="app-version" content="{{ app_version }}">
     <link rel="stylesheet" href="/static/css/editor/markflow-editor.css?v={{ app_version }}">
     <link rel="stylesheet" href="/static/css/modules/color-picker.css?v={{ app_version }}">
     

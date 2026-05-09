@@ -42,7 +42,7 @@ export const ru = {
     sys_logo_path: "Логотип",
     sys_accent_color: "Акцентный цвет",
     sys_save_btn: "Сохранить настройки системы",
-    sys_color_hint: "Этот цвет будет применен глобально к кнопкам, ссылкам и активным элементам.",
+    sys_color_hint: "Этот цвет будет применен глобально к кнопкам, ссылкам и активным элементам интерфейса.",
     sys_custom_hex: "Свой Hex-код",
     sys_saving: "Сохранение настроек...",
     sys_updated_success: "Системные настройки успешно обновлены!",
@@ -63,7 +63,6 @@ export const ru = {
     unit_minute: "мин.",
     unit_hour: "час.",
     unit_day: "дн.",
-    sys_color_hint: "Этот цвет будет применен глобально к кнопкам, ссылкам и активным элементам интерфейса.",
     
     // Editor
     btn_edit: "Редактировать",
@@ -246,5 +245,17 @@ export const ru = {
     logs_th_user: "Пользователь",
     logs_th_action: "Действие",
     logs_th_ip: "IP",
-    logs_th_details: "Детали"
+    logs_th_details: "Детали",
+    
+    // SSH Modals
+    git_global_key_title: "Глобальный SSH публичный ключ",
+    git_global_key_desc: "Это ваш общий ключ для всех репозиториев.",
+    git_unique_key_title: "Уникальный ключ создан",
+    git_unique_key_desc: "Скопируйте этот уникальный ключ в настройки вашего Git-провайдера.",
+    git_provider_desc: "Скопируйте этот ключ в настройки вашего Git-провайдера (GitHub/GitLab).",
+    btn_set_manually: "Вручную",
+    btn_generating: "Генерация...",
+    status_protected: "Защищено",
+    confirm_delete_user: "Вы уверены, что хотите удалить пользователя",
+    error_fill_all: "Пожалуйста, заполните все поля"
 };

@@ -1,6 +1,5 @@
 import { ui, state } from '../ui.js';
 import { logout } from '../auth.js';
-import { initPages } from './pages.js';
 import { initRepos, loadRepositories } from './repos.js';
 import { initSync } from './sync.js';
 import { initSettings } from './settings.js';
@@ -17,7 +16,6 @@ export function initDashboardListeners() {
     if (logoutBtn) logoutBtn.onclick = logout;
 
     // Initialize sub-modules
-    initPages();
     initRepos();
     initSync();
     initSettings();

@@ -28,7 +28,7 @@ def is_git_repo(slug: str) -> bool:
 async def upload_image(request: Request, file: UploadFile = File(...), target_path: Optional[str] = Form(None), user=Depends(get_developer_user)):
     """Securely uploads an image or video attachment."""
     ext = os.path.splitext(file.filename)[1].lower()
-    image_exts = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg"]
+    image_exts = [".png", ".jpg", ".jpeg", ".gif", ".webp"]
     video_exts = [".mp4", ".webm", ".ogg"]
     
     if ext not in image_exts + video_exts:
@@ -53,28 +53,21 @@ async def upload_image(request: Request, file: UploadFile = File(...), target_pa
     # 1. Validation and Sanitization
     try:
         if ext in image_exts:
-            if ext == ".svg":
-                svg_text = content.decode("utf-8", errors="ignore")
-                svg_text = re.sub(r'<script.*?>.*?</script>', '', svg_text, flags=re.DOTALL | re.IGNORECASE)
-                svg_text = re.sub(r'\son\w+=".*?"', '', svg_text, flags=re.IGNORECASE)
-                svg_text = re.sub(r'\son\w+=\'.*?\'', '', svg_text, flags=re.IGNORECASE)
-                content = svg_text.encode("utf-8")
-            else:
-                try:
-                    img = Image.open(io.BytesIO(content))
-                    img.verify()
-                    img = Image.open(io.BytesIO(content))
-                    output = io.BytesIO()
-                    if img.mode in ("RGBA", "P"):
-                        img = img.convert("RGBA")
-                    else:
-                        img = img.convert("RGB")
-                    
-                    img_format = img.format if img.format else "PNG"
-                    img.save(output, format=img_format)
-                    content = output.getvalue()
-                except Exception:
-                    raise HTTPException(status_code=400, detail="Invalid or malicious image file")
+            try:
+                img = Image.open(io.BytesIO(content))
+                img.verify()
+                img = Image.open(io.BytesIO(content))
+                output = io.BytesIO()
+                if img.mode in ("RGBA", "P"):
+                    img = img.convert("RGBA")
+                else:
+                    img = img.convert("RGB")
+                
+                img_format = img.format if img.format else "PNG"
+                img.save(output, format=img_format)
+                content = output.getvalue()
+            except Exception:
+                raise HTTPException(status_code=400, detail="Invalid or malicious image file")
         
         elif ext in video_exts:
             import subprocess

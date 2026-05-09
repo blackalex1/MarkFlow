@@ -13,6 +13,7 @@ from watchdog.events import FileSystemEventHandler
 from contextlib import asynccontextmanager
 from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from core.database import init_db, update_fts_index, delete_fts_index, reindex_all_docs
 from core.auth import router as auth_router, get_current_user
@@ -82,6 +83,10 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Middlewares
 app.middleware("http")(add_security_headers)
+
+# Host Header Injection Protection
+allowed_hosts = os.getenv("ALLOWED_HOSTS", "*").split(",")
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
 
 # Routers
 app.include_router(auth_router, prefix="/api/auth", tags=["auth"])

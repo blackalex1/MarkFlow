@@ -1,5 +1,6 @@
 import os
 import re
+import shlex
 from datetime import datetime
 from git import Repo, InvalidGitRepositoryError, GitCommandError
 from core.database import get_setting, set_setting, add_audit_log, reindex_all_docs, get_active_repository, get_db
@@ -52,6 +53,10 @@ def _sync_repository_internal(active_repo: dict, username: str, force: bool = Fa
 
     try:
         from git import Git
+        # Defence in Depth: Validate slug again
+        if not re.match(r"^[a-z0-9_\-]+$", repo_slug):
+             raise Exception(f"Invalid repository slug: {repo_slug}")
+             
         Git().config("--global", "--add", "safe.directory", target_dir.replace('\\', '/'))
         
         repo = None
@@ -61,6 +66,7 @@ def _sync_repository_internal(active_repo: dict, username: str, force: bool = Fa
             repo = Repo.init(target_dir)
 
         url = active_repo['url']
+        validate_git_url(url)
         branch_name = active_repo['branch'] or "master"
         
         # Auto-convert GitHub HTTPS to SSH
@@ -97,7 +103,8 @@ def _sync_repository_internal(active_repo: dict, username: str, force: bool = Fa
             tmp_path = tmp.name
         if os.name != 'nt': os.chmod(tmp_path, 0o600)
         safe_tmp_path = tmp_path.replace("\\", "/")
-        ssh_cmd = f'ssh -i "{safe_tmp_path}" -o StrictHostKeyChecking=no'
+        quoted_path = shlex.quote(safe_tmp_path)
+        ssh_cmd = f'ssh -i {quoted_path} -o StrictHostKeyChecking=no'
 
         try:
             with repo.git.custom_environment(GIT_SSH_COMMAND=ssh_cmd):
@@ -208,8 +215,31 @@ def _sync_repository_internal(active_repo: dict, username: str, force: bool = Fa
         update_sync_status('error', error_msg[:500])
         raise e
 
+def validate_git_url(url: str):
+    """Validate Git URL to prevent SSRF and other injection attacks."""
+    if not url:
+        raise Exception("Git URL is required")
+    
+    # Block local/private IPs
+    blocked_patterns = [
+        r'localhost',
+        r'127\.0\.0\.1',
+        r'0\.0\.0\.0',
+        r'169\.254\.',  # Metadata service
+        r'10\.',         # Private Class A
+        r'172\.(1[6-9]|2[0-9]|3[0-1])\.', # Private Class B
+        r'192\.168\.'   # Private Class C
+    ]
+    
+    for pattern in blocked_patterns:
+        if re.search(pattern, url, re.IGNORECASE):
+            clean_pattern = pattern.replace('\\', '')
+            raise Exception(f"Invalid Git URL: Access to {clean_pattern} is blocked for security reasons.")
+
 def get_remote_branches_list(repo_data: dict):
     url = repo_data['url']
+    validate_git_url(url)
+    
     if url.startswith('https://github.com/'):
         path = url.replace('https://github.com/', '')
         clean_path = re.sub(r'\.git$', '', path).strip('/')
@@ -231,12 +261,14 @@ def get_remote_branches_list(repo_data: dict):
     
     if os.name != 'nt': os.chmod(tmp_path, 0o600)
     safe_ssh_path = tmp_path.replace("\\", "/")
-    ssh_cmd = f'ssh -i "{safe_ssh_path}" -o StrictHostKeyChecking=no'
+    quoted_path = shlex.quote(safe_ssh_path)
+    ssh_cmd = f'ssh -i {quoted_path} -o StrictHostKeyChecking=no'
     
     try:
         import subprocess
+        # Use '--' to separate arguments from the URL to prevent argument injection
         result = subprocess.run(
-            ['git', 'ls-remote', '--heads', url],
+            ['git', 'ls-remote', '--heads', '--', url],
             env={**os.environ, 'GIT_SSH_COMMAND': ssh_cmd},
             capture_output=True, text=True, check=True
         )

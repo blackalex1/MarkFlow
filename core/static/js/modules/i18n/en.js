@@ -237,5 +237,17 @@ export const en = {
     logs_th_user: "User",
     logs_th_action: "Action",
     logs_th_ip: "IP",
-    logs_th_details: "Details"
+    logs_th_details: "Details",
+
+    // SSH Modals
+    git_global_key_title: "Global SSH Public Key",
+    git_global_key_desc: "This is your common key for all repositories.",
+    git_unique_key_title: "Unique Key Generated",
+    git_unique_key_desc: "Copy this unique key to your Git provider settings.",
+    git_provider_desc: "Copy this key to your Git provider (GitHub/GitLab) settings.",
+    btn_set_manually: "Set Manually",
+    btn_generating: "Generating...",
+    status_protected: "Protected",
+    confirm_delete_user: "Are you sure you want to delete user",
+    error_fill_all: "Please fill all fields"
 };

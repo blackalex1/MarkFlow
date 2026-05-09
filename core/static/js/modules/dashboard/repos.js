@@ -143,7 +143,7 @@ export function initRepos() {
             const res = await fetch('/api/git/pubkey');
             const data = await res.json();
             if (data.pubkey) {
-                showKeyDrawer(data.pubkey, 'Global SSH Public Key', 'This is your common key for all repositories.');
+                showKeyDrawer(data.pubkey, t('git_global_key_title', 'Global SSH Public Key'), t('git_global_key_desc', 'This is your common key for all repositories.'));
             } else {
                 toast.warn('Global key is not configured');
             }
@@ -197,10 +197,12 @@ export function initRepos() {
                 if (ui.repoKeyGenArea) ui.repoKeyGenArea.classList.remove('hidden');
             }
 
-            ui.btnRepoGenUniqueKey.innerText = 'Generate Unique Key for this Repo';
+            ui.btnRepoGenUniqueKey.innerText = t('git_repo_gen_unique', 'Generate Unique Key');
             ui.btnRepoGenUniqueKey.disabled = false;
             if (ui.repoUniqueKeyDisplay) ui.repoUniqueKeyDisplay.classList.add('hidden');
+            if (ui.repoManualKeyInput) ui.repoManualKeyInput.classList.add('hidden');
             ui.btnRepoGenUniqueKey.classList.remove('hidden');
+            if (ui.btnRepoManualKey) ui.btnRepoManualKey.classList.remove('hidden');
             
             ui.repoBranchSelect.innerHTML = `<option value="${repo.branch}" selected>${repo.branch}</option>`;
             if (ui.repoAutoSyncInterval) {
@@ -300,13 +302,34 @@ export function initRepos() {
             const isGlobal = ui.repoUseGlobalSSH.checked;
             if (ui.repoUniqueKeyBox) ui.repoUniqueKeyBox.classList.toggle('hidden', isGlobal);
             if (ui.btnViewGlobalKeyHint) ui.btnViewGlobalKeyHint.classList.toggle('hidden', !isGlobal);
+            // Hide manual input if switching back to global
+            if (isGlobal && ui.repoManualKeyInput) ui.repoManualKeyInput.classList.add('hidden');
+        };
+    }
+
+    // Universal Hint Triggers (CSP Friendly)
+    document.querySelectorAll('.hint-trigger').forEach(trigger => {
+        trigger.onclick = () => {
+            const hintId = trigger.dataset.hint;
+            const hintEl = document.getElementById(hintId);
+            if (hintEl) hintEl.classList.toggle('hidden');
+        };
+    });
+
+    if (ui.btnRepoManualKey) {
+        ui.btnRepoManualKey.onclick = () => {
+            if (ui.repoManualKeyInput) ui.repoManualKeyInput.classList.toggle('hidden');
+            if (ui.repoUniqueKeyDisplay) ui.repoUniqueKeyDisplay.classList.add('hidden');
+            ui.btnRepoGenUniqueKey.classList.remove('hidden');
+            ui.repoManualPrivateKey.value = '';
+            ui.repoManualPublicKey.value = '';
         };
     }
 
     if (ui.btnRepoGenUniqueKey) {
         ui.btnRepoGenUniqueKey.onclick = async () => {
             ui.btnRepoGenUniqueKey.disabled = true;
-            ui.btnRepoGenUniqueKey.innerText = 'Generating...';
+            ui.btnRepoGenUniqueKey.innerText = t('btn_generating', 'Generating...');
             try {
                 const res = await fetch('/api/git/gen-key-pair');
                 const pair = await res.json();
@@ -314,7 +337,9 @@ export function initRepos() {
                 
                 if (ui.repoGeneratedPubkey) ui.repoGeneratedPubkey.innerText = pair.public_key;
                 if (ui.repoUniqueKeyDisplay) ui.repoUniqueKeyDisplay.classList.remove('hidden');
+                if (ui.repoManualKeyInput) ui.repoManualKeyInput.classList.add('hidden');
                 ui.btnRepoGenUniqueKey.classList.add('hidden');
+                if (ui.btnRepoManualKey) ui.btnRepoManualKey.classList.add('hidden');
                 
                 if (ui.repoUrl) {
                     const currentUrl = ui.repoUrl.value.trim();
@@ -325,11 +350,11 @@ export function initRepos() {
                     }
                 }
 
-                showKeyDrawer(pair.public_key, 'Unique Key Generated', 'Copy this unique key to your Git provider settings.');
+                showKeyDrawer(pair.public_key, t('git_unique_key_title', 'Unique Key Generated'), t('git_unique_key_desc', 'Copy this unique key to your Git provider settings.'));
                 toast.success('Unique key pair generated.');
             } catch (e) {
                 toast.error('Failed to generate key pair');
-                ui.btnRepoGenUniqueKey.innerText = 'Generate Unique Key';
+                ui.btnRepoGenUniqueKey.innerText = t('git_repo_gen_unique', 'Generate Unique Key');
                 ui.btnRepoGenUniqueKey.disabled = false;
             }
         };
@@ -362,7 +387,7 @@ export function initRepos() {
             if (ui.repoKeyGenArea) ui.repoKeyGenArea.classList.remove('hidden');
             ui.btnRepoGenUniqueKey.classList.remove('hidden');
             ui.btnRepoGenUniqueKey.disabled = false;
-            ui.btnRepoGenUniqueKey.innerText = 'Generate Unique Key for this Repo';
+            ui.btnRepoGenUniqueKey.innerText = t('git_repo_gen_unique', 'Generate Unique Key');
             ui.repoBranchSelect.innerHTML = '<option value="master">master</option><option value="main">main</option>';
             if (ui.repoAutoSyncInterval) ui.repoAutoSyncInterval.value = 30;
             if (ui.repoAutoSyncUnit) ui.repoAutoSyncUnit.value = "1";
@@ -398,8 +423,12 @@ export function initRepos() {
                 slug: ui.repoSlug.value.trim(),
                 url: ui.repoUrl.value.trim(),
                 branch: ui.repoBranchSelect.value,
+                branch: ui.repoBranchSelect.value,
                 key_id: ui.repoUseGlobalSSH.checked ? null : tempKeyPair.keyId,
-                public_key: ui.repoUseGlobalSSH.checked ? null : tempKeyPair.public,
+                public_key: ui.repoUseGlobalSSH.checked ? 
+                    null : (tempKeyPair.public || ui.repoManualPublicKey.value.trim()),
+                private_key: ui.repoUseGlobalSSH.checked ?
+                    null : ui.repoManualPrivateKey.value.trim(),
                 auto_sync_interval: ui.repoAutoSyncToggle.checked ? 
                     ((parseInt(ui.repoAutoSyncInterval.value) || 30) * parseInt(ui.repoAutoSyncUnit.value)) : 0,
                 sync_strategy: ui.repoSyncStrategy.value,

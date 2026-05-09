@@ -98,7 +98,8 @@ def api_delete_repo(repo_id: int, user=Depends(get_maintainer_user)):
     return {"message": "Repository deleted"}
 
 @router.put("/repos/{repo_id}")
-def api_update_repo(repo_id: int, data: RepoInput, user=Depends(get_maintainer_user)):
+@limiter.limit(SECURITY_LIMITS["file_ops"])
+def api_update_repo(request: Request, repo_id: int, data: RepoInput, user=Depends(get_maintainer_user)):
     validate_git_url(data.url)
     safe_slug = slugify(data.slug)
     validate_slug(safe_slug)
@@ -146,7 +147,8 @@ def get_repo_pubkey(repo_id: int, user=Depends(get_maintainer_user)):
     return {"pubkey": pubkey, "type": "unique"}
 
 @router.get("/gen-key-pair")
-def api_gen_key_pair(user=Depends(get_maintainer_user)):
+@limiter.limit(SECURITY_LIMITS["file_ops"])
+def api_gen_key_pair(request: Request, user=Depends(get_maintainer_user)):
     try:
         from core.services.ssh_service import generate_key_pair
         import uuid
@@ -186,7 +188,8 @@ def api_set_ssh_key(request: Request, data: SSHKeyInput, user=Depends(get_mainta
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.get("/branches")
-def get_remote_branches(url: str = None, key_id: str = None, user=Depends(get_maintainer_user)):
+@limiter.limit(SECURITY_LIMITS["file_ops"])
+def get_remote_branches(request: Request, url: str = None, key_id: str = None, user=Depends(get_maintainer_user)):
     repo_data = None
     if key_id:
         # User just generated a key but hasn't saved yet

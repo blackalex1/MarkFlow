@@ -1,4 +1,39 @@
 import { ui, state } from './modules/ui.js';
+
+// --- CSRF Protection Layer ---
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+}
+
+const originalFetch = window.fetch;
+window.fetch = async (...args) => {
+    let [resource, config] = args;
+    if (!config) config = {};
+    
+    // Only intercept local API calls
+    const url = typeof resource === 'string' ? resource : resource.url;
+    const isLocal = !url.startsWith('http') || url.startsWith(window.location.origin);
+    
+    if (isLocal) {
+        if (!config.headers) config.headers = {};
+        const method = (config.method || 'GET').toUpperCase();
+        if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
+            const token = getCookie('csrf_token');
+            if (token) {
+                // If config.headers is Headers object
+                if (config.headers instanceof Headers) {
+                    config.headers.set('X-CSRF-Token', token);
+                } else {
+                    config.headers['X-CSRF-Token'] = token;
+                }
+            }
+        }
+    }
+    return originalFetch(resource, config);
+};
+// -----------------------------
 import * as auth from './modules/auth.js';
 import * as tree from './modules/tree.js';
 import * as viewer from './modules/viewer.js';
@@ -12,6 +47,8 @@ import './modules/confirm.js';
 
 // Initialization
 async function init() {
+    const versionMeta = document.querySelector('meta[name="app-version"]');
+    if (versionMeta) window.APP_VERSION = versionMeta.content;
     // Fix for highlight.js deprecation warnings (EasyMDE uses old API)
     if (window.hljs && typeof window.hljs.highlight === 'function') {
         const _origHljs = window.hljs.highlight;

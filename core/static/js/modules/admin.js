@@ -1,10 +1,11 @@
 import { ui, state } from './ui.js';
+import { t, getLang } from './i18n.js';
 
 export function initAdmin() {
     const tabItems = document.querySelectorAll('.tab-item');
     const tabContents = document.querySelectorAll('.tab-content');
 
-    // Tab Switching
+    // Tab Switching (CSP Friendly)
     tabItems.forEach(tab => {
         tab.onclick = () => {
             const target = tab.dataset.tab;
@@ -33,7 +34,7 @@ export function initAdmin() {
             const u = ui.adminNewUsername.value.trim();
             const p = ui.adminNewPassword.value.trim();
             const r = ui.adminNewRole.value;
-            if (!u || !p) return alert('Заполните все поля');
+            if (!u || !p) return alert(t('error_fill_all') || 'Please fill all fields');
             
             try {
                 const res = await fetch('/api/auth/users', {
@@ -47,7 +48,7 @@ export function initAdmin() {
                     loadUsers();
                 } else {
                     const data = await res.json();
-                    alert('Ошибка: ' + data.detail);
+                    alert((t('error_generic') || 'Error') + ': ' + data.detail);
                 }
             } catch (err) { console.error(err); }
         };
@@ -60,6 +61,8 @@ export async function loadUsers() {
     try {
         const res = await fetch('/api/auth/users');
         const users = await res.json();
+        const currentLang = getLang();
+        
         listBody.innerHTML = users.map(u => `
             <tr>
                 <td>${u.username}</td>
@@ -72,8 +75,8 @@ export async function loadUsers() {
                 </td>
                 <td>
                     ${u.username !== 'admin' && u.username !== state.currentUser.username ? 
-                        `<button class="btn-text delete-user-btn" data-user="${u.username}" style="color: var(--danger-color);">Удалить</button>` : 
-                        '<span style="color: var(--text-muted); font-size: 11px;">(Защищено)</span>'}
+                        `<button class="btn-text delete-user-btn" data-user="${u.username}" style="color: var(--danger-color);">${t('btn_delete')}</button>` : 
+                        `<span style="color: var(--text-muted); font-size: 11px;">(${t('status_protected')})</span>`}
                 </td>
             </tr>
         `).join('');
@@ -95,7 +98,7 @@ export async function loadUsers() {
         listBody.querySelectorAll('.delete-user-btn').forEach(btn => {
             btn.onclick = async () => {
                 const username = btn.dataset.user;
-                if (!confirm(`Удалить пользователя ${username}?`)) return;
+                if (!confirm(`${t('confirm_delete_user')} ${username}?`)) return;
                 const res = await fetch(`/api/auth/users/${username}`, { method: 'DELETE' });
                 if (res.ok) loadUsers();
             };
@@ -109,8 +112,10 @@ export async function loadLogs() {
     try {
         const res = await fetch('/api/auth/audit-logs');
         const logs = await res.json();
+        const locale = getLang() === 'ru' ? 'ru-RU' : 'en-US';
+        
         listBody.innerHTML = logs.map(l => {
-            const date = new Date(l.timestamp + 'Z').toLocaleString('ru-RU');
+            const date = new Date(l.timestamp + 'Z').toLocaleString(locale);
             return `
                 <tr>
                     <td style="font-size: 11px; white-space: nowrap;">${date}</td>

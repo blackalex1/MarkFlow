@@ -99,8 +99,8 @@ def update_system_settings(request: Request, data: SystemSettings, user=Depends(
 async def upload_asset(request: Request, type: str = "custom", file: UploadFile = File(...), user=Depends(get_owner_user)):
     # Security: allowed extensions
     ext = os.path.splitext(file.filename)[1].lower()
-    if ext not in ['.png', '.ico', '.jpg', '.jpeg', '.svg']:
-        raise HTTPException(status_code=400, detail="Invalid file type. Allowed: png, ico, jpg, svg")
+    if ext not in ['.png', '.ico', '.jpg', '.jpeg']:
+        raise HTTPException(status_code=400, detail="Invalid file type. Allowed: png, ico, jpg")
     
     # Path to config volume (project root/config)
     config_dir = os.path.join(os.path.dirname(BASE_DIR), "config")
@@ -110,13 +110,13 @@ async def upload_asset(request: Request, type: str = "custom", file: UploadFile 
     if type == "logo":
         safe_name = f"logo{ext}"
         # Delete other logo files with different extensions to avoid confusion
-        for e in ['.png', '.jpg', '.jpeg', '.svg']:
+        for e in ['.png', '.jpg', '.jpeg']:
             if e != ext:
                 try: os.remove(os.path.join(config_dir, f"logo{e}"))
                 except: pass
     elif type == "favicon":
         safe_name = f"favicon{ext}"
-        for e in ['.ico', '.png', '.svg']:
+        for e in ['.ico', '.png']:
             if e != ext:
                 try: os.remove(os.path.join(config_dir, f"favicon{e}"))
                 except: pass
@@ -128,16 +128,6 @@ async def upload_asset(request: Request, type: str = "custom", file: UploadFile 
     
     try:
         content = await file.read()
-        
-        # Security: Sanitize SVG if uploaded as logo/favicon/asset
-        if ext == ".svg":
-            svg_text = content.decode("utf-8", errors="ignore")
-            # Strip scripts
-            svg_text = re.sub(r'<script.*?>.*?</script>', '', svg_text, flags=re.DOTALL | re.IGNORECASE)
-            # Strip inline handlers (onmouseover, onclick, etc.)
-            svg_text = re.sub(r'\son\w+=".*?"', '', svg_text, flags=re.IGNORECASE)
-            svg_text = re.sub(r'\son\w+=\'.*?\'', '', svg_text, flags=re.IGNORECASE)
-            content = svg_text.encode("utf-8")
 
         with open(save_path, "wb") as f:
             f.write(content)

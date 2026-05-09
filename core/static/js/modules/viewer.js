@@ -11,7 +11,7 @@ if (window.mermaid) {
     mermaid.initialize({ 
         startOnLoad: false, 
         theme: 'dark',
-        securityLevel: 'loose',
+        securityLevel: 'strict',
         logLevel: 4, // Error only
         fontFamily: 'inherit'
     });
@@ -59,7 +59,7 @@ export async function loadFileContent(path, pushState = true, hash = null) {
                     ],
                     throwOnError: false,
                     strict: false,
-                    trust: true
+                    trust: false
                 });
             }
 
@@ -70,20 +70,24 @@ export async function loadFileContent(path, pushState = true, hash = null) {
             updateBreadcrumbs(path);
             
             if (window.mermaid && ui.contentViewer) {
-                // Use a slight delay to ensure elements are visible and have dimensions
+                // Use a longer delay to ensure elements are visible and have dimensions
+                // This prevents "translate(undefined, NaN)" errors in Mermaid
                 setTimeout(() => {
                     try {
                         const nodes = ui.contentViewer.querySelectorAll('.mermaid');
                         if (nodes.length > 0) {
-                            mermaid.run({
-                                nodes: nodes,
-                                suppressErrors: true
-                            });
+                            // Check if viewer is still visible and has width
+                            if (ui.contentViewer.offsetWidth > 0) {
+                                mermaid.run({
+                                    nodes: nodes,
+                                    suppressErrors: true
+                                });
+                            }
                         }
                     } catch (e) {
                         console.error('Mermaid render error:', e);
                     }
-                }, 150);
+                }, 300); // Increased from 150ms for stability
             }
             if (window.lucide) lucide.createIcons();
             
@@ -139,18 +143,45 @@ export async function loadFolderContent(path) {
 function renderErrorPage(status, path) {
     ui.contentViewer.classList.remove('fade-out');
     const config = {
-        403: { title: t("error_access_denied"), msg: t("error_access_denied_msg"), icon: "shield-off", actions: `<button class="error-btn error-btn-primary" onclick="document.getElementById('btn-login-trigger').click()"><i data-lucide="log-in"></i> ${t("btn_signin")}</button>` },
-        404: { title: t("error_not_found"), msg: t("error_not_found_msg"), icon: "file-question", actions: '' }
+        403: { 
+            title: t("error_access_denied"), 
+            msg: t("error_access_denied_msg"), 
+            icon: "shield-off", 
+            actions: `<button id="error-btn-login" class="error-btn error-btn-primary"><i data-lucide="log-in"></i> ${t("btn_signin")}</button>` 
+        },
+        404: { 
+            title: t("error_not_found"), 
+            msg: t("error_not_found_msg"), 
+            icon: "file-question", 
+            actions: '' 
+        }
     }[status] || { title: t("error_generic"), msg: t("error_generic"), icon: "alert-circle", actions: '' };
 
+    const retryBtn = `<button id="error-btn-retry" class="error-btn error-btn-primary"><i data-lucide="refresh-cw"></i> ${t("btn_retry")}</button>`;
+    
     ui.contentViewer.innerHTML = `
         <div class="error-page-container">
             <div class="error-icon-wrapper"><i data-lucide="${config.icon}"></i></div>
             <div class="error-code">${status}</div>
             <div class="error-title">${config.title}</div>
             <div class="error-message">${config.msg}</div>
-            <div class="error-actions">${config.actions || `<button class="error-btn error-btn-primary" onclick="location.reload()"><i data-lucide="refresh-cw"></i> ${t("btn_retry")}</button>`}</div>
+            <div class="error-actions">${config.actions || retryBtn}</div>
         </div>`;
+    
+    // Add Event Listeners (CSP Friendly)
+    const btnLogin = document.getElementById('error-btn-login');
+    const btnRetry = document.getElementById('error-btn-retry');
+    
+    if (btnLogin) {
+        btnLogin.onclick = () => {
+            const loginTrigger = document.getElementById('btn-login-trigger');
+            if (loginTrigger) loginTrigger.click();
+        };
+    }
+    if (btnRetry) {
+        btnRetry.onclick = () => location.reload();
+    }
+
     if (window.lucide) lucide.createIcons();
 }
 

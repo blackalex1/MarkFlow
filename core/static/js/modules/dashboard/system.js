@@ -14,6 +14,29 @@ export function initSystemSettings() {
     const colorPreviewCircle = document.getElementById('sys-color-preview-circle');
     const swatches = document.querySelectorAll('.color-swatch');
     
+    // Logo/Favicon Triggers (CSP Friendly)
+    const btnLogoTrigger = document.getElementById('btn-sys-logo-trigger');
+    const btnFaviconTrigger = document.getElementById('btn-sys-favicon-trigger');
+    const logoUpload = document.getElementById('sys-logo-upload');
+    const faviconUpload = document.getElementById('sys-favicon-upload');
+
+    if (btnLogoTrigger && logoUpload) {
+        btnLogoTrigger.onclick = () => logoUpload.click();
+    }
+    if (btnFaviconTrigger && faviconUpload) {
+        btnFaviconTrigger.onclick = () => faviconUpload.click();
+    }
+
+    // Logo Fallback Handler (CSP Friendly)
+    const mainLogo = document.getElementById('app-logo-main');
+    if (mainLogo) {
+        mainLogo.onerror = () => {
+            mainLogo.style.display = 'none';
+            const altName = document.getElementById('sidebar-app-name-alt');
+            if (altName) altName.style.display = 'block';
+        };
+    }
+    
     if (!btnSave) return;
 
     // Force translations for new elements
@@ -73,9 +96,7 @@ export function initSystemSettings() {
         };
     });
 
-    // File Upload Handlers
-    const logoUpload = document.getElementById('sys-logo-upload');
-    const faviconUpload = document.getElementById('sys-favicon-upload');
+    // File Upload Handlers (Uses variables defined above)
     let pendingLogo = null;
     let pendingFavicon = null;
     
