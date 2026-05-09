@@ -128,6 +128,17 @@ async def upload_asset(request: Request, type: str = "custom", file: UploadFile 
     
     try:
         content = await file.read()
+        
+        # Security: Sanitize SVG if uploaded as logo/favicon/asset
+        if ext == ".svg":
+            svg_text = content.decode("utf-8", errors="ignore")
+            # Strip scripts
+            svg_text = re.sub(r'<script.*?>.*?</script>', '', svg_text, flags=re.DOTALL | re.IGNORECASE)
+            # Strip inline handlers (onmouseover, onclick, etc.)
+            svg_text = re.sub(r'\son\w+=".*?"', '', svg_text, flags=re.IGNORECASE)
+            svg_text = re.sub(r'\son\w+=\'.*?\'', '', svg_text, flags=re.IGNORECASE)
+            content = svg_text.encode("utf-8")
+
         with open(save_path, "wb") as f:
             f.write(content)
             

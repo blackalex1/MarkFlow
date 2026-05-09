@@ -3,10 +3,24 @@ import * as tree from './tree.js';
 import { loadFileContent } from './viewer.js';
 import { t } from './i18n.js';
 
+function escapeHTML(str) {
+    if (!str) return "";
+    return str.replace(/[&<>"']/g, function(m) {
+        return {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        }[m];
+    });
+}
+
+
 export function renderFolderGrid(data) {
     ui.contentViewer.innerHTML = `
         <div class="folder-view fade-in">
-            <h1 class="folder-view-title">${data.name}</h1>
+            <h1 class="folder-view-title">${escapeHTML(data.name)}</h1>
             <div class="folder-grid">
                 ${data.items.map(item => {
                     const icon = item.type === 'folder' ? 'folder' : (item.public ? 'file-text' : 'lock');
@@ -18,14 +32,17 @@ export function renderFolderGrid(data) {
                         statusDot = `<span class="status-dot ${statusClass}"></span>`;
                     }
                     
+                    const safePath = escapeHTML(item.path);
+                    const safeName = escapeHTML(item.name.replace('.md', ''));
+                    
                     return `
-                        <div class="folder-card ${item.type}-card" onclick="window.dispatchEvent(new CustomEvent('load-file', { detail: { path: '${item.path}' } }))">
+                        <div class="folder-card ${item.type}-card" onclick="window.dispatchEvent(new CustomEvent('load-file', { detail: { path: '${safePath.replace(/'/g, "\\'")}' } }))">
                             <div class="card-icon">
                                 ${statusDot}
                                 <i data-lucide="${icon}"></i>
                             </div>
                             <div class="card-info">
-                                <span class="card-name">${item.name.replace('.md', '')}</span>
+                                <span class="card-name">${safeName}</span>
                                 <span class="card-meta">${item.type === 'folder' ? (t('type_folder') || 'Folder') : (t('type_file') || 'Document')}</span>
                             </div>
                         </div>

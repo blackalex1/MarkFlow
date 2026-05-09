@@ -32,6 +32,10 @@ def validate_git_url(url: str):
         raise HTTPException(status_code=400, detail="Invalid Git URL: illegal characters detected")
     if not (url.startswith("https://") or url.startswith("git@") or url.startswith("ssh://")):
         raise HTTPException(status_code=400, detail="Invalid Git URL: protocol not allowed")
+    
+    # Block argument injection in ssh:// urls (e.g. ssh://-oProxyCommand=...)
+    if url.startswith("ssh://") and url[6:].startswith("-"):
+         raise HTTPException(status_code=400, detail="Invalid Git URL: argument injection detected")
 
 def validate_slug(slug: str):
     if not slug:

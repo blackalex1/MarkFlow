@@ -203,7 +203,9 @@ def _sync_repository_internal(active_repo: dict, username: str, force: bool = Fa
         update_sync_status('success')
         return {"message": "Sync successful"}
     except Exception as e:
-        update_sync_status('error', str(e))
+        error_msg = str(e)
+        # Truncate long error messages for logs
+        update_sync_status('error', error_msg[:500])
         raise e
 
 def get_remote_branches_list(repo_data: dict):

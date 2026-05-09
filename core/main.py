@@ -130,6 +130,19 @@ if __name__ == "__main__":
     import uvicorn
     proj_root = os.path.dirname(BASE_DIR)
     cert_path, key_path = os.path.join(proj_root, "cert.pem"), os.path.join(proj_root, "key.pem")
-    
     ssl_config = {"ssl_keyfile": key_path, "ssl_certfile": cert_path} if os.path.exists(cert_path) and os.path.exists(key_path) else {}
-    uvicorn.run("core.main:app", host="0.0.0.0", port=8000, reload=True, proxy_headers=True, forwarded_allow_ips="*", **ssl_config)
+    
+    # Security: Only allow proxy headers from trusted sources.
+    # We try to load from environment or config/.env file
+    import os
+    from dotenv import load_dotenv
+    config_env_path = os.path.join(os.path.dirname(BASE_DIR), "config", ".env")
+    if os.path.exists(config_env_path):
+        load_dotenv(config_env_path)
+    
+    # Default to local and our new Docker subnet + standard Docker subnets
+    default_trusted = "127.0.0.1,172.20.0.5,172.16.0.0/12,192.168.0.0/16,10.0.0.0/8"
+    trusted_ips = os.getenv("TRUSTED_PROXIES", default_trusted)
+    
+    print(f"Starting server with trusted proxies: {trusted_ips}")
+    uvicorn.run("core.main:app", host="0.0.0.0", port=8000, reload=True, proxy_headers=True, forwarded_allow_ips=trusted_ips, **ssl_config)
