@@ -2,22 +2,26 @@
  * MarkFlow Editor Instance Management
  */
 import { MarkFlowEditor } from './markflow-editor.js';
-import { handleImageUpload, initPasteHandler } from './image-handler.js';
+import { handleFileUpload, initPasteHandler, initDropHandler } from './image-handler.js';
 
 let instance = null;
 
-export const createEditor = (textarea) => {
+export const createEditor = (textarea, path = null) => {
     if (instance) {
         destroyEditor();
     }
 
     // Initialize our custom MarkFlowEditor
     instance = new MarkFlowEditor(textarea, {
-        onImageUpload: handleImageUpload
+        path: path,
+        onImageUpload: handleFileUpload
     });
     
-    // Paste handler for images
+    // Paste handler for images and videos
     initPasteHandler(instance);
+    
+    // Drop handler for files
+    initDropHandler(instance);
     
     return instance;
 };

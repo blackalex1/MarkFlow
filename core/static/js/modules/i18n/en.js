@@ -146,5 +146,10 @@ export const en = {
     sync_never: "Never synced",
     sync_success: "Success",
     sync_failed: "Failed",
-    git_select_repo: "Select a repository above"
+    git_select_repo: "Select a repository above",
+
+    // Toasts
+    toast_draft_found: "Unsaved draft found",
+    toast_draft_restored: "Draft restored successfully",
+    btn_restore: "Restore"
 };

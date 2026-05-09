@@ -16,7 +16,7 @@ export const ui = {
     btnSave: document.getElementById('btn-save'),
     btnCancel: document.getElementById('btn-cancel'),
     visibilityCheckbox: document.getElementById('visibility-checkbox'),
-    statusSelect: document.getElementById('status-select'),
+    statusDropdown: document.getElementById('status-dropdown'),
     
     // Dashboard (LK)
     dashboardModal: document.getElementById('user-dashboard-modal'),

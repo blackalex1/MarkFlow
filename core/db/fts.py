@@ -41,47 +41,58 @@ def search_fts(query_str: str, limit: int = 20):
     return [dict(row) for row in rows]
 
 def reindex_all_docs(docs_dir: str):
-    """Clears and rebuilds the entire search index by crawling the docs directory."""
+    """Clears and rebuilds the entire search index and cleans up orphaned attachments."""
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute('DELETE FROM fts_docs')
     
+    # 1. Rebuild Index
     for root, dirs, files in os.walk(docs_dir):
         for file in files:
             if file.endswith('.md'):
                 full_path = os.path.join(root, file)
-                # Use forward slashes for cross-platform consistency in the DB
                 rel_path = os.path.relpath(full_path, docs_dir).replace('\\', '/')
                 name = file.replace('.md', '')
                 try:
-                    # Try UTF-8 first
-                    with open(full_path, 'r', encoding='utf-8') as f:
+                    with open(full_path, 'r', encoding='utf-8', errors='replace') as f:
                         content = f.read()
-                except UnicodeDecodeError:
-                    try:
-                        # Fallback to UTF-16 (common on Windows)
-                        with open(full_path, 'r', encoding='utf-16') as f:
-                            content = f.read()
-                    except Exception:
-                        # Final fallback with replacement characters
-                        with open(full_path, 'r', encoding='utf-8', errors='replace') as f:
-                            content = f.read()
-                
-                try:
                     cursor.execute('INSERT INTO fts_docs (path, name, content) VALUES (?, ?, ?)', (rel_path, name, content))
                 except Exception as e:
-                    print(f"Failed to index content for {rel_path}: {e}")
+                    print(f"Failed to index {rel_path}: {e}")
     
     conn.commit()
     conn.close()
+    
+    # 2. Cleanup orphaned attachments
+    cleanup_orphaned_attachments(docs_dir)
+
+def cleanup_orphaned_attachments(docs_dir: str):
+    """Removes files in attachments/ that are not referenced in any document."""
+    attachments_dir = os.path.join(docs_dir, 'attachments')
+    if not os.path.exists(attachments_dir):
+        return
+
+    deleted_count = 0
+    for file in os.listdir(attachments_dir):
+        rel_path = f"attachments/{file}"
+        if not is_image_referenced(rel_path):
+            full_path = os.path.join(attachments_dir, file)
+            try:
+                os.remove(full_path)
+                deleted_count += 1
+            except Exception as e:
+                print(f"Failed to delete orphaned file {rel_path}: {e}")
+    
+    if deleted_count > 0:
+        print(f"Cleaned up {deleted_count} orphaned attachments.")
 
 def is_image_referenced(image_rel_path: str) -> bool:
     """Returns True if the image is referenced in any document's content."""
     conn = get_db()
     cursor = conn.cursor()
-    # We use LIKE for a robust substring search in the original content
-    # Since FTS table stores the content, we can query it
-    cursor.execute('SELECT 1 FROM fts_docs WHERE content LIKE ? LIMIT 1', (f'%{image_rel_path}%',))
+    # Normalize path for searching
+    search_path = image_rel_path.replace('\\', '/')
+    cursor.execute('SELECT 1 FROM fts_docs WHERE content LIKE ? LIMIT 1', (f'%{search_path}%',))
     exists = cursor.fetchone() is not None
     conn.close()
     return exists

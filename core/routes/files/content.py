@@ -65,7 +65,8 @@ async def save_file_content(path: str, data: FileContent, request: Request, back
 
     os.makedirs(os.path.dirname(full_path), exist_ok=True)
     
-    image_regex = r'!\[.*?\]\((attachments/.*?)\)'
+    # Regex to find attachments in Markdown and HTML (images and videos)
+    attachment_regex = r'(?:!\[.*?\]\(|src=["\'])(attachments/[^"\s\)]+)'
     old_content = ""
     if os.path.exists(full_path):
         try:
@@ -74,12 +75,12 @@ async def save_file_content(path: str, data: FileContent, request: Request, back
         except Exception:
             old_content = ""
             
-    old_images = set(re.findall(image_regex, old_content))
-    new_images = set(re.findall(image_regex, data.content))
-    orphans = old_images - new_images
+    old_attachments = set(re.findall(attachment_regex, old_content))
+    new_attachments = set(re.findall(attachment_regex, data.content))
+    orphans = old_attachments - new_attachments
     
     if orphans:
-        background_tasks.add_task(cleanup_orphaned_images, list(orphans), user["username"])
+        background_tasks.add_task(cleanup_orphaned_attachments, list(orphans), user["username"])
     
     with open(full_path, "w", encoding="utf-8") as f:
         f.write(data.content)
@@ -88,14 +89,14 @@ async def save_file_content(path: str, data: FileContent, request: Request, back
     add_audit_log(user["username"], "file_updated", f"Path: {path}", ip_address=request.client.host)
     return {"message": "File saved"}
 
-def cleanup_orphaned_images(orphans: list, username: str):
-    for img_rel_path in orphans:
-        if not is_image_referenced(img_rel_path):
+def cleanup_orphaned_attachments(orphans: list, username: str):
+    for att_rel_path in orphans:
+        if not is_image_referenced(att_rel_path):
             try:
-                img_full_path = get_safe_path(DOCS_DIR, img_rel_path)
-                if os.path.exists(img_full_path):
-                    os.remove(img_full_path)
-                    add_audit_log("system", "image_cleanup", f"Deleted orphaned image: {img_rel_path} (after {username} edit)")
+                att_full_path = get_safe_path(DOCS_DIR, att_rel_path)
+                if os.path.exists(att_full_path):
+                    os.remove(att_full_path)
+                    add_audit_log("system", "attachment_cleanup", f"Deleted orphaned attachment: {att_rel_path} (after {username} edit)")
             except Exception as e:
-                print(f"Failed to cleanup image {img_rel_path}: {e}")
+                print(f"Failed to cleanup attachment {att_rel_path}: {e}")
 

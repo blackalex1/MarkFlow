@@ -5,6 +5,7 @@ import { ui, state } from '../modules/ui.js';
 import { toast } from '../modules/toasts.js';
 import { getEditorValue, getEditor } from './instance.js';
 import { loadFileContent } from '../modules/viewer.js';
+import { t } from '../modules/i18n.js';
 
 const getContainer = () => {
     const editor = getEditor();
@@ -14,7 +15,7 @@ const getContainer = () => {
 
 export const saveContent = async () => {
     const path = state.currentFilePath;
-    const content = getEditorValue();
+    let content = getEditorValue();
 
     if (!path) {
         toast('No file selected', 'error');
@@ -22,6 +23,12 @@ export const saveContent = async () => {
     }
 
     try {
+        // 1. Upload pending files first
+        const { uploadPendingFiles } = await import(`./image-handler.js?v=${window.APP_VERSION || Date.now()}`);
+        toast('Uploading attachments...', 'info');
+        content = await uploadPendingFiles(content);
+
+        // 2. Save final content
         const v = window.APP_VERSION || Date.now();
         const response = await fetch('/api/files/content?path=' + encodeURIComponent(path), {
             method: 'PUT',
@@ -39,7 +46,7 @@ export const saveContent = async () => {
         }, 500);
     } catch (error) {
         console.error('Save failed:', error);
-        toast('Failed to save file', 'error');
+        toast(error.message || 'Failed to save file', 'error');
     }
 };
 
@@ -58,7 +65,7 @@ export const enterEditMode = async () => {
         let editorInstance = getEditor();
         if (!editorInstance) {
             const { createEditor } = await import(`./instance.js?v=${v}`);
-            editorInstance = createEditor(ui.contentEditor);
+            editorInstance = createEditor(ui.contentEditor, path);
         }
         
         ui.contentViewer.classList.add('hidden');
@@ -73,12 +80,37 @@ export const enterEditMode = async () => {
         const container = getContainer();
         if (container) container.classList.remove('hidden');
 
-        // Update editor value
+        // 1. Draft Check (BEFORE setting editor value to avoid overwrite)
+        const draft = localStorage.getItem(`mf_draft_${path}`);
+        let hasDraft = false;
+        if (draft && draft !== data.content) {
+            hasDraft = true;
+        }
+
+        // 2. Update editor value
         const { setEditorValue } = await import(`./instance.js?v=${v}`);
         setEditorValue(data.content);
         
+        // 3. Show notification if draft exists
+        if (hasDraft) {
+            toast(t('toast_draft_found'), 'warning', 0, {
+                label: t('btn_restore'),
+                callback: () => {
+                    setEditorValue(draft);
+                    toast(t('toast_draft_restored'), 'success');
+                }
+            });
+        }
+        
         if (ui.visibilityCheckbox) ui.visibilityCheckbox.checked = data.public;
-        if (ui.statusSelect) ui.statusSelect.value = data.status;
+        if (ui.statusDropdown) {
+            const statusText = document.getElementById('current-status-text');
+            const item = ui.statusDropdown.querySelector(`.dropdown-item[data-value="${data.status}"]`);
+            if (item && statusText) {
+                statusText.textContent = item.textContent;
+                statusText.setAttribute('data-t', item.getAttribute('data-t'));
+            }
+        }
 
     } catch (error) {
         console.error('Edit mode error:', error);
@@ -87,6 +119,9 @@ export const enterEditMode = async () => {
 };
 
 export const exitEditMode = (reload = false) => {
+    const path = state.currentFilePath;
+    if (path) localStorage.removeItem(`mf_draft_${path}`);
+
     ui.contentViewer.classList.remove('hidden');
     ui.contentEditor.classList.add('hidden');
     ui.btnEdit.classList.remove('hidden');

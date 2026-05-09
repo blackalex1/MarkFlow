@@ -84,4 +84,16 @@ class ToastManager {
     }
 }
 
-export const toast = new ToastManager();
+const manager = new ToastManager();
+
+/**
+ * Main toast function - callable as toast(msg, type)
+ */
+export const toast = (message, type, duration, action) => manager.show(message, type, duration, action);
+
+// Attach sugar methods to the function for toast.success() style calls
+toast.success = (msg, dur) => manager.success(msg, dur);
+toast.error = (msg, dur) => manager.error(msg, dur);
+toast.warn = (msg, dur) => manager.warn(msg, dur);
+toast.info = (msg, dur) => manager.info(msg, dur);
+toast.confirm = (msg, onConfirm, onCancel) => manager.confirm(msg, onConfirm, onCancel);

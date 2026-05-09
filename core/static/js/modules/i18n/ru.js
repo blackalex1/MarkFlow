@@ -146,5 +146,10 @@ export const ru = {
     sync_never: "Ни разу не синхронизировался",
     sync_success: "Успешно",
     sync_failed: "Ошибка",
-    git_select_repo: "Выберите репозиторий выше"
+    git_select_repo: "Выберите репозиторий выше",
+
+    // Toasts
+    toast_draft_found: "Найден черновик с несохраненными изменениями",
+    toast_draft_restored: "Черновик успешно восстановлен",
+    btn_restore: "Восстановить"
 };

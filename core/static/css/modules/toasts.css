@@ -23,20 +23,37 @@
     background: var(--bg-card);
     backdrop-filter: blur(24px);
     border: 1px solid var(--border-color);
-    border-radius: 16px;
-    padding: 16px 20px;
-    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    border-radius: 20px;
+    padding: 20px 24px;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.4);
     display: flex;
     align-items: center;
     justify-content: space-between;
-    min-width: 350px;
-    max-width: 500px;
+    min-width: 480px;
+    max-width: 600px;
     pointer-events: auto;
+}
+
+.fade-in {
+    animation: toastPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+.fade-out {
+    animation: toastOut 0.3s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@keyframes toastPop {
+    0% { opacity: 0; transform: scale(0.9) translateY(20px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes toastOut {
+    0% { opacity: 1; transform: scale(1) translateY(0); }
+    100% { opacity: 0; transform: scale(0.9) translateY(10px); }
 }
 
 .toast-center {
     border: 2px solid var(--primary-color);
-    animation: centerFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .toast-content {
@@ -63,7 +80,8 @@
 .toast-info .toast-icon { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
 
 .toast-message {
-    font-size: 14px;
+    font-size: 16px;
+    font-weight: 500;
     color: var(--text-heading);
 }
 
@@ -71,7 +89,7 @@
     background: transparent;
     border: none;
     color: var(--text-muted);
-    font-size: 20px;
+    font-size: 24px;
     cursor: pointer;
     padding: 0 4px;
     margin-left: 12px;
@@ -85,13 +103,14 @@
     background: var(--primary-color);
     color: white;
     border: none;
-    border-radius: 6px;
-    padding: 4px 12px;
-    font-size: 12px;
+    border-radius: 10px;
+    padding: 8px 18px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    margin-left: 12px;
-    transition: 0.2s;
+    margin-left: 16px;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
 
 .toast-action:hover { filter: brightness(1.1); }

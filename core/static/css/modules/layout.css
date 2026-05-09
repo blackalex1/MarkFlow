@@ -97,6 +97,20 @@
     transform: translateY(10px);
 }
 
+/* Navigation */
+#page-navigation {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+body.is-editing #page-navigation {
+    display: none !important;
+}
+
 .mobile-nav-toggle {
     display: none;
     position: fixed;

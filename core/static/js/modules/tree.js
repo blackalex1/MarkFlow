@@ -41,7 +41,6 @@ function renderFileTree(tree) {
                         item.classList.remove('open');
                         state.openFolders.delete(nodePath);
                     }
-                    if (window.lucide) lucide.createIcons();
                 };
 
                 const isStaff = state.currentUser && ['developer', 'maintainer', 'owner'].includes(state.currentUser.role);

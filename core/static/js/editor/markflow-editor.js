@@ -1,4 +1,6 @@
 import { initMarked } from '../modules/markdown.js';
+import { SlashMenu } from './slash-menu.js';
+import { state } from '../modules/ui.js';
 
 export class MarkFlowEditor {
     constructor(container, options = {}) {
@@ -7,6 +9,7 @@ export class MarkFlowEditor {
         this.isFullscreen = false;
         this.isSplit = false;
         this.isPreview = false;
+        this.currentPath = options.path || state.currentFilePath;
         
         // Initialize project-specific markdown extensions
         initMarked();
@@ -14,6 +17,9 @@ export class MarkFlowEditor {
         this.initUI();
         this.initCodeMirror();
         this.initSyncScroll();
+        
+        // Slash Menu
+        this.slashMenu = new SlashMenu(this);
         
         // Render icons for the newly created toolbar
         if (window.lucide) window.lucide.createIcons();
@@ -143,7 +149,14 @@ export class MarkFlowEditor {
         });
 
         this.cm.on('change', () => {
-            this.container.value = this.cm.getValue();
+            const content = this.cm.getValue();
+            this.container.value = content;
+            
+            // Auto-save draft to localStorage
+            if (this.currentPath) {
+                localStorage.setItem(`mf_draft_${this.currentPath}`, content);
+            }
+
             if (this.isPreview || this.isSplit) {
                 clearTimeout(this.previewTimeout);
                 this.previewTimeout = setTimeout(() => this.updatePreview(), 300);
@@ -264,7 +277,8 @@ export class MarkFlowEditor {
         let html = window.marked.parse(content);
         if (window.DOMPurify) {
             html = window.DOMPurify.sanitize(html, {
-                ADD_ATTR: ['target', 'data-target', 'data-tab-id', 'data-lucide', 'id', 'class'],
+                ADD_TAGS: ['video', 'source'],
+                ADD_ATTR: ['target', 'data-target', 'data-tab-id', 'data-lucide', 'id', 'class', 'src', 'controls'],
                 USE_PROFILES: { html: true, mathMl: true, svg: true }
             });
         }
