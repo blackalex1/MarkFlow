@@ -107,6 +107,8 @@ export const ru = {
     // Navigation
     nav_prev: "Назад",
     nav_next: "Далее",
+    nav_home: "Корень",
+    root_folder: "Корень документов",
 
     // Git Sync
     btn_sync_now: "Синхронизировать сейчас",
@@ -146,6 +148,8 @@ export const ru = {
     menu_rename: "Переименовать",
     menu_move: "Переместить",
     menu_delete: "Удалить",
+    menu_new_file: "Новый файл",
+    menu_new_folder: "Новая папка",
     
     // Visibility
     vis_label: "Видимость",
@@ -211,5 +215,36 @@ export const ru = {
     toast_status_failed: "Ошибка обновления статуса",
     toast_draft_found: "Найден несохраненный черновик",
     btn_restore: "Восстановить",
-    toast_draft_restored: "Черновик восстановлен"
+    toast_draft_restored: "Черновик восстановлен",
+    
+    // Dashboard - Pages
+    pages_create_title: "Создать новый контент",
+    pages_type_file: "Файл (.md)",
+    pages_type_folder: "Папка",
+    pages_name_placeholder: "Имя или путь (напр. Docs/Intro)",
+    pages_btn_create: "Создать",
+    
+    // Dashboard - Users
+    users_add_title: "Добавить пользователя",
+    users_login_placeholder: "Логин",
+    users_pass_placeholder: "Пароль",
+    users_th_user: "Пользователь",
+    users_th_role: "Роль",
+    users_th_actions: "Действия",
+    
+    // Dashboard - Git additions
+    git_edit_repo_title: "Редактировать репозиторий",
+    git_repo_flatten: "Развернуть в дереве",
+    git_repo_view_global: "Глобальный ключ",
+    git_repo_use_global: "Использовать глобальный SSH-ключ",
+    git_repo_gen_unique: "Создать уникальный ключ для этого репо",
+    git_repo_copy_pub: "Копировать публичный ключ",
+    git_repo_ssh_auto: "URL будет автоматически изменен на SSH формат",
+    
+    // Dashboard - Logs
+    logs_th_time: "Время",
+    logs_th_user: "Пользователь",
+    logs_th_action: "Действие",
+    logs_th_ip: "IP",
+    logs_th_details: "Детали"
 };

@@ -3,9 +3,15 @@ import { toast } from './toasts.js';
 import { t } from './i18n.js';
 
 export async function loadFileTree() {
-    const res = await fetch('/api/files/tree');
-    const data = await res.json();
-    renderFileTree(data.tree);
+    const [treeRes, reposRes] = await Promise.all([
+        fetch('/api/files/tree'),
+        fetch('/api/git/repos')
+    ]);
+    const treeData = await treeRes.json();
+    const reposData = await reposRes.json();
+    
+    state.repos = Array.isArray(reposData) ? reposData : (reposData.repos || []);
+    renderFileTree(treeData.tree);
 }
 
 function renderFileTree(tree) {
@@ -90,6 +96,17 @@ function renderFileTree(tree) {
     }
     
     renderNode(tree, ui.fileTree);
+    
+    // Context menu on empty space
+    ui.fileTree.oncontextmenu = (e) => {
+        const isStaff = state.currentUser && ['developer', 'maintainer', 'owner'].includes(state.currentUser.role);
+        if (!isStaff) return;
+        if (e.target !== ui.fileTree) return; // Only trigger if clicking exactly on the container
+        
+        e.preventDefault();
+        showContextMenu(e, { type: 'empty' });
+    };
+
     if (window.lucide) lucide.createIcons();
 }
 
@@ -122,35 +139,75 @@ function showContextMenu(e, node) {
     menu.style.top = `${e.clientY}px`;
     menu.style.left = `${e.clientX}px`;
 
-    const items = [
-        { icon: 'edit', label: t('menu_rename') || 'Rename', cmd: 'rename' },
-        { icon: 'move', label: t('menu_move') || 'Move', cmd: 'move' }
-    ];
+    const items = [];
+    const isStaff = state.currentUser && ['developer', 'maintainer', 'owner'].includes(state.currentUser.role);
+    if (!isStaff) return;
 
-    if (node.type === 'file') {
+    if (node.type === 'empty') {
+        // Root creation group
         items.push({ 
-            icon: 'activity', 
-            label: t('status_label') || 'Status', 
+            icon: 'folder', 
+            label: t('root_folder'), 
             submenu: [
-                { label: t('status_draft'), cmd: 'status-draft' },
-                { label: t('status_in_progress'), cmd: 'status-in_progress' },
-                { label: t('status_published'), cmd: 'status-published' }
+                { icon: 'file-plus', label: t('menu_new_file'), cmd: 'new-file', path: '' },
+                { icon: 'folder-plus', label: t('menu_new_folder'), cmd: 'new-folder', path: '' }
             ]
         });
+        
+        // Flattened repos creation groups
+        const flattened = state.repos.filter(r => r.flatten_in_tree);
+        if (flattened.length > 0) {
+            flattened.forEach(repo => {
+                items.push({ 
+                    icon: 'git-branch', 
+                    label: repo.name, 
+                    submenu: [
+                        { icon: 'file-plus', label: t('menu_new_file'), cmd: 'new-file', path: repo.slug },
+                        { icon: 'folder-plus', label: t('menu_new_folder'), cmd: 'new-folder', path: repo.slug }
+                    ]
+                });
+            });
+        }
+    } else {
+        const parentPath = node.type === 'folder' ? node.path : node.path.split('/').slice(0, -1).join('/');
+        
+        items.push({ icon: 'file-plus', label: t('menu_new_file'), cmd: 'new-file', path: parentPath });
+        items.push({ icon: 'folder-plus', label: t('menu_new_folder'), cmd: 'new-folder', path: parentPath });
+        items.push({ divider: true });
+        items.push({ icon: 'edit', label: t('menu_rename') || 'Rename', cmd: 'rename' });
+        items.push({ icon: 'move', label: t('menu_move') || 'Move', cmd: 'move' });
+        
+        if (node.type === 'file') {
+            items.push({ 
+                icon: 'activity', 
+                label: t('status_label') || 'Status', 
+                submenu: [
+                    { icon: 'circle', label: t('status_draft'), cmd: 'status-draft' },
+                    { icon: 'play-circle', label: t('status_in_progress'), cmd: 'status-in_progress' },
+                    { icon: 'check-circle', label: t('status_published'), cmd: 'status-published' }
+                ]
+            });
+        }
+
+        items.push({
+            icon: node.public ? 'eye' : 'lock',
+            label: t('vis_label') || 'Visibility',
+            submenu: [
+                { icon: 'eye', label: t('vis_public'), cmd: 'vis-public' },
+                { icon: 'lock', label: t('vis_private'), cmd: 'vis-private' }
+            ]
+        });
+
+        items.push({ icon: 'trash-2', label: t('menu_delete') || 'Delete', cmd: 'delete', danger: true });
     }
 
-    items.push({
-        icon: node.public ? 'eye' : 'lock',
-        label: t('vis_label') || 'Visibility',
-        submenu: [
-            { label: t('vis_public'), cmd: 'vis-public' },
-            { label: t('vis_private'), cmd: 'vis-private' }
-        ]
-    });
-
-    items.push({ icon: 'trash-2', label: t('menu_delete') || 'Delete', cmd: 'delete', danger: true });
-
     items.forEach(it => {
+        if (it.divider) {
+            const div = document.createElement('div');
+            div.className = 'context-menu-divider';
+            menu.appendChild(div);
+            return;
+        }
         const item = document.createElement('div');
         item.className = `context-menu-item ${it.danger ? 'danger' : ''} ${it.submenu ? 'has-submenu' : ''}`;
         item.innerHTML = `<i data-lucide="${it.icon}" class="icon-sm"></i> <span>${it.label}</span>`;
@@ -161,10 +218,11 @@ function showContextMenu(e, node) {
             it.submenu.forEach(sit => {
                 const sitem = document.createElement('div');
                 sitem.className = 'context-menu-item';
-                sitem.textContent = sit.label;
+                const sIcon = sit.icon ? `<i data-lucide="${sit.icon}" class="icon-sm"></i> ` : '';
+                sitem.innerHTML = `${sIcon}<span>${sit.label}</span>`;
                 sitem.onclick = (ev) => {
                     ev.stopPropagation();
-                    handleMenuCommand(sit.cmd, node);
+                    handleMenuCommand(sit.cmd, node, sit.path !== undefined ? sit.path : it.path);
                     menu.remove();
                 };
                 sub.appendChild(sitem);
@@ -172,7 +230,7 @@ function showContextMenu(e, node) {
             item.appendChild(sub);
         } else {
             item.onclick = () => {
-                handleMenuCommand(it.cmd, node);
+                handleMenuCommand(it.cmd, node, it.path);
                 menu.remove();
             };
         }
@@ -192,8 +250,33 @@ function showContextMenu(e, node) {
     document.addEventListener('mousedown', closeMenu);
 }
 
-async function handleMenuCommand(cmd, node) {
-    if (cmd === 'delete') {
+async function handleMenuCommand(cmd, node, contextPath = '') {
+    if (cmd === 'new-file') {
+        const name = prompt(t('pages_name_placeholder') || "Enter file name:");
+        if (!name) return;
+        const fullPath = contextPath ? `${contextPath}/${name}` : name;
+        const res = await fetch(`/api/files/create?path=${encodeURIComponent(fullPath)}`, { method: 'POST' });
+        if (res.ok) {
+            toast.success(t('toast_save_success'));
+            loadFileTree();
+            window.dispatchEvent(new CustomEvent('load-file', { detail: { path: fullPath + (fullPath.endsWith('.md') ? '' : '.md') } }));
+        } else {
+            const err = await res.json();
+            toast.error(err.detail || "Failed to create file");
+        }
+    } else if (cmd === 'new-folder') {
+        const name = prompt(t('pages_name_placeholder') || "Enter folder name:");
+        if (!name) return;
+        const fullPath = contextPath ? `${contextPath}/${name}` : name;
+        const res = await fetch(`/api/files/mkdir?path=${encodeURIComponent(fullPath)}`, { method: 'POST' });
+        if (res.ok) {
+            toast.success(t('type_folder') + " created");
+            loadFileTree();
+        } else {
+            const err = await res.json();
+            toast.error(err.detail || "Failed to create folder");
+        }
+    } else if (cmd === 'delete') {
         const typeStr = node.type === 'folder' ? (t('type_folder') || 'folder') : (t('type_file') || 'file');
         const confirmed = await window.confirmAction(
             t('confirm_delete_title') || 'Confirm Delete',

@@ -58,17 +58,17 @@
             <div class="settings-plate">
                 <div class="plate-header">
                     <i data-lucide="file-plus"></i>
-                    <span>Create New Content</span>
+                    <span data-t="pages_create_title">Create New Content</span>
                 </div>
                 <div class="plate-body">
                     <div class="input-group" style="margin-bottom: 10px; display: flex; gap: 10px;">
                         <select id="new-item-type" style="width: auto;">
-                            <option value="file">File (.md)</option>
-                            <option value="folder">Folder</option>
+                            <option value="file" data-t="pages_type_file">File (.md)</option>
+                            <option value="folder" data-t="pages_type_folder">Folder</option>
                         </select>
-                        <input type="text" id="new-page-name" placeholder="Name or path (e.g. Docs/Intro)" style="flex: 1;">
+                        <input type="text" id="new-page-name" data-t="pages_name_placeholder" placeholder="Name or path (e.g. Docs/Intro)" style="flex: 1;">
                     </div>
-                    <button id="btn-create-page" class="btn btn-sm btn-primary" style="width: 100%;">Create</button>
+                    <button id="btn-create-page" class="btn btn-sm btn-primary" style="width: 100%;" data-t="pages_btn_create">Create</button>
                 </div>
             </div>
         </div>
@@ -77,10 +77,10 @@
         {% if user_role in ['maintainer', 'owner'] %}
         <div id="tab-users" class="tab-content hidden">
             <div class="settings-plate">
-                <div class="plate-header"><span>Add New User</span></div>
+                <div class="plate-header"><span data-t="users_add_title">Add New User</span></div>
                 <div class="plate-body" style="display: flex; gap: 10px; align-items: flex-start;">
-                    <input type="text" id="admin-new-username" placeholder="Login" style="flex: 1;">
-                    <input type="password" id="admin-new-password" placeholder="Password" style="flex: 1;">
+                    <input type="text" id="admin-new-username" data-t="users_login_placeholder" placeholder="Login" style="flex: 1;">
+                    <input type="password" id="admin-new-password" data-t="users_pass_placeholder" placeholder="Password" style="flex: 1;">
                     <select id="admin-new-role" style="flex: 1;">
                         <option value="guest">Guest</option>
                         <option value="reporter">Reporter</option>
@@ -88,16 +88,16 @@
                         <option value="maintainer">Maintainer</option>
                         <option value="owner">Owner</option>
                     </select>
-                    <button id="btn-admin-create-user" class="btn btn-primary">Create</button>
+                    <button id="btn-admin-create-user" class="btn btn-primary" data-t="pages_btn_create">Create</button>
                 </div>
             </div>
             <div style="margin-top: 20px;">
                 <table class="admin-table">
                     <thead>
                         <tr>
-                            <th>User</th>
-                            <th>Role</th>
-                            <th>Actions</th>
+                            <th data-t="users_th_user">User</th>
+                            <th data-t="users_th_role">Role</th>
+                            <th data-t="users_th_actions">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="users-list-body"></tbody>
@@ -203,7 +203,7 @@
                                     <input type="checkbox" id="repo-flatten-toggle">
                                     <span class="slider"></span>
                                 </label>
-                                <label data-t="repo_flatten_label" style="margin: 0; font-size: 14px; font-weight: 600; cursor: pointer;" for="repo-flatten-toggle">Flatten in Tree</label>
+                                <label data-t="git_repo_flatten" style="margin: 0; font-size: 14px; font-weight: 600; cursor: pointer;" for="repo-flatten-toggle">Flatten in Tree</label>
                             </div>
                         </div>
                         <p style="font-size: 11px; color: var(--text-muted); margin-top: 5px; margin-left: 50px;" data-t="repo_flatten_hint">Show repository contents directly in the root sidebar instead of a folder</p>
@@ -211,8 +211,8 @@
 
                     <div id="repo-key-type-selection" class="input-group" style="flex-direction: row; align-items: center; gap: 8px; margin-top: 15px;">
                         <input type="checkbox" id="repo-use-global-ssh" checked style="width: 16px; height: 16px; margin: 0;">
-                        <label for="repo-use-global-ssh" style="margin: 0; font-size: 13px; cursor: pointer;">Использовать глобальный SSH-ключ</label>
-                        <button type="button" id="btn-view-global-key-hint" class="btn btn-xs btn-text" style="font-size: 10px; margin-left: auto;">View Global Key</button>
+                        <label for="repo-use-global-ssh" style="margin: 0; font-size: 13px; cursor: pointer;" data-t="git_repo_use_global">Use global SSH key</label>
+                        <button type="button" id="btn-view-global-key-hint" class="btn btn-xs btn-text" style="font-size: 10px; margin-left: auto;" data-t="git_repo_view_global">View Global Key</button>
                     </div>
                     
                     <div id="repo-unique-key-box" class="hidden" style="margin-top: 10px; padding: 15px; background: rgba(0,0,0,0.1); border-radius: 8px; border: 1px dashed var(--border-color);">
@@ -228,19 +228,19 @@
                         </div>
 
                         <div id="repo-key-gen-area">
-                            <button type="button" id="btn-repo-gen-unique-key" class="btn btn-xs btn-outline" style="width: 100%;">Generate Unique Key for this Repo</button>
+                            <button type="button" id="btn-repo-gen-unique-key" class="btn btn-xs btn-outline" style="width: 100%;" data-t="git_repo_gen_unique">Generate Unique Key for this Repo</button>
                             
                             <div id="repo-unique-key-display" class="hidden" style="margin-top: 10px;">
                                 <div class="key-display-box" style="padding: 10px; background: rgba(0,0,0,0.2);">
                                     <pre id="repo-generated-pubkey" style="font-size: 10px; max-height: 60px; overflow-y: auto; margin-bottom: 8px; word-break: break-all; white-space: pre-wrap; color: var(--text-muted);"></pre>
-                                    <button type="button" id="btn-copy-generated-key" class="btn btn-xs btn-primary" style="width: 100%;">
+                                    <button type="button" id="btn-copy-generated-key" class="btn btn-xs btn-primary" style="width: 100%;" data-t="git_repo_copy_pub">
                                         <i data-lucide="copy" style="width: 12px; height: 12px;"></i>
                                         <span>Copy Public Key</span>
                                     </button>
                                 </div>
                                 <div style="margin-top: 8px; font-size: 11px; color: var(--info-color);">
                                     <i data-lucide="info" style="width: 12px; vertical-align: middle;"></i>
-                                    URL will be updated to SSH format automatically.
+                                    <span data-t="git_repo_ssh_auto">URL will be updated to SSH format automatically.</span>
                                 </div>
                             </div>
                         </div>
@@ -280,11 +280,11 @@
                 <table class="admin-table">
                     <thead>
                         <tr>
-                            <th>Time</th>
-                            <th>User</th>
-                            <th>Action</th>
-                            <th>IP</th>
-                            <th>Details</th>
+                            <th data-t="logs_th_time">Time</th>
+                            <th data-t="logs_th_user">User</th>
+                            <th data-t="logs_th_action">Action</th>
+                            <th data-t="logs_th_ip">IP</th>
+                            <th data-t="logs_th_details">Details</th>
                         </tr>
                     </thead>
                     <tbody id="logs-list-body"></tbody>

@@ -58,3 +58,10 @@
 .context-menu-item:hover > .submenu {
     display: block;
 }
+
+.context-menu-divider {
+    height: 1px;
+    background: var(--border-color);
+    margin: 6px 4px;
+    opacity: 0.4;
+}

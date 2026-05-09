@@ -113,6 +113,8 @@ export const en = {
     // Navigation
     nav_prev: "Previous",
     nav_next: "Next",
+    nav_home: "Root",
+    root_folder: "Document Root",
 
     // Git Sync
     btn_sync_now: "Sync Now",
@@ -134,6 +136,8 @@ export const en = {
     menu_rename: "Rename",
     menu_move: "Move",
     menu_delete: "Delete",
+    menu_new_file: "New File",
+    menu_new_folder: "New Folder",
 
     // Visibility
     vis_label: "Visibility",
@@ -202,5 +206,36 @@ export const en = {
     toast_status_failed: "Failed to update status",
     toast_draft_found: "Unsaved draft found",
     btn_restore: "Restore",
-    toast_draft_restored: "Draft restored"
+    toast_draft_restored: "Draft restored",
+    
+    // Dashboard - Pages
+    pages_create_title: "Create New Content",
+    pages_type_file: "File (.md)",
+    pages_type_folder: "Folder",
+    pages_name_placeholder: "Name or path (e.g. Docs/Intro)",
+    pages_btn_create: "Create",
+    
+    // Dashboard - Users
+    users_add_title: "Add New User",
+    users_login_placeholder: "Login",
+    users_pass_placeholder: "Password",
+    users_th_user: "User",
+    users_th_role: "Role",
+    users_th_actions: "Actions",
+    
+    // Dashboard - Git additions
+    git_edit_repo_title: "Edit Repository",
+    git_repo_flatten: "Flatten in Tree",
+    git_repo_view_global: "View Global Key",
+    git_repo_use_global: "Use global SSH key",
+    git_repo_gen_unique: "Generate unique key for this repo",
+    git_repo_copy_pub: "Copy Public Key",
+    git_repo_ssh_auto: "URL will be updated to SSH format automatically",
+    
+    // Dashboard - Logs
+    logs_th_time: "Time",
+    logs_th_user: "User",
+    logs_th_action: "Action",
+    logs_th_ip: "IP",
+    logs_th_details: "Details"
 };
