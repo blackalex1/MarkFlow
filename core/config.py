@@ -98,3 +98,29 @@ SECURITY_LIMITS = SETTINGS["security_limits"]
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DOCS_DIR = os.path.join(os.path.dirname(BASE_DIR), "markdown_docs")
+
+# --- Dynamic SRI Hash Calculation ---
+_sri_cache = {}
+def get_sri_hash(rel_path):
+    """Calculates SHA-384 hash for a static file and returns the SRI string."""
+    if rel_path in _sri_cache:
+        return _sri_cache[rel_path]
+    
+    # Path relative to core/static
+    abs_path = os.path.join(BASE_DIR, "static", rel_path.lstrip("/"))
+    if not os.path.exists(abs_path):
+        return ""
+    
+    import hashlib
+    import base64
+    try:
+        with open(abs_path, "rb") as f:
+            digest = hashlib.sha384(f.read()).digest()
+            sri = f"sha384-{base64.b64encode(digest).decode('utf-8')}"
+            _sri_cache[rel_path] = sri
+            return sri
+    except Exception:
+        return ""
+
+# Add function to SETTINGS so it's available in Jinja2
+SETTINGS["get_sri"] = get_sri_hash

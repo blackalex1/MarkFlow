@@ -5,28 +5,28 @@
     <link rel="icon" href="{{ config.favicon_path if config.favicon_path else 'data:,' }}">
     <link rel="stylesheet" href="/static/css/style.css?v={{ app_version }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
-    <script src="/static/vendor/js/lucide.min.js" integrity="sha384-prOTt12iGU6/k2uoXJ3az4BWS2qoxykgxJb6pjfmRK7MYOMnMe7bWWBMPZqxwVks" crossorigin="anonymous"></script>
+    <script src="/static/vendor/js/lucide.min.js" integrity="{{ config.get_sri('vendor/js/lucide.min.js') }}" crossorigin="anonymous"></script>
     
     <!-- Highlight.js for Code Highlighting -->
     <link id="hljs-theme" rel="stylesheet" href="/static/vendor/css/github-dark.min.css">
-    <script src="/static/vendor/js/highlight.min.js" integrity="sha384-F/bZzf7p3Joyp5psL90p/p89AZJsndkSoGwRpXcZhleCWhd8SnRuoYo4d0yirjJp" crossorigin="anonymous"></script>
+    <script src="/static/vendor/js/highlight.min.js" integrity="{{ config.get_sri('vendor/js/highlight.min.js') }}" crossorigin="anonymous"></script>
     <script src="/static/vendor/js/languages/scala.min.js"></script>
     <script src="/static/vendor/js/languages/sql.min.js"></script>
     <script src="/static/vendor/js/languages/java.min.js"></script>
     <script src="/static/vendor/js/languages/r.min.js"></script>
     
-    <script src="/static/vendor/js/marked.min.js" integrity="sha384-948ahk4ZmxYVYOc+rxN1H2gM1EJ2Duhp7uHtZ4WSLkV4Vtx5MUqnV+l7u9B+jFv+" crossorigin="anonymous"></script>
-    <script src="/static/vendor/js/purify.min.js" integrity="sha384-rneZSW/1QE+3/U5/u+/7eRNi/tRc+SzS+yXy36fltr1tDN9EHaVo1Bwz2Z8o8DA4" crossorigin="anonymous"></script>
-    <script src="/static/vendor/js/mermaid.min.js" integrity="sha384-enVdc7lTHDGtpROV85t9+VqPC2EyyB0hsRD0MrvQnHUsHmTHIz2D8SPP4EnBkstH" crossorigin="anonymous"></script>
+    <script src="/static/vendor/js/marked.min.js" integrity="{{ config.get_sri('vendor/js/marked.min.js') }}" crossorigin="anonymous"></script>
+    <script src="/static/vendor/js/purify.min.js" integrity="{{ config.get_sri('vendor/js/purify.min.js') }}" crossorigin="anonymous"></script>
+    <script src="/static/vendor/js/mermaid.min.js" integrity="{{ config.get_sri('vendor/js/mermaid.min.js') }}" crossorigin="anonymous"></script>
     
     <!-- Local Editor Assets (Bundled CodeMirror) -->
     <link rel="stylesheet" href="/static/vendor/css/easymde.min.css">
-    <script src="/static/vendor/js/easymde.min.js" integrity="sha384-mTM6vzy+/UiHrMBClNGViM9qEv0/26iCGqpJKhSzdnjrxbKjO3vkT62ujXQ8B5iv" crossorigin="anonymous"></script>
+    <script src="/static/vendor/js/easymde.min.js" integrity="{{ config.get_sri('vendor/js/easymde.min.js') }}" crossorigin="anonymous"></script>
     
     <!-- KaTeX for Mathematics -->
     <link rel="stylesheet" href="/static/vendor/css/katex.min.css">
-    <script src="/static/vendor/js/katex.min.js" integrity="sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg" crossorigin="anonymous"></script>
-    <script src="/static/vendor/js/auto-render.min.js" integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk" crossorigin="anonymous"></script>
+    <script src="/static/vendor/js/katex.min.js" integrity="{{ config.get_sri('vendor/js/katex.min.js') }}" crossorigin="anonymous"></script>
+    <script src="/static/vendor/js/auto-render.min.js" integrity="{{ config.get_sri('vendor/js/auto-render.min.js') }}" crossorigin="anonymous"></script>
     <meta name="app-version" content="{{ app_version }}">
     <link rel="stylesheet" href="/static/css/editor/markflow-editor.css?v={{ app_version }}">
     <link rel="stylesheet" href="/static/css/modules/color-picker.css?v={{ app_version }}">
