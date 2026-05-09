@@ -57,6 +57,12 @@
     overflow-x: hidden !important;
 }
 
+.editor-preview {
+    height: calc(100vh - 350px) !important;
+    min-height: 400px !important;
+    overflow-y: auto !important;
+}
+
 .cm-header-1 { font-size: 1.4em !important; }
 .cm-header-2 { font-size: 1.3em !important; }
 .cm-header-3 { font-size: 1.2em !important; }

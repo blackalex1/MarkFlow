@@ -93,7 +93,12 @@ export function toggleEditMode(editing) {
 
             const oldSideBySide = easyMDE.toggleSideBySide;
             easyMDE.toggleSideBySide = function() {
+                const wasSided = easyMDE.isSideBySideActive();
                 oldSideBySide.call(this);
+                // Fix native EasyMDE bug: disabling side-by-side leaves fullscreen active
+                if (wasSided && easyMDE.isFullscreenActive()) {
+                    easyMDE.toggleFullScreen();
+                }
                 syncLayout();
             };
             
