@@ -38,7 +38,7 @@ export function renderFolderGrid(data) {
                     const safeName = escapeHTML(item.name.replace('.md', ''));
                     
                     return `
-                        <div class="folder-card ${item.type}-card" onclick="window.dispatchEvent(new CustomEvent('load-file', { detail: { path: '${safePath.replace(/'/g, "\\'")}' } }))">
+                        <div class="folder-card ${item.type}-card" data-path="${safePath}">
                             <div class="card-icon">
                                 ${statusDot}
                                 <i data-lucide="${icon}"></i>
@@ -53,6 +53,15 @@ export function renderFolderGrid(data) {
             </div>
         </div>
     `;
+
+    // Add dynamic event listeners to avoid CSP issues with inline onclick
+    ui.contentViewer.querySelectorAll('.folder-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const path = card.getAttribute('data-path');
+            window.dispatchEvent(new CustomEvent('load-file', { detail: { path } }));
+        });
+    });
+
     if (window.lucide) lucide.createIcons();
 }
 
