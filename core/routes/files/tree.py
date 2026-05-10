@@ -56,6 +56,7 @@ def get_file_tree(request: Request):
                 nodes.append({
                     "name": item,
                     "type": "folder",
+                    "path": rel_path,
                     "children": children
                 })
             elif item.endswith(".md"):

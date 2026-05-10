@@ -36,7 +36,7 @@ function renderFileTree(tree) {
     function renderNode(nodes, parentEl, level = 0, parentPath = '') {
         nodes.forEach(node => {
             const item = document.createElement('div');
-            const nodePath = parentPath ? `${parentPath}/${node.name}` : node.name;
+            const nodePath = node.path || (parentPath ? `${parentPath}/${node.name}` : node.name);
             item.className = node.type === 'folder' ? 'folder-item' : 'file-item';
             item.style.paddingLeft = `${level * 15 + 10}px`;
             
