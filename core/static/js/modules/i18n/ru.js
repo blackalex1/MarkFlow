@@ -131,6 +131,7 @@ export const ru = {
 
     // Git Sync
     btn_sync_now: "Синхронизировать сейчас",
+    btn_reindex: "Переиндексировать поиск",
     btn_syncing: "Синхронизация...",
     btn_fetch_branches: "Загрузить ветки",
     btn_save_config: "Сохранить конфиг",
@@ -156,6 +157,8 @@ export const ru = {
     strategy_help_rebase: "Сначала сохраняет ваши правки в коммит, затем подтягивает новые данные из Git и накладывает ваши изменения сверху. Сохраняет чистую историю.",
     strategy_help_force: "ВНИМАНИЕ: Полностью удаляет все локальные изменения и делает папку точной копией ветки в Git. Используйте только для сброса ошибок.",
     strategy_help_pr: "Безопасный метод. Создает новую ветку в Git с вашими правками, которую затем можно проверить и объединить через Pull Request.",
+    tab_search_maintenance: "Поисковый индекс",
+    reindex_desc: "Полная пересборка индекса поиска с нуля",
     unit_mins: "мин.",
     
     // Statuses
@@ -246,6 +249,7 @@ export const ru = {
     toast_draft_found: "Найден несохраненный черновик",
     btn_restore: "Восстановить",
     toast_draft_restored: "Черновик восстановлен",
+    toast_reindex_success: "Индекс поиска успешно обновлен!",
     
     // Dashboard - Pages
     pages_create_title: "Создать новый контент",

@@ -134,4 +134,27 @@ export function initSync() {
             }
         };
     }
+
+    if (ui.btnReindex) {
+        ui.btnReindex.onclick = async () => {
+            ui.btnReindex.disabled = true;
+            const originalText = ui.btnReindex.innerText;
+            ui.btnReindex.innerText = '...';
+            
+            try {
+                const res = await fetch('/api/files/reindex', { method: 'POST' });
+                if (res.ok) {
+                    toast.success(i18n.t('toast_reindex_success') || 'Search index rebuilt!');
+                } else {
+                    const data = await res.json();
+                    toast.error((i18n.t('error_generic') || 'Error') + ': ' + (data.detail || ''));
+                }
+            } catch (e) {
+                console.error(e);
+            } finally {
+                ui.btnReindex.disabled = false;
+                ui.btnReindex.innerText = originalText;
+            }
+        };
+    }
 }

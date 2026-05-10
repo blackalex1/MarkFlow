@@ -25,6 +25,7 @@ export const ui = {
     newPageName: document.getElementById('new-page-name'),
     btnGitSync: document.getElementById('btn-git-sync'),
     btnGitForceSync: document.getElementById('btn-git-force-sync'),
+    btnReindex: document.getElementById('btn-reindex'),
     syncStatusIcon: document.getElementById('sync-status-icon'),
     syncStatusText: document.getElementById('sync-status-text'),
     gitReposTbody: document.getElementById('git-repos-tbody'),

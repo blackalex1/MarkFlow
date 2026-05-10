@@ -109,6 +109,8 @@ export const en = {
     strategy_help_rebase: "First commits your local changes, then pulls updates and puts your changes on top. Keeps a clean history.",
     strategy_help_force: "WARNING: Discards all local changes and makes the folder an exact copy of the remote branch. Use only for reset.",
     strategy_help_pr: "Safe method. Creates a new branch in Git with your changes, which can then be reviewed and merged via Pull Request.",
+    tab_search_maintenance: "Search Index",
+    reindex_desc: "Rebuild search index from scratch",
     unit_mins: "min.",
     hint_tabs_desc: "Tabbed container",
     
@@ -132,6 +134,7 @@ export const en = {
 
     // Git Sync
     btn_sync_now: "Sync Now",
+    btn_reindex: "Reindex Search",
     btn_syncing: "Syncing...",
     btn_fetch_branches: "Fetch Branches",
     btn_save_config: "Save Config",
@@ -198,6 +201,7 @@ export const en = {
     // Toasts
     toast_draft_found: "Unsaved draft found",
     toast_draft_restored: "Draft restored successfully",
+    toast_reindex_success: "Search index rebuilt!",
     btn_restore: "Restore",
 
     // Confirmation Modals
