@@ -2,6 +2,7 @@ import pyotp
 import qrcode
 import qrcode.image.svg
 from io import BytesIO
+from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Response, Request
 from pydantic import BaseModel
 from core.database import (
@@ -86,8 +87,10 @@ def verify_2fa(request: Request, data: TOTPVerifyRequest, user=Depends(get_curre
 
 class PasswordVerifyRequest(BaseModel):
     password: str
+    totp_code: Optional[str] = None
 
 @router.post("/2fa/disable")
+@limiter.limit(SECURITY_LIMITS["2fa_verify"])
 def disable_2fa(request: Request, data: PasswordVerifyRequest, user=Depends(get_current_user)):
     if not user:
         raise HTTPException(status_code=401, detail="Not logged in")
@@ -96,6 +99,14 @@ def disable_2fa(request: Request, data: PasswordVerifyRequest, user=Depends(get_
     if not db_user or not verify_password(data.password, db_user["password_hash"]):
         add_audit_log(user["username"], "2fa_disable_failed", "Invalid password", ip_address=request.client.host)
         raise HTTPException(status_code=400, detail="Invalid password")
+
+    if db_user["totp_secret"]:
+        if not data.totp_code:
+            raise HTTPException(status_code=401, detail="2FA code required to disable 2FA")
+        totp = pyotp.TOTP(db_user["totp_secret"])
+        if not totp.verify(data.totp_code):
+            add_audit_log(user["username"], "2fa_disable_failed", "Invalid 2FA code", ip_address=request.client.host)
+            raise HTTPException(status_code=400, detail="Invalid 2FA code")
 
     set_user_totp_secret(user["username"], None)
     add_audit_log(user["username"], "2fa_disabled", ip_address=request.client.host)
@@ -189,6 +200,11 @@ def api_delete_user(request: Request, username: str, user=Depends(get_owner_user
 
 @router.put("/users/{username}/role")
 def api_update_role(request: Request, username: str, data: RoleUpdate, user=Depends(get_owner_user)):
+    # Validate role
+    allowed_roles = ['guest', 'reporter', 'developer', 'maintainer', 'owner']
+    if data.role not in allowed_roles:
+        raise HTTPException(status_code=400, detail=f"Invalid role. Allowed: {', '.join(allowed_roles)}")
+        
     update_user_role(username, data.role)
     add_audit_log(user["username"], "user_role_updated", f"User: {username}, New Role: {data.role}", ip_address=request.client.host)
     return {"message": "Role updated"}

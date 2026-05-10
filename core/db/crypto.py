@@ -12,11 +12,9 @@ def get_cipher():
     if _fernet:
         return _fernet
     
-    # Use ENCRYPTION_SECRET from DB
     secret = get_setting('ENCRYPTION_SECRET')
     if not secret:
-        # Fallback to a random one if not initialized yet (should not happen after init_db)
-        secret = "default_unsafe_secret_change_me"
+        raise RuntimeError("ENCRYPTION_SECRET not found in database. Encryption is not initialized.")
     
     # Derive a key from the secret
     salt = b'markflow_static_salt' # In a real app, salt should be unique and stored, but for our case we use the secret as the main entropy
@@ -45,6 +43,6 @@ def decrypt_value(value: str) -> str:
     try:
         f = get_cipher()
         return f.decrypt(value.encode()).decode()
-    except Exception:
-        # Fallback for legacy or corrupted data
-        return value
+    except Exception as e:
+        # Do NOT return the original value on failure, as it might be sensitive
+        raise ValueError(f"Decryption failed: {str(e)}")

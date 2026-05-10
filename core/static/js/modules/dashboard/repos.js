@@ -208,7 +208,8 @@ export function initRepos() {
             ui.btnRepoGenUniqueKey.classList.remove('hidden');
             if (ui.btnRepoManualKey) ui.btnRepoManualKey.classList.remove('hidden');
             
-            ui.repoBranchSelect.innerHTML = `<option value="${repo.branch}" selected>${repo.branch}</option>`;
+            const safeBranch = escapeHTML(repo.branch);
+            ui.repoBranchSelect.innerHTML = `<option value="${safeBranch}" selected>${safeBranch}</option>`;
             if (ui.repoAutoSyncInterval) {
                 const totalMinutes = repo.auto_sync_interval || 0;
                 if (totalMinutes >= 1440 && totalMinutes % 1440 === 0) {

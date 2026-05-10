@@ -133,17 +133,29 @@ async def upload_asset(request: Request, type: str = "custom", file: UploadFile 
         if len(content) > 2 * 1024 * 1024:
              raise HTTPException(status_code=400, detail="File too large (max 2MB)")
 
-        # Security: Verify image content using Pillow
+        # Security: Verify and sanitize image content using Pillow
         from PIL import Image
         import io
         try:
+            # Re-encoding the image strips metadata and potential polyglot attacks
             img = Image.open(io.BytesIO(content))
-            img.verify()
-        except Exception:
-            raise HTTPException(status_code=400, detail="Invalid or malicious image content")
+            img.verify() # First pass verification
+            
+            # Second pass: re-open and save to a new buffer (sanitization)
+            img = Image.open(io.BytesIO(content))
+            out_buffer = io.BytesIO()
+            
+            # Map extensions to Pillow formats
+            fmt = 'PNG' if ext == '.png' else 'JPEG'
+            if ext == '.ico': fmt = 'ICO'
+            
+            img.save(out_buffer, format=fmt)
+            sanitized_content = out_buffer.getvalue()
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Invalid or malicious image content: {str(e)}")
 
         with open(save_path, "wb") as f:
-            f.write(content)
+            f.write(sanitized_content)
             
         # Log the upload
         add_audit_log(
@@ -154,5 +166,7 @@ async def upload_asset(request: Request, type: str = "custom", file: UploadFile 
         )
             
         return {"path": f"/config/{safe_name}"}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to upload: {str(e)}")

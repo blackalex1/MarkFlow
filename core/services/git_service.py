@@ -26,7 +26,7 @@ def get_repo(path=DOCS_DIR):
 
 
 def sync_repository(username: str, force: bool = False, ip_address: str = "", is_auto: bool = False):
-    active_repo = get_active_repository()
+    active_repo = get_active_repository(include_secrets=True)
     if not active_repo:
         return {"message": "No active repository configured."}
     return _sync_repository_internal(active_repo, username, force, ip_address, is_auto)
@@ -220,36 +220,41 @@ def validate_git_url(url: str):
     if not url:
         raise Exception("Git URL is required")
     
+    # 1. Basic Protocol & Injection Checks (from git_sync)
+    if url.startswith("-"):
+        raise Exception("Invalid Git URL: cannot start with a hyphen")
+    if re.search(r"[\s;`\"'|&<>]", url):
+        raise Exception("Invalid Git URL: illegal characters detected")
+    if not (url.startswith("https://") or url.startswith("git@") or url.startswith("ssh://")):
+        raise Exception("Invalid Git URL: protocol not allowed. Use HTTPS or SSH.")
+    
+    # Block argument injection in ssh:// urls
+    if url.startswith("ssh://") and url[6:].startswith("-"):
+         raise Exception("Invalid Git URL: argument injection detected")
+
+    # 2. SSRF Protection via DNS/IP checks
     import socket
     import ipaddress
     from urllib.parse import urlparse
     
-    # Extract hostname
     hostname = None
     if url.startswith("git@"):
-        # git@github.com:user/repo.git
         hostname = url.split("@")[-1].split(":")[0]
     elif "://" in url:
-        # https://github.com/user/repo.git or ssh://git@github.com/user/repo.git
         parsed = urlparse(url)
         hostname = parsed.hostname
     else:
-        # Assume it might just be a hostname or local path
         hostname = url.split(":")[0]
 
     if not hostname:
         raise Exception(f"Could not extract hostname from URL: {url}")
 
-    # Block common suspicious patterns in the URL string itself
-    blocked_patterns = [
-        r'169\.254\.',  # Metadata service
-    ]
+    blocked_patterns = [r'169\.254\.', r'metadata\.google\.internal']
     for pattern in blocked_patterns:
         if re.search(pattern, url):
             raise Exception(f"Invalid Git URL: Potential metadata service access blocked.")
 
     try:
-        # Resolve all IP addresses for the hostname
         addr_info = socket.getaddrinfo(hostname, None)
         for info in addr_info:
             ip_str = info[4][0]
@@ -258,20 +263,17 @@ def validate_git_url(url: str):
             if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_multicast or ip.is_unspecified:
                 raise Exception(f"Invalid Git URL: Access to private/local network ({ip_str}) is blocked.")
                 
-            # Extra check for IPv4 mapped IPv6 and other edge cases
             if hasattr(ip, 'ipv4_mapped') and ip.ipv4_mapped:
                 if ip.ipv4_mapped.is_private:
                      raise Exception(f"Invalid Git URL: Access to private network (via IPv6 mapped) is blocked.")
-
     except socket.gaierror:
-        # If we can't resolve it, it might be a local name that doesn't resolve to an IP in this environment
-        # but could resolve elsewhere. For safety, we block it if it's not a known public domain format
-        # but since this is a documentation engine, we assume public Git hosts.
-        # However, let's allow it if it's not a direct IP (checked by ipaddress above).
-        pass
+        # If we can't resolve it, it's safer to block it in a production-hardened environment
+        # unless it's a known public Git provider.
+        public_providers = ['github.com', 'gitlab.com', 'bitbucket.org', 'gitea.com']
+        if hostname.lower() not in public_providers and not any(hostname.lower().endswith("." + p) for p in public_providers):
+            raise Exception(f"Invalid Git URL: Could not resolve hostname '{hostname}' and it is not a known public provider.")
     except Exception as e:
         if "blocked" in str(e): raise e
-        # Other errors might be related to network issues or invalid hostnames
         raise Exception(f"Git URL validation failed: {str(e)}")
 
 def get_remote_branches_list(repo_data: dict):
@@ -378,15 +380,8 @@ async def start_background_sync_worker():
 
 def sync_repository_by_id(repo_id: int, username: str):
     """Wrapper for sync_repository that targets a specific repo."""
-    repo = None
-    conn = get_db()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM git_repositories WHERE id = ?", (repo_id,))
-    row = cur.fetchone()
-    conn.close()
-    if row:
-        repo = dict(row)
-    
+    from core.database import get_repository
+    repo = get_repository(repo_id, include_secrets=True)
     if not repo: return
     
     # Call the main sync logic with this repo

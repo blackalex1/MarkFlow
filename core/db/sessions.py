@@ -28,11 +28,12 @@ def get_session(session_id: str):
     if row:
         expires_at = datetime.fromisoformat(row[2])
         if expires_at > datetime.now():
+            from .crypto import decrypt_value
             return {
                 "username": row[0], 
                 "is_admin": bool(row[1]), 
                 "role": row[3],
-                "totp_secret": row[4]
+                "totp_secret": decrypt_value(row[4]) if row[4] else None
             }
         else:
             delete_session(session_id)

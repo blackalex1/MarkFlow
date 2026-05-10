@@ -24,18 +24,13 @@ def slugify(text: str) -> str:
     text = re.sub(r'-+', '-', text)
     return text.strip('-')
 
+from core.services.git_service import validate_git_url as central_validate_git_url
+
 def validate_git_url(url: str):
-    if not url: return
-    if url.startswith("-"):
-        raise HTTPException(status_code=400, detail="Invalid Git URL: cannot start with a hyphen")
-    if re.search(r"[\s;`\"'|&<>]", url):
-        raise HTTPException(status_code=400, detail="Invalid Git URL: illegal characters detected")
-    if not (url.startswith("https://") or url.startswith("git@") or url.startswith("ssh://")):
-        raise HTTPException(status_code=400, detail="Invalid Git URL: protocol not allowed")
-    
-    # Block argument injection in ssh:// urls (e.g. ssh://-oProxyCommand=...)
-    if url.startswith("ssh://") and url[6:].startswith("-"):
-         raise HTTPException(status_code=400, detail="Invalid Git URL: argument injection detected")
+    try:
+        central_validate_git_url(url)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 def validate_slug(slug: str):
     if not slug:
@@ -78,7 +73,11 @@ def api_add_repo(request: Request, data: RepoInput, user=Depends(get_maintainer_
         cur.execute("SELECT private_key FROM temp_ssh_keys WHERE id = ?", (data.key_id,))
         row = cur.fetchone()
         if row:
-            priv = row[0]
+            from core.db.crypto import decrypt_value
+            try:
+                priv = decrypt_value(row[0])
+            except:
+                priv = row[0] # Fallback for legacy
             cur.execute("DELETE FROM temp_ssh_keys WHERE id = ?", (data.key_id,))
             conn.commit()
         conn.close()
@@ -112,7 +111,11 @@ def api_update_repo(request: Request, repo_id: int, data: RepoInput, user=Depend
         cur.execute("SELECT private_key FROM temp_ssh_keys WHERE id = ?", (data.key_id,))
         row = cur.fetchone()
         if row:
-            priv = row[0]
+            from core.db.crypto import decrypt_value
+            try:
+                priv = decrypt_value(row[0])
+            except:
+                priv = row[0] # Fallback for legacy
             cur.execute("DELETE FROM temp_ssh_keys WHERE id = ?", (data.key_id,))
             conn.commit()
         conn.close()
@@ -122,7 +125,7 @@ def api_update_repo(request: Request, repo_id: int, data: RepoInput, user=Depend
 
 @router.get("/ssh-status")
 def get_ssh_status(user=Depends(get_maintainer_user)):
-    repo = get_active_repository()
+    repo = get_active_repository(include_secrets=True)
     if not repo: return {"has_keys": False}
     return {"has_keys": bool(repo['ssh_private_key'] and repo['ssh_public_key'])}
 
@@ -159,7 +162,8 @@ def api_gen_key_pair(request: Request, user=Depends(get_maintainer_user)):
         cur = conn.cursor()
         # Clean up old temp keys (older than 1 hour)
         cur.execute("DELETE FROM temp_ssh_keys WHERE created_at < datetime('now', '-1 hour')")
-        cur.execute("INSERT INTO temp_ssh_keys (id, private_key) VALUES (?, ?)", (key_id, priv))
+        from core.db.crypto import encrypt_value
+        cur.execute("INSERT INTO temp_ssh_keys (id, private_key) VALUES (?, ?)", (key_id, encrypt_value(priv)))
         conn.commit()
         conn.close()
         
@@ -199,7 +203,12 @@ def get_remote_branches(request: Request, url: str = None, key_id: str = None, u
         row = cur.fetchone()
         conn.close()
         if row:
-            repo_data = {"url": url, "ssh_private_key": row[0], "ssh_public_key": None}
+            from core.db.crypto import decrypt_value
+            try:
+                decrypted_key = decrypt_value(row[0])
+            except:
+                decrypted_key = row[0]
+            repo_data = {"url": url, "ssh_private_key": decrypted_key, "ssh_public_key": None}
     
     if not repo_data and url:
         # Try to find repo with this URL to get keys
@@ -215,7 +224,7 @@ def get_remote_branches(request: Request, url: str = None, key_id: str = None, u
             repo_data = {"url": url, "ssh_private_key": None, "ssh_public_key": None}
     
     if not repo_data:
-        repo_data = get_active_repository()
+        repo_data = get_active_repository(include_secrets=True)
         
     if not repo_data or not repo_data.get('url'):
         raise HTTPException(status_code=400, detail="No repository URL provided or active.")
@@ -229,7 +238,7 @@ def get_remote_branches(request: Request, url: str = None, key_id: str = None, u
 
 @router.get("/config")
 def get_git_config(user=Depends(get_maintainer_user)):
-    repo = get_active_repository()
+    repo = get_active_repository(include_secrets=True)
     if not repo: return {"url": "", "branch": "master", "has_ssh": False}
     return {
         "url": repo['url'],

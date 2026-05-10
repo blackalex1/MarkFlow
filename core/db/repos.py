@@ -1,7 +1,7 @@
 from .base import get_db
 from .crypto import encrypt_value, decrypt_value
 
-def list_repositories():
+def list_repositories(include_secrets: bool = False):
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM git_repositories ORDER BY id DESC')
@@ -11,11 +11,14 @@ def list_repositories():
     for row in rows:
         r = dict(row)
         if r.get("ssh_private_key"):
-            r["ssh_private_key"] = decrypt_value(r["ssh_private_key"])
+            if include_secrets:
+                r["ssh_private_key"] = decrypt_value(r["ssh_private_key"])
+            else:
+                r["ssh_private_key"] = None # Exclude from list
         repos.append(r)
     return repos
 
-def get_active_repository():
+def get_active_repository(include_secrets: bool = False):
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM git_repositories WHERE is_active = 1 LIMIT 1')
@@ -24,11 +27,14 @@ def get_active_repository():
     if row:
         r = dict(row)
         if r.get("ssh_private_key"):
-            r["ssh_private_key"] = decrypt_value(r["ssh_private_key"])
+            if include_secrets:
+                r["ssh_private_key"] = decrypt_value(r["ssh_private_key"])
+            else:
+                r["ssh_private_key"] = None
         return r
     return None
 
-def get_repository(repo_id: int):
+def get_repository(repo_id: int, include_secrets: bool = False):
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM git_repositories WHERE id = ?', (repo_id,))
@@ -37,7 +43,10 @@ def get_repository(repo_id: int):
     if row:
         r = dict(row)
         if r.get("ssh_private_key"):
-            r["ssh_private_key"] = decrypt_value(r["ssh_private_key"])
+            if include_secrets:
+                r["ssh_private_key"] = decrypt_value(r["ssh_private_key"])
+            else:
+                r["ssh_private_key"] = None
         return r
     return None
 

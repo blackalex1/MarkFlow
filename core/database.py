@@ -205,5 +205,24 @@ def init_db():
     except sqlite3.OperationalError:
         pass
 
+    # Migration: Encrypt plaintext secrets (ssh_private_key and totp_secret)
+    from .db.crypto import encrypt_value
+    
+    # 1. Encrypt git_repositories secrets
+    cursor.execute("SELECT id, ssh_private_key FROM git_repositories WHERE ssh_private_key IS NOT NULL")
+    for row in cursor.fetchall():
+        repo_id, priv = row
+        if priv and not priv.startswith("gAAAA"):
+            cursor.execute("UPDATE git_repositories SET ssh_private_key = ? WHERE id = ?", (encrypt_value(priv), repo_id))
+            print(f" Migrated SSH key for repository ID {repo_id} to encrypted format.")
+            
+    # 2. Encrypt users secrets
+    cursor.execute("SELECT username, totp_secret FROM users WHERE totp_secret IS NOT NULL")
+    for row in cursor.fetchall():
+        username, totp = row
+        if totp and not totp.startswith("gAAAA"):
+            cursor.execute("UPDATE users SET totp_secret = ? WHERE username = ?", (encrypt_value(totp), username))
+            print(f" Migrated TOTP secret for user {username} to encrypted format.")
+
     conn.commit()
     conn.close()
