@@ -99,12 +99,22 @@ def _sync_repository_internal(active_repo: dict, username: str, force: bool = Fa
         if not priv_key:
             raise Exception("Neither repository-specific nor global SSH private key found.")
 
-        priv_key = priv_key.strip().replace('\r\n', '\n') + '\n'
+        # Strict sanitization: find PEM boundaries and keep only what's inside
+        priv_key = priv_key.strip()
+        match = re.search(r'(-----BEGIN.*?-----.*?-----END.*?-----)', priv_key, re.DOTALL)
+        if match:
+            priv_key = match.group(1)
+        
+        priv_key = priv_key.replace('\r\n', '\n') + '\n'
+        
         import tempfile
+        # Use mode 'wb' and write encoded bytes directly
         with tempfile.NamedTemporaryFile(mode='wb', delete=False) as tmp:
             tmp.write(priv_key.encode('utf-8'))
             tmp_path = tmp.name
-        if os.name != 'nt': os.chmod(tmp_path, 0o600)
+        
+        if os.name != 'nt':
+            os.chmod(tmp_path, 0o600)
         safe_tmp_path = tmp_path.replace("\\", "/")
         quoted_path = shlex.quote(safe_tmp_path)
         # Ensure config dir exists for known_hosts
@@ -297,13 +307,22 @@ def get_remote_branches_list(repo_data: dict):
     if not priv_key:
         raise Exception("Neither repository-specific nor global SSH private key found.")
     
-    priv_key = priv_key.strip().replace('\r\n', '\n') + '\n'
+    # Strict sanitization: find PEM boundaries and keep only what's inside
+    priv_key = priv_key.strip()
+    match = re.search(r'(-----BEGIN.*?-----.*?-----END.*?-----)', priv_key, re.DOTALL)
+    if match:
+        priv_key = match.group(1)
+        
+    priv_key = priv_key.replace('\r\n', '\n') + '\n'
+    
     import tempfile
+    # Use mode 'wb' and write encoded bytes directly
     with tempfile.NamedTemporaryFile(mode='wb', delete=False) as tmp:
         tmp.write(priv_key.encode('utf-8'))
         tmp_path = tmp.name
     
-    if os.name != 'nt': os.chmod(tmp_path, 0o600)
+    if os.name != 'nt':
+        os.chmod(tmp_path, 0o600)
     safe_ssh_path = tmp_path.replace("\\", "/")
     quoted_path = shlex.quote(safe_ssh_path)
     # Ensure config dir exists for known_hosts
