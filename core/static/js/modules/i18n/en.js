@@ -36,6 +36,7 @@ export const en = {
     tab_users: "Users",
     tab_git: "Git",
     tab_logs: "Audit Logs",
+    tab_statuses: "Statuses",
     tab_system: "System",
     logout_btn: "Logout",
     logout_all_btn: "Logout from all devices",
@@ -58,7 +59,7 @@ export const en = {
     sys_saving: "Saving settings...",
     sys_updated_success: "System settings updated successfully!",
     sys_max_request_size: "Max Request Size (MB)",
-    sys_max_size_hint: "Prevents Denial of Service (DoS) by rejecting oversized payloads. Default is 10MB. <br>Note: This does NOT limit background Git sync operations.",
+    sys_max_size_hint: "Prevents Denial of Service (DoS) by rejecting oversized payloads. Default is 10MB. \nNote: This does NOT limit background Git sync operations.",
     sys_updated_error: "Failed to save settings",
     sys_name_empty: "App name cannot be empty",
     sys_save_failed: "Failed to save settings",
@@ -285,5 +286,13 @@ export const en = {
     totp_status_on: "2FA Enabled",
     totp_status_off: "2FA Disabled",
     totp_btn_setup: "Setup",
-    totp_btn_disable: "Disable"
+    totp_btn_disable: "Disable",
+    
+    // Dashboard - Statuses
+    statuses_title: "Document Statuses",
+    statuses_hint: "Manage statuses and their bullet colors across the system.",
+    status_name_placeholder: "Status Name (e.g. 'Archived')",
+    status_created: "Status created successfully",
+    status_updated: "Status settings saved",
+    status_deleted: "Status deleted successfully",
 };

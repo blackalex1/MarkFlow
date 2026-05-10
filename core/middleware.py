@@ -73,7 +73,7 @@ async def add_security_headers(request: Request, call_next):
         "object-src 'none'; "
         "base-uri 'self'; "
         "require-trusted-types-for 'script'; "
-        "trusted-types dompurify default;"
+        "trusted-types dompurify default 'allow-duplicates';"
     )
 
     response.headers["Content-Security-Policy"] = csp

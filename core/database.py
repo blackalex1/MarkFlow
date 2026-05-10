@@ -14,6 +14,7 @@ from .db.repos import (
 )
 from .db.audit import add_audit_log, get_audit_logs
 from .db.fts import update_fts_index, delete_fts_index, search_fts, reindex_all_docs, is_image_referenced
+from .db.statuses import list_statuses, add_status, update_status, delete_status, get_status_by_slug
 from .metadata import is_public, set_public, set_public_recursive, get_file_status, set_file_status, rename_metadata
 
 import sqlite3
@@ -129,6 +130,28 @@ def init_db():
     try:
         cursor.execute('ALTER TABLE git_repositories ADD COLUMN flatten_in_tree BOOLEAN DEFAULT 0')
     except sqlite3.OperationalError: pass
+    
+    # Create document_statuses table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS document_statuses (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            slug TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            color TEXT NOT NULL,
+            is_system BOOLEAN DEFAULT 0
+        )
+    ''')
+    
+    # Seed default statuses if empty
+    cursor.execute("SELECT COUNT(*) FROM document_statuses")
+    if cursor.fetchone()[0] == 0:
+        default_statuses = [
+            ('draft', 'Draft', '#94a3b8', 1),
+            ('in_progress', 'In Progress', '#6366f1', 1),
+            ('published', 'Published', '#22c55e', 1)
+        ]
+        cursor.executemany('INSERT INTO document_statuses (slug, name, color, is_system) VALUES (?, ?, ?, ?)', default_statuses)
+        print(" Default document statuses initialized.")
 
     # Migration: Check if we have existing git config in settings and move it to git_repositories
     cursor.execute("SELECT COUNT(*) FROM git_repositories")

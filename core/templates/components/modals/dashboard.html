@@ -12,6 +12,7 @@
             <div class="tab-item" data-tab="git" data-t="tab_git">Git</div>
             <div class="tab-item" data-tab="logs" data-t="tab_logs">Audit Logs</div>
             {% if user_role == 'owner' %}
+            <div class="tab-item" data-tab="statuses" data-t="tab_statuses">Statuses</div>
             <div class="tab-item" data-tab="system" data-t="tab_system">System</div>
             {% endif %}
             {% endif %}
@@ -263,6 +264,28 @@
             </div>
         </div>
         {% if user_role == 'owner' %}
+        <div id="tab-statuses" class="tab-content hidden">
+            <div class="settings-plate">
+                <div class="plate-header">
+                    <i data-lucide="tag"></i>
+                    <span data-t="statuses_title">Document Statuses</span>
+                </div>
+                <div class="plate-body">
+                    <p class="hint-text" style="margin-bottom: 15px;" data-t="statuses_hint">Manage statuses and their bullet colors across the system.</p>
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <input type="text" id="status-new-name" data-t="status_name_placeholder" placeholder="Status Name" style="flex: 1;">
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <input type="color" id="status-new-color" value="#6366f1" style="width: 45px; padding: 2px; height: 38px; cursor: pointer; border: none; background: none;">
+                        </div>
+                        <button id="btn-admin-create-status" class="btn btn-primary" data-t="pages_btn_create">Create</button>
+                    </div>
+                    <div id="statuses-table-container">
+                        <!-- Populated by statuses.js -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <div id="tab-system" class="tab-content hidden">
             <div class="settings-list">
                 <!-- General Settings Plate -->

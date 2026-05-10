@@ -5,6 +5,7 @@ import { t } from './i18n.js';
 import { initMarked } from './markdown.js';
 import { generateTOC, updateBreadcrumbs, addCopyButtons, updateNavigation } from './viewer_ui.js';
 import { API } from './api.js';
+import { updateStatusDisplay } from './status.js';
 
 initMarked();
 
@@ -112,6 +113,8 @@ export async function loadFileContent(path, pushState = true, hash = null) {
             if (ui.topBar) {
                 if (state.currentUser && state.currentUser.role !== 'guest' && state.currentUser.role !== 'reporter') {
                     ui.topBar.classList.remove('hidden');
+                    updateStatusDisplay(data.status);
+                    if (ui.visibilityCheckbox) ui.visibilityCheckbox.checked = data.public;
                 } else ui.topBar.classList.add('hidden');
             }
             

@@ -36,6 +36,7 @@ export const ru = {
     tab_users: "Пользователи",
     tab_git: "Git",
     tab_logs: "Логи аудита",
+    tab_statuses: "Статусы",
     tab_system: "Система",
     logout_btn: "Выйти из системы",
     logout_all_btn: "Выйти на всех устройствах",
@@ -58,7 +59,7 @@ export const ru = {
     sys_saving: "Сохранение настроек...",
     sys_updated_success: "Системные настройки успешно обновлены!",
     sys_max_request_size: "Макс. размер запроса (МБ)",
-    sys_max_size_hint: "Защита от DoS-атак: сервер будет отклонять слишком тяжелые запросы. По умолчанию: 10МБ. <br>Примечание: Это не влияет на фоновую синхронизацию Git.",
+    sys_max_size_hint: "Защита от DoS-атак: сервер будет отклонять слишком тяжелые запросы. По умолчанию: 10МБ. \nПримечание: Это не влияет на фоновую синхронизацию Git.",
     sys_updated_error: "Не удалось сохранить настройки",
     sys_name_empty: "Название приложения не может быть пустым",
     sys_save_failed: "Не удалось сохранить настройки",
@@ -290,5 +291,13 @@ export const ru = {
     totp_status_on: "2FA включена",
     totp_status_off: "2FA отключена",
     totp_btn_setup: "Настроить",
-    totp_btn_disable: "Отключить"
+    totp_btn_disable: "Отключить",
+    
+    // Dashboard - Statuses
+    statuses_title: "Статусы документов",
+    statuses_hint: "Управление статусами и цветами их индикаторов в системе.",
+    status_name_placeholder: "Название статуса (напр. 'Архив')",
+    status_created: "Статус успешно создан",
+    status_updated: "Настройки статуса сохранены",
+    status_deleted: "Статус успешно удален",
 };

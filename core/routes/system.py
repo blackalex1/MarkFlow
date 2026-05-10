@@ -5,9 +5,23 @@ from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
 from pydantic import BaseModel, constr, validator, Field
 from core.config import APP_CONFIG, limiter, SECURITY_LIMITS, BASE_DIR
 from core.auth import get_owner_user
-from core.database import add_audit_log
+from core.database import (
+    add_audit_log, list_statuses, add_status, 
+    update_status, delete_status, get_status_by_slug
+)
 
 router = APIRouter()
+
+class StatusUpdate(BaseModel):
+    name: constr(min_length=1, max_length=30)
+    color: str
+    slug: str = None
+
+    @validator('color')
+    def validate_color(cls, v):
+        if not re.match(r'^#(?:[0-9a-fA-F]{3}){1,2}$', v):
+            raise ValueError('Invalid Hex color format')
+        return v
 
 class SecurityLimits(BaseModel):
     login: str
@@ -173,3 +187,33 @@ async def upload_asset(request: Request, type: str = "custom", file: UploadFile 
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to upload: {str(e)}")
+
+@router.get("/statuses")
+def get_statuses():
+    return list_statuses()
+
+@router.post("/statuses")
+def create_status(request: Request, data: StatusUpdate, user=Depends(get_owner_user)):
+    if not data.slug:
+        data.slug = re.sub(r'[^a-z0-9]', '_', data.name.lower())
+    
+    # Check if slug exists
+    if get_status_by_slug(data.slug):
+        raise HTTPException(status_code=400, detail="Status with this ID already exists")
+        
+    if add_status(data.slug, data.name, data.color):
+        add_audit_log(user["username"], "status_created", f"Name: {data.name}, Color: {data.color}", ip_address=request.client.host)
+        return {"message": "Status created"}
+    raise HTTPException(status_code=500, detail="Failed to create status")
+
+@router.put("/statuses/{status_id}")
+def edit_status(status_id: int, request: Request, data: StatusUpdate, user=Depends(get_owner_user)):
+    update_status(status_id, data.name, data.color)
+    add_audit_log(user["username"], "status_updated", f"ID: {status_id}, Name: {data.name}, Color: {data.color}", ip_address=request.client.host)
+    return {"message": "Status updated"}
+
+@router.delete("/statuses/{status_id}")
+def remove_status(status_id: int, request: Request, user=Depends(get_owner_user)):
+    delete_status(status_id)
+    add_audit_log(user["username"], "status_deleted", f"ID: {status_id}", ip_address=request.client.host)
+    return {"message": "Status deleted"}

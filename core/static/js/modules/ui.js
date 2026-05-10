@@ -136,5 +136,6 @@ export const state = {
     currentFilePath: null,
     setupTotpSecret: null,
     openFolders: new Set(),
-    isSidebarActive: false
+    isSidebarActive: false,
+    statuses: {} // Map: slug -> {name, color, id}
 };

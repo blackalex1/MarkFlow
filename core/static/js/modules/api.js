@@ -45,4 +45,5 @@ export const API = {
     SETTINGS: d('L2FwaS9zeXN0ZW0vc2V0dGluZ3M='), // /api/system/settings
     SYSTEM_UPLOAD_ASSET: d('L2FwaS9zeXN0ZW0vdXBsb2FkLWFzc2V0'), // /api/system/upload-asset
     AUDIT_LOGS: d('L2FwaS9hdXRoL2F1ZGl0LWxvZ3M='), // /api/auth/audit-logs
+    STATUSES: d('L2FwaS9zeXN0ZW0vc3RhdHVzZXM='), // /api/system/statuses
 };

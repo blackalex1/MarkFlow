@@ -6,6 +6,7 @@ import { initSettings } from './settings.js';
 import { initSystemSettings } from './system.js';
 import { initAdmin } from '../admin.js';
 import { initAuditTab } from './audit.js';
+import { initStatuses, renderStatusesTable } from './statuses.js';
 
 import { update2FAStatusUI, updateCredsStatusUI } from './settings.js';
 export { update2FAStatusUI, updateCredsStatusUI };
@@ -34,6 +35,7 @@ export function initDashboardListeners() {
             // Specialized Initializers
             if (tabName === 'logs') initAuditTab();
             if (tabName === 'users') initAdmin();
+            if (tabName === 'statuses') renderStatusesTable();
             if (tabName === 'system') initSystemSettings();
             if (tabName === 'git') loadRepositories();
         };
@@ -45,6 +47,7 @@ export function initDashboardListeners() {
     initSettings();
     initSystemSettings();
     initAdmin();
+    initStatuses();
 
     // Initial load check for active tab
     const activeTab = document.querySelector('.dashboard-tabs .tab-item.active');

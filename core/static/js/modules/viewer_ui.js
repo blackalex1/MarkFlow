@@ -2,6 +2,7 @@ import { ui, state } from './ui.js';
 import * as tree from './tree.js';
 import { loadFileContent } from './viewer.js';
 import { t } from './i18n.js';
+import { getStatusColor, getStatusName } from './status.js';
 
 function escapeHTML(str) {
     if (!str) return "";
@@ -28,8 +29,9 @@ export function renderFolderGrid(data) {
                     let statusDot = '';
                     if (isStaff && item.type === 'file') {
                         const status = item.status || 'published';
-                        let statusClass = status === 'published' ? 'public' : status;
-                        statusDot = `<span class="status-dot ${statusClass}"></span>`;
+                        const color = getStatusColor(status);
+                        const title = getStatusName(status);
+                        statusDot = `<span class="status-dot" style="background-color: ${color};" title="${title}"></span>`;
                     }
                     
                     const safePath = escapeHTML(item.path);

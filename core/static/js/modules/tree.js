@@ -3,6 +3,7 @@ import { toast } from './toasts.js';
 import { t } from './i18n.js';
 import { API } from './api.js';
 import { escapeHTML } from './security.js';
+import { getStatusColor, getStatusName } from './status.js';
 
 export async function loadFileTree() {
     // 1. Fetch File Tree (Available to guests)
@@ -86,10 +87,9 @@ function renderFileTree(tree) {
                 let statusDot = '';
                 if (isStaff) {
                     const status = node.status || 'published';
-                    // Status colors: Draft (Gray), In Progress (Blue), Published (Green)
-                    let statusClass = status === 'published' ? 'public' : status; 
-                    const statusTitle = t(`status_${status}`);
-                    statusDot = `<span class="status-dot ${statusClass}" title="${statusTitle}"></span>`;
+                    const color = getStatusColor(status);
+                    const statusTitle = getStatusName(status);
+                    statusDot = `<span class="status-dot" style="background-color: ${color};" title="${statusTitle}"></span>`;
                 }
 
                 const escapedName = escapeHTML(node.name.replace('.md', ''));

@@ -6,6 +6,7 @@ import { toast } from '../modules/toasts.js';
 import { getEditorValue, getEditor } from './instance.js';
 import { loadFileContent } from '../modules/viewer.js';
 import { t } from '../modules/i18n.js';
+import { updateStatusDisplay } from '../modules/status.js';
 
 const getContainer = () => {
     const editor = getEditor();
@@ -104,12 +105,7 @@ export const enterEditMode = async () => {
         
         if (ui.visibilityCheckbox) ui.visibilityCheckbox.checked = data.public;
         if (ui.statusDropdown) {
-            const statusText = document.getElementById('current-status-text');
-            const item = ui.statusDropdown.querySelector(`.dropdown-item[data-value="${data.status}"]`);
-            if (item && statusText) {
-                statusText.textContent = item.textContent;
-                statusText.setAttribute('data-t', item.getAttribute('data-t'));
-            }
+            updateStatusDisplay(data.status);
         }
 
     } catch (error) {

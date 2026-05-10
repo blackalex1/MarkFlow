@@ -5,7 +5,7 @@ import { ui } from '../modules/ui.js';
 import { createEditor } from './instance.js';
 import * as actions from './actions.js';
 
-export const init = () => {
+export const init = async () => {
     if (!ui.contentEditor) return;
 
     // We no longer initialize the editor here. 
@@ -22,9 +22,9 @@ export const init = () => {
     
     if (ui.statusDropdown) {
         const trigger = ui.statusDropdown.querySelector('.dropdown-trigger');
-        const menu = ui.statusDropdown.querySelector('.dropdown-menu');
-        const items = ui.statusDropdown.querySelectorAll('.dropdown-item');
-        const statusText = document.getElementById('current-status-text');
+        const menu = document.getElementById('status-dropdown-menu');
+        
+        const { renderStatusDropdown, updateStatusDisplay } = await import('../modules/status.js');
 
         trigger.onclick = (e) => {
             e.stopPropagation();
@@ -32,17 +32,11 @@ export const init = () => {
             menu.classList.toggle('hidden');
         };
 
-        items.forEach(item => {
-            item.onclick = () => {
-                const val = item.getAttribute('data-value');
-                statusText.textContent = item.textContent;
-                statusText.setAttribute('data-t', item.getAttribute('data-t'));
-                
-                actions.updateStatus(val);
-                
-                ui.statusDropdown.classList.remove('is-open');
-                menu.classList.add('hidden');
-            };
+        renderStatusDropdown(menu, (val, name) => {
+            updateStatusDisplay(val);
+            actions.updateStatus(val);
+            ui.statusDropdown.classList.remove('is-open');
+            menu.classList.add('hidden');
         });
 
         // Close when clicking outside
