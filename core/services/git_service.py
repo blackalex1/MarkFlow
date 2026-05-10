@@ -107,7 +107,11 @@ def _sync_repository_internal(active_repo: dict, username: str, force: bool = Fa
         if os.name != 'nt': os.chmod(tmp_path, 0o600)
         safe_tmp_path = tmp_path.replace("\\", "/")
         quoted_path = shlex.quote(safe_tmp_path)
-        ssh_cmd = f'ssh -i {quoted_path} -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile={shlex.quote(os.path.join(os.path.dirname(BASE_DIR), "config", "known_hosts"))}'
+        # Ensure config dir exists for known_hosts
+        config_dir = os.path.join(os.path.dirname(BASE_DIR), "config")
+        if not os.path.exists(config_dir): os.makedirs(config_dir)
+        
+        ssh_cmd = f'ssh -i {quoted_path} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile={shlex.quote(os.path.join(config_dir, "known_hosts"))}'
 
         try:
             with repo.git.custom_environment(GIT_SSH_COMMAND=ssh_cmd):
@@ -302,7 +306,11 @@ def get_remote_branches_list(repo_data: dict):
     if os.name != 'nt': os.chmod(tmp_path, 0o600)
     safe_ssh_path = tmp_path.replace("\\", "/")
     quoted_path = shlex.quote(safe_ssh_path)
-    ssh_cmd = f'ssh -i {quoted_path} -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile={shlex.quote(os.path.join(os.path.dirname(BASE_DIR), "config", "known_hosts"))}'
+    # Ensure config dir exists for known_hosts
+    config_dir = os.path.join(os.path.dirname(BASE_DIR), "config")
+    if not os.path.exists(config_dir): os.makedirs(config_dir)
+    
+    ssh_cmd = f'ssh -i {quoted_path} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile={shlex.quote(os.path.join(config_dir, "known_hosts"))}'
     
     try:
         import subprocess
