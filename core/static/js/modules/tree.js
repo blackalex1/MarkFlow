@@ -305,13 +305,14 @@ async function handleMenuCommand(cmd, node, contextPath = '') {
         if (confirmed) {
             const res = await fetch(`${API.FILE_DELETE}?path=${encodeURIComponent(node.path)}`, { method: 'DELETE' });
             if (res.ok) {
-                toast.success(`${node.type} deleted`);
+                const typeStr = node.type === 'folder' ? (t('type_folder') || 'folder') : (t('type_file') || 'file');
+                toast.success(`${typeStr} ${t('toast_delete_success') || 'deleted'}`);
                 loadFileTree();
                 if (node.path === state.currentFilePath) {
                     location.href = '/';
                 }
             } else {
-                toast.error("Failed to delete");
+                toast.error(t('toast_delete_failed') || "Failed to delete");
             }
         }
     } else if (cmd === 'rename' || cmd === 'move') {

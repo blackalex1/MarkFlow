@@ -241,6 +241,8 @@ export const ru = {
     toast_visibility_failed: "Ошибка обновления видимости",
     toast_status_updated: "Статус обновлен",
     toast_status_failed: "Ошибка обновления статуса",
+    toast_delete_success: "успешно удалено",
+    toast_delete_failed: "Ошибка при удалении",
     toast_draft_found: "Найден несохраненный черновик",
     btn_restore: "Восстановить",
     toast_draft_restored: "Черновик восстановлен",

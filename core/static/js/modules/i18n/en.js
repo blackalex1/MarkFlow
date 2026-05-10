@@ -230,6 +230,8 @@ export const en = {
     toast_visibility_failed: "Failed to update visibility",
     toast_status_updated: "Status updated",
     toast_status_failed: "Failed to update status",
+    toast_delete_success: "deleted successfully",
+    toast_delete_failed: "Failed to delete",
     toast_draft_found: "Unsaved draft found",
     btn_restore: "Restore",
     toast_draft_restored: "Draft restored",
