@@ -11,29 +11,27 @@ VENDOR_DIR = os.path.join(BASE_DIR, "static", "vendor")
 # We use SHA-384 hashes for consistency with SRI
 LIBRARIES = [
     ("https://unpkg.com/lucide@0.475.0/dist/umd/lucide.min.js", "js/lucide.min.js", "sha384-prOTt12iGU6/k2uoXJ3az4BWS2qoxykgxJb6pjfmRK7MYOMnMe7bWWBMPZqxwVks"),
-    ("https://unpkg.com/lucide@0.475.0/dist/umd/lucide.min.js.map", "js/lucide.min.js.map", None),
     ("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js", "js/highlight.min.js", "sha384-F/bZzf7p3Joyp5psL90p/p89AZJsndkSoGwRpXcZhleCWhd8SnRuoYo4d0yirjJp"),
-    ("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css", "css/github-dark.min.css", None),
-    ("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css", "css/github.min.css", None),
+    ("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css", "css/github-dark.min.css", "sha384-wH75j6z1lH97ZOpMOInqhgKzFkAInZPPSPlZpYKYTOqsaizPvhQZmAtLcPKXpLyH"),
+    ("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css", "css/github.min.css", "sha384-eFTL69TLRZTkNfYZOLM+G04821K1qZao/4QLJbet1pP4tcF+fdXq/9CdqAbWRl/L"),
     ("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/scala.min.js", "js/languages/scala.min.js", None),
     ("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/sql.min.js", "js/languages/sql.min.js", None),
     ("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js", "js/languages/java.min.js", None),
     ("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/r.min.js", "js/languages/r.min.js", None),
     ("https://cdn.jsdelivr.net/npm/marked/marked.min.js", "js/marked.min.js", "sha384-948ahk4ZmxYVYOc+rxN1H2gM1EJ2Duhp7uHtZ4WSLkV4Vtx5MUqnV+l7u9B+jFv+"),
     ("https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js", "js/purify.min.js", "sha384-rneZSW/1QE+3/U5/u+/7eRNi/tRc+SzS+yXy36fltr1tDN9EHaVo1Bwz2Z8o8DA4"),
-    ("https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js.map", "js/purify.min.js.map", None),
     ("https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js", "js/mermaid.min.js", "sha384-enVdc7lTHDGtpROV85t9+VqPC2EyyB0hsRD0MrvQnHUsHmTHIz2D8SPP4EnBkstH"),
 
-    ("https://unpkg.com/easymde/dist/easymde.min.js", "js/easymde.min.js", None),
-    ("https://unpkg.com/easymde/dist/easymde.min.css", "css/easymde.min.css", None),
-    ("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js", "js/katex.min.js", None),
-    ("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css", "css/katex.min.css", None),
+    ("https://unpkg.com/easymde@2.18.0/dist/easymde.min.js", "js/easymde.min.js", "sha384-KtB38COewxfrhJxoN2d+olxJAeT08LF8cVZ6DQ8Poqu89zIptqO6zAXoIxpGNWYE"),
+    ("https://unpkg.com/easymde@2.18.0/dist/easymde.min.css", "css/easymde.min.css", "sha384-uqD/OYCNfagd1EgXMgl5QedTD5K+B3e9b8GYo/41t7+Serf7CBxvl+tU1gHd+qd1"),
+    ("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js", "js/katex.min.js", "sha384-7zkQWkzuo3B5mTepMUcHkMB5jZaolc2xDwL6VFqjFALcbeS9Ggm/Yr2r3Dy4lfFg"),
+    ("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css", "css/katex.min.css", "sha384-nB0miv6/jRmo5UMMR1wu3Gz6NLsoTkbqJghGIsx//Rlm+ZU03BU6SQNC66uf4l5+"),
     ("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js", "js/auto-render.min.js", None),
     
     # KaTeX Fonts
-    ("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Main-Regular.woff2", "css/fonts/KaTeX_Main-Regular.woff2", None),
-    ("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Main-Bold.woff2", "css/fonts/KaTeX_Main-Bold.woff2", None),
-    ("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Math-Italic.woff2", "css/fonts/KaTeX_Math-Italic.woff2", None),
+    ("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Main-Regular.woff2", "css/fonts/KaTeX_Main-Regular.woff2", "sha384-K4rU/m6R4ygdFA2s4iphVuNOm4ksiQlo7BPut2DKbuGQFsmOTsh1vie2QdS8+qD/"),
+    ("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Main-Bold.woff2", "css/fonts/KaTeX_Main-Bold.woff2", "sha384-MnzwPa3V5+Sly78huHTxfNszB+vQQmvhX4O4+m3UZ7LzQoA9wxEhsgxQsvW1y8dV"),
+    ("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Math-Italic.woff2", "css/fonts/KaTeX_Math-Italic.woff2", "sha384-ahAgpD3waV7F+QiHuM0WaQnVF/FMS0RXhS0dsThbGBuwv3RPHoxvT/8UGwzyOATH"),
     ("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Size1-Regular.woff2", "css/fonts/KaTeX_Size1-Regular.woff2", None),
     ("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Size2-Regular.woff2", "css/fonts/KaTeX_Size2-Regular.woff2", None),
     ("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Size3-Regular.woff2", "css/fonts/KaTeX_Size3-Regular.woff2", None),
@@ -48,7 +46,7 @@ LIBRARIES = [
     ("https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/fonts/KaTeX_Caligraphic-Regular.ttf", "css/fonts/KaTeX_Caligraphic-Regular.ttf", None),
     
     # FontAwesome 4.7.0 (for EasyMDE)
-    ("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css", "css/font-awesome.min.css", None),
+    ("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css", "css/font-awesome.min.css", "sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN"),
     ("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/fonts/fontawesome-webfont.woff2", "fonts/fontawesome-webfont.woff2", None),
     ("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/fonts/fontawesome-webfont.woff", "fonts/fontawesome-webfont.woff", None),
     ("https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/fonts/fontawesome-webfont.ttf", "fonts/fontawesome-webfont.ttf", None),

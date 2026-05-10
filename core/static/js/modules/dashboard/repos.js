@@ -208,8 +208,14 @@ export function initRepos() {
             ui.btnRepoGenUniqueKey.classList.remove('hidden');
             if (ui.btnRepoManualKey) ui.btnRepoManualKey.classList.remove('hidden');
             
-            const safeBranch = escapeHTML(repo.branch);
-            ui.repoBranchSelect.innerHTML = `<option value="${safeBranch}" selected>${safeBranch}</option>`;
+            if (ui.repoBranchSelect) {
+                ui.repoBranchSelect.innerHTML = '';
+                const option = document.createElement('option');
+                option.value = repo.branch;
+                option.textContent = repo.branch;
+                option.selected = true;
+                ui.repoBranchSelect.appendChild(option);
+            }
             if (ui.repoAutoSyncInterval) {
                 const totalMinutes = repo.auto_sync_interval || 0;
                 if (totalMinutes >= 1440 && totalMinutes % 1440 === 0) {
@@ -291,10 +297,13 @@ export function initRepos() {
                 const res = await fetch(fetchUrl);
                 const data = await res.json();
                 if (res.ok && data.branches) {
-                    ui.repoBranchSelect.innerHTML = data.branches.map(b => {
-                        const safeBranch = escapeHTML(b);
-                        return `<option value="${safeBranch}">${safeBranch}</option>`;
-                    }).join('');
+                    ui.repoBranchSelect.innerHTML = '';
+                    data.branches.forEach(b => {
+                        const option = document.createElement('option');
+                        option.value = b;
+                        option.textContent = b;
+                        ui.repoBranchSelect.appendChild(option);
+                    });
                     toast.success('Branches loaded');
                 } else {
                     toast.error(data.detail || 'Failed to fetch branches');

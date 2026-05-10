@@ -184,6 +184,20 @@ def init_db():
             new_secret = secrets.token_urlsafe(32)
             cursor.execute('INSERT INTO settings (key, value) VALUES (?, ?)', (key_name, new_secret))
 
+    # Special handling for ENCRYPTION_SALT to ensure backward compatibility
+    cursor.execute('SELECT * FROM settings WHERE key = "ENCRYPTION_SALT"')
+    if not cursor.fetchone():
+        # Check if we already have an ENCRYPTION_SECRET (existing install)
+        cursor.execute('SELECT * FROM settings WHERE key = "ENCRYPTION_SECRET"')
+        if cursor.fetchone():
+            # Legacy install: use the old static salt to keep existing data decryptable
+            legacy_salt = "markflow_static_salt"
+            cursor.execute('INSERT INTO settings (key, value) VALUES ("ENCRYPTION_SALT", ?)', (legacy_salt,))
+        else:
+            # New install: generate a truly random salt
+            new_salt = secrets.token_urlsafe(16)
+            cursor.execute('INSERT INTO settings (key, value) VALUES ("ENCRYPTION_SALT", ?)', (new_salt,))
+
     # Migration: Initial settings from JSON to DB if empty
     cursor.execute("SELECT COUNT(*) FROM settings WHERE key = 'app_name'")
     if cursor.fetchone()[0] == 0:

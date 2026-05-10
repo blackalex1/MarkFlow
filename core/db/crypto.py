@@ -13,11 +13,13 @@ def get_cipher():
         return _fernet
     
     secret = get_setting('ENCRYPTION_SECRET')
-    if not secret:
-        raise RuntimeError("ENCRYPTION_SECRET not found in database. Encryption is not initialized.")
+    salt_str = get_setting('ENCRYPTION_SALT')
     
-    # Derive a key from the secret
-    salt = b'markflow_static_salt' # In a real app, salt should be unique and stored, but for our case we use the secret as the main entropy
+    if not secret or not salt_str:
+        raise RuntimeError("Encryption not fully initialized. ENCRYPTION_SECRET or ENCRYPTION_SALT missing in database.")
+    
+    # Derive a key from the secret and the dynamic salt
+    salt = salt_str.encode()
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),
         length=32,
@@ -35,11 +37,6 @@ def encrypt_value(value: str) -> str:
 
 def decrypt_value(value: str) -> str:
     if not value: return value
-    # If it's not encrypted (e.g. legacy data), return as is
-    # Fernet tokens start with 'gAAAAA'
-    if not value.startswith('gAAAA'):
-        return value
-    
     try:
         f = get_cipher()
         return f.decrypt(value.encode()).decode()

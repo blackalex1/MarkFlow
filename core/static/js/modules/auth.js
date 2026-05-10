@@ -25,7 +25,14 @@ export function initAuthListeners() {
             try {
                 const gitRes = await fetch(API.GIT_CONFIG), gitData = await gitRes.json();
                 ui.gitRemoteUrl.value = gitData.url || '';
-                ui.gitBranchSelect.innerHTML = `<option value="${gitData.branch || 'master'}">${gitData.branch || 'master'}</option>`;
+                if (ui.gitBranchSelect) {
+                    ui.gitBranchSelect.innerHTML = '';
+                    const option = document.createElement('option');
+                    const branch = gitData.branch || 'master';
+                    option.value = branch;
+                    option.textContent = branch;
+                    ui.gitBranchSelect.appendChild(option);
+                }
                 updateCredsStatusUI(gitData.is_valid);
                 const sshRes = await fetch(API.SSH_STATUS), sshData = await sshRes.json();
                 if (sshData.has_keys) { ui.sshPublicKey.placeholder = '********'; ui.sshPrivateKey.placeholder = '********'; }

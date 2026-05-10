@@ -54,7 +54,22 @@ class RepoInput(BaseModel):
     sync_strategy: Optional[str] = "rebase"
     flatten_in_tree: Optional[bool] = False
 
-@router.get("/repos")
+class RepoOutput(BaseModel):
+    id: int
+    name: str
+    slug: str
+    url: str
+    branch: str
+    ssh_public_key: Optional[str] = None
+    is_active: bool
+    auto_sync_interval: int
+    sync_strategy: str
+    last_sync_status: Optional[str] = None
+    last_sync_error: Optional[str] = None
+    last_sync_at: Optional[str] = None
+    flatten_in_tree: bool
+
+@router.get("/repos", response_model=list[RepoOutput])
 def api_list_repos(user=Depends(get_maintainer_user)):
     return list_repositories()
 
@@ -76,8 +91,8 @@ def api_add_repo(request: Request, data: RepoInput, user=Depends(get_maintainer_
             from core.db.crypto import decrypt_value
             try:
                 priv = decrypt_value(row[0])
-            except:
-                priv = row[0] # Fallback for legacy
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"Failed to decrypt temporary key: {str(e)}")
             cur.execute("DELETE FROM temp_ssh_keys WHERE id = ?", (data.key_id,))
             conn.commit()
         conn.close()
@@ -114,8 +129,8 @@ def api_update_repo(request: Request, repo_id: int, data: RepoInput, user=Depend
             from core.db.crypto import decrypt_value
             try:
                 priv = decrypt_value(row[0])
-            except:
-                priv = row[0] # Fallback for legacy
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"Failed to decrypt temporary key: {str(e)}")
             cur.execute("DELETE FROM temp_ssh_keys WHERE id = ?", (data.key_id,))
             conn.commit()
         conn.close()
@@ -206,8 +221,8 @@ def get_remote_branches(request: Request, url: str = None, key_id: str = None, u
             from core.db.crypto import decrypt_value
             try:
                 decrypted_key = decrypt_value(row[0])
-            except:
-                decrypted_key = row[0]
+            except Exception as e:
+                raise HTTPException(status_code=500, detail=f"Failed to decrypt temporary key: {str(e)}")
             repo_data = {"url": url, "ssh_private_key": decrypted_key, "ssh_public_key": None}
     
     if not repo_data and url:
