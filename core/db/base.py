@@ -1,5 +1,6 @@
 import sqlite3
 import os
+from contextlib import contextmanager
 from passlib.context import CryptContext
 
 # Project root is 3 levels up from core/db/base.py
@@ -11,3 +12,15 @@ def get_db():
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
     return conn
+
+@contextmanager
+def db_session():
+    conn = get_db()
+    try:
+        yield conn
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()

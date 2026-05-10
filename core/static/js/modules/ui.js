@@ -56,6 +56,7 @@ export const ui = {
     repoAutoSyncToggle: document.getElementById('repo-auto-sync-toggle'),
     repoIntervalContainer: document.getElementById('repo-interval-container'),
     repoSyncStrategy: document.getElementById('repo-sync-strategy'),
+    strategyInfoBox: document.getElementById('strategy-info-box'),
     strategyDescription: document.getElementById('strategy-description'),
     repoFlattenToggle: document.getElementById('repo-flatten-toggle'),
     btnSaveRepo: document.getElementById('btn-save-repo'),
@@ -69,6 +70,12 @@ export const ui = {
     sshKeyText: document.getElementById('ssh-key-text'),
     btnCopySSHKey: document.getElementById('btn-copy-ssh-key'),
     btnCloseViewKey: document.getElementById('close-view-key'),
+    
+    // Global SSH Modal
+    modalSSH: document.getElementById('modal-ssh-settings'),
+    btnOpenSSHModal: document.getElementById('btn-open-ssh-modal'),
+    sshPublicKey: document.getElementById('ssh-public-key'),
+    sshPrivateKey: document.getElementById('ssh-private-key'),
     btnGenerateSSHKey: document.getElementById('btn-generate-ssh-key'),
     btnSaveSSHKeys: document.getElementById('btn-save-ssh-keys'),
     btnCopySSHKey: document.getElementById('btn-copy-ssh-key'),

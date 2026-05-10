@@ -31,6 +31,7 @@ class SystemSettings(BaseModel):
     use_logo: bool
     logo_path: str
     favicon_path: str
+    max_request_size_mb: int = Field(default=10, ge=1, le=500)
     security_limits: SecurityLimits
 
     @validator('primary_color')
@@ -55,6 +56,7 @@ def update_system_settings(request: Request, data: SystemSettings, user=Depends(
         set_setting("use_logo", "true" if data.use_logo else "false")
         set_setting("logo_path", data.logo_path)
         set_setting("favicon_path", data.favicon_path)
+        set_setting("max_request_size_mb", str(data.max_request_size_mb))
         
         # Convert Pydantic model to dict, respecting aliases
         limits_dict = data.security_limits.dict(by_alias=True)
@@ -67,6 +69,7 @@ def update_system_settings(request: Request, data: SystemSettings, user=Depends(
             "use_logo": data.use_logo,
             "logo_path": data.logo_path,
             "favicon_path": data.favicon_path,
+            "max_request_size_mb": data.max_request_size_mb,
             "security_limits": limits_dict
         })
         

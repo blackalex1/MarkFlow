@@ -27,6 +27,7 @@
     <link rel="stylesheet" href="/static/vendor/css/katex.min.css">
     <script nonce="{{ csp_nonce }}" src="/static/vendor/js/katex.min.js" integrity="{{ config.get_sri('vendor/js/katex.min.js') }}" crossorigin="anonymous"></script>
     <script nonce="{{ csp_nonce }}" src="/static/vendor/js/auto-render.min.js" integrity="{{ config.get_sri('vendor/js/auto-render.min.js') }}" crossorigin="anonymous"></script>
+    <meta name="csrf-token" content="{{ request.cookies.get('csrf_token', '') }}">
     <meta name="app-version" content="{{ app_version }}">
     <link rel="stylesheet" href="/static/css/editor/markflow-editor.css?v={{ app_version }}">
     <link rel="stylesheet" href="/static/css/modules/color-picker.css?v={{ app_version }}">

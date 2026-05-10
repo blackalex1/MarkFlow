@@ -146,8 +146,9 @@ def get_ssh_status(user=Depends(get_maintainer_user)):
 
 @router.get("/pubkey")
 def get_pubkey(user=Depends(get_maintainer_user)):
-    repo = get_active_repository()
-    return {"pubkey": repo['ssh_public_key'] if repo else None}
+    from core.database import get_setting
+    pubkey = get_setting('git_ssh_public_key')
+    return {"pubkey": pubkey}
 
 @router.get("/repos/{repo_id}/pubkey")
 def get_repo_pubkey(repo_id: int, user=Depends(get_maintainer_user)):

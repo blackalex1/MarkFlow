@@ -7,9 +7,9 @@ import { API } from '../api.js';
 export function update2FAStatusUI() {
     if (!state.currentUser) return;
     const isEnabled = state.currentUser.two_factor_enabled;
-    ui.status2FA.innerText = isEnabled ? 'Включена' : 'Отключена';
+    ui.status2FA.innerText = i18n.t(isEnabled ? 'totp_status_on' : 'totp_status_off');
     ui.status2FA.className = `tag ${isEnabled ? 'tag-on' : 'tag-off'}`;
-    ui.btnToggle2FA.innerText = isEnabled ? 'Отключить' : 'Настроить';
+    ui.btnToggle2FA.innerText = i18n.t(isEnabled ? 'totp_btn_disable' : 'totp_btn_setup');
     ui.desc2FA.innerText = isEnabled ? 'Ваш аккаунт защищен вторым фактором' : 'Дополнительная защита вашего аккаунта';
 }
 
@@ -23,19 +23,17 @@ export function updateCredsStatusUI(isValid) {
 }
 
 export function initSettings() {
-    if (ui.btnOpenSSHModal) {
-        ui.btnOpenSSHModal.onclick = () => {
-            ui.modalSSH.classList.remove('hidden');
-            fetch(API.GIT_PUBKEY).then(r => r.json()).then(data => { 
-                ui.sshPublicKey.value = data.pubkey || ''; 
-                const privCont = document.getElementById('privkey-input-container');
-                if (privCont) privCont.classList.add('hidden');
-                const btnSave = document.getElementById('btn-save-ssh-keys');
-                if (btnSave) btnSave.classList.add('hidden');
-            });
+    // Load Global PubKey immediately
+    fetch(API.GIT_PUBKEY).then(r => r.json()).then(data => { 
+        if (ui.sshPublicKey) ui.sshPublicKey.value = data.pubkey || ''; 
+    });
+
+    if (ui.btnCopySSHKey) {
+        ui.btnCopySSHKey.onclick = () => {
+            ui.sshPublicKey.select();
+            document.execCommand('copy');
+            toast.success('Public key copied to clipboard');
         };
-        const closeSSH = document.getElementById('close-ssh-settings');
-        if (closeSSH) closeSSH.onclick = () => ui.modalSSH.classList.add('hidden');
     }
 
     const btnShowPriv = document.getElementById('btn-show-privkey-input');
@@ -51,8 +49,15 @@ export function initSettings() {
     }
 
     if (ui.btnGenerateSSHKey) {
-        ui.btnGenerateSSHKey.onclick = () => {
-            toast.show(i18n.t('confirm_gen_ssh'), 'warning', 0, { label: i18n.t('btn_confirm_gen'), callback: async () => {
+        ui.btnGenerateSSHKey.onclick = async () => {
+            const confirmed = await window.confirmAction(
+                i18n.t('git_regen_global_title'),
+                i18n.t('git_regen_global_warn'),
+                i18n.t('git_regen_global_btn'),
+                i18n.t('btn_cancel')
+            );
+            
+            if (confirmed) {
                 const res = await fetch(API.GIT_GENERATE_KEY, { method: 'POST' });
                 const data = await res.json();
                 if (res.ok) { 
@@ -60,7 +65,7 @@ export function initSettings() {
                     updateCredsStatusUI(true); 
                     toast.success('Generated & Saved on server!'); 
                 }
-            }});
+            }
         };
     }
 
@@ -94,10 +99,20 @@ export function initSettings() {
                 );
                 if (!password) return;
 
+                const totp_code = await window.promptAction(
+                    i18n.t('sec_2fa_disable_title'),
+                    i18n.t('sec_2fa_disable_code_prompt'),
+                    i18n.t('sec_2fa_disable_code_placeholder'),
+                    i18n.t('sec_2fa_disable_confirm'),
+                    i18n.t('btn_cancel'),
+                    false
+                );
+                if (!totp_code) return;
+
                 const res = await fetch('/api/auth/2fa/disable', { 
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ password })
+                    body: JSON.stringify({ password, totp_code })
                 });
                 if (res.ok) { 
                     state.currentUser.two_factor_enabled = false; 

@@ -5,6 +5,7 @@
     "use_logo": false,
     "logo_path": "/config/logo.png",
     "favicon_path": "/config/favicon.ico",
+    "max_request_size_mb": 10,
     "security_limits": {
         "login": "5/minute",
         "2fa_verify": "5/minute",

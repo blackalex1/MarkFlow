@@ -68,12 +68,16 @@ async def lifespan(app: FastAPI):
     observer.schedule(DocsHandler(), DOCS_DIR, recursive=True)
     observer.start()
 
-    # Start Git Background Worker
+    # Start Background Workers
     from core.services.git_service import start_background_sync_worker
-    bg_task = asyncio.create_task(start_background_sync_worker())
+    from core.services.session_service import cleanup_expired_sessions
+    
+    bg_sync_task = asyncio.create_task(start_background_sync_worker())
+    bg_session_task = asyncio.create_task(cleanup_expired_sessions())
 
     yield
-    bg_task.cancel()
+    bg_sync_task.cancel()
+    bg_session_task.cancel()
     observer.stop()
     observer.join()
 

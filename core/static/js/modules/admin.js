@@ -3,34 +3,12 @@ import { t, getLang } from './i18n.js';
 import { escapeHTML } from './security.js';
 
 export function initAdmin() {
-    const tabItems = document.querySelectorAll('.tab-item');
-    const tabContents = document.querySelectorAll('.tab-content');
-
-    // Tab Switching (CSP Friendly)
-    tabItems.forEach(tab => {
-        tab.onclick = () => {
-            const target = tab.dataset.tab;
-            
-            tabItems.forEach(t => t.classList.remove('active'));
-            tabContents.forEach(c => c.classList.add('hidden'));
-            
-            tab.classList.add('active');
-            const contentEl = document.getElementById(`tab-${target}`);
-            if (contentEl) {
-                contentEl.classList.remove('hidden');
-            }
-            
-            if (target === 'users') loadUsers();
-            if (target === 'logs') loadLogs();
-        };
-    });
-
     // Owner logic
     if (state.currentUser && state.currentUser.role === 'owner') {
         ui.ownerOnlyItems.forEach(item => item.classList.remove('hidden'));
     }
 
-    if (ui.btnAdminCreateUser) {
+    if (ui.btnAdminCreateUser && !ui.btnAdminCreateUser.hasListener) {
         ui.btnAdminCreateUser.onclick = async () => {
             const u = ui.adminNewUsername.value.trim();
             const p = ui.adminNewPassword.value.trim();
@@ -53,18 +31,20 @@ export function initAdmin() {
                 }
             } catch (err) { console.error(err); }
         };
+        ui.btnAdminCreateUser.hasListener = true;
     }
+    
+    loadUsers();
 }
 
 export async function loadUsers() {
-    const listBody = document.getElementById('users-list-body');
-    if (!listBody) return;
+    const container = document.getElementById('users-table-container');
+    if (!container) return;
     try {
         const res = await fetch('/api/auth/users');
         const users = await res.json();
-        const currentLang = getLang();
         
-        listBody.innerHTML = users.map(u => {
+        const rows = users.map(u => {
             const safeUsername = escapeHTML(u.username);
             return `
             <tr>
@@ -83,6 +63,23 @@ export async function loadUsers() {
                 </td>
             </tr>
         `;}).join('');
+
+        container.innerHTML = `
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th data-t="users_th_user">${t('users_th_user') || 'User'}</th>
+                        <th data-t="users_th_role">${t('users_th_role') || 'Role'}</th>
+                        <th data-t="users_th_actions">${t('users_th_actions') || 'Actions'}</th>
+                    </tr>
+                </thead>
+                <tbody id="users-list-body">
+                    ${rows}
+                </tbody>
+            </table>
+        `;
+
+        const listBody = container.querySelector('#users-list-body');
 
         // Listeners for role change
         listBody.querySelectorAll('.role-select').forEach(sel => {
@@ -106,32 +103,5 @@ export async function loadUsers() {
                 if (res.ok) loadUsers();
             };
         });
-    } catch (err) { console.error(err); }
-}
-
-export async function loadLogs() {
-    const listBody = document.getElementById('logs-list-body');
-    if (!listBody) return;
-    try {
-        const res = await fetch('/api/auth/audit-logs');
-        const logs = await res.json();
-        const locale = getLang() === 'ru' ? 'ru-RU' : 'en-US';
-        
-        listBody.innerHTML = logs.map(l => {
-            const date = new Date(l.timestamp + 'Z').toLocaleString(locale);
-            const safeUser = escapeHTML(l.username);
-            const safeAction = escapeHTML(l.action);
-            const safeIP = escapeHTML(l.ip_address || '-');
-            const safeDetails = escapeHTML(l.details || '-');
-            return `
-                <tr>
-                    <td style="font-size: 11px; white-space: nowrap;">${date}</td>
-                    <td style="font-weight: 600;">${safeUser}</td>
-                    <td><span class="tag tag-sm">${safeAction}</span></td>
-                    <td style="font-family: monospace; font-size: 11px;">${safeIP}</td>
-                    <td style="font-size: 12px; color: var(--text-muted);">${safeDetails}</td>
-                </tr>
-            `;
-        }).join('');
     } catch (err) { console.error(err); }
 }

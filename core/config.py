@@ -17,8 +17,10 @@ def load_settings():
     defaults = {
         "app_name": "MarkFlow",
         "use_logo": False,
-        "favicon_path": "",
+        "logo_path": "/config/logo.png",
+        "favicon_path": "/config/favicon.ico",
         "primary_color": "#6366f1",
+        "max_request_size_mb": 10,
         "security_limits": {
             "login": "5/minute",
             "2fa_verify": "5/minute",
@@ -79,10 +81,6 @@ def load_settings():
             return "99, 102, 241" # Fallback to indigo
 
     res["primary_rgb"] = hex_to_rgb(res.get("primary_color", "#6366f1"))
-    if not res.get("favicon_path"):
-        res["favicon_path"] = "/config/favicon.ico"
-    if not res.get("logo_path"):
-        res["logo_path"] = "/config/logo.png"
 
     # Deep merge for nested dicts if needed
     if "security_limits" in db_settings:

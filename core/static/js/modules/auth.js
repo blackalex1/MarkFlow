@@ -15,8 +15,8 @@ export async function checkAuth() {
 export function initAuthListeners() {
     if (state.currentUser && ui.btnUserDashboard) {
         ui.btnUserDashboard.onclick = async () => {
-            const rolesRu = { "guest": "Гость", "reporter": "Репортер", "developer": "Разработчик", "maintainer": "Мейнтейнер", "owner": "Владелец" };
-            ui.dashboardUsername.innerText = `${state.currentUser.username} (${rolesRu[state.currentUser.role] || state.currentUser.role})`;
+            const roleKey = `role_${state.currentUser.role}`;
+            ui.dashboardUsername.innerText = `${state.currentUser.username} (${i18n.t(roleKey)})`;
             ui.dashboardModal.classList.remove('hidden');
             update2FAStatusUI();
             initAdmin();

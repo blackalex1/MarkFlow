@@ -20,7 +20,10 @@ window.fetch = async (...args) => {
         if (!config.headers) config.headers = {};
         const method = (config.method || 'GET').toUpperCase();
         if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
-            const token = getCookie('csrf_token');
+            // Get CSRF token from meta tag because cookie is now HttpOnly
+            const tokenMeta = document.querySelector('meta[name="csrf-token"]');
+            const token = tokenMeta ? tokenMeta.content : '';
+            
             if (token) {
                 // If config.headers is Headers object
                 if (config.headers instanceof Headers) {
@@ -55,7 +58,7 @@ if (window.trustedTypes && window.trustedTypes.createPolicy) {
             window.trustedTypes.createPolicy('default', {
                 createHTML: (string) => DOMPurify.sanitize(string, { 
                     RETURN_TRUSTED_TYPE: true,
-                    ADD_TAGS: ['use', 'foreignObject'], // Required for Mermaid
+                    ADD_TAGS: ['use', 'foreignObject', 'table', 'thead', 'tbody', 'tr', 'td', 'th'], // Required for Mermaid and dynamic tables
                     ADD_ATTR: ['xlink:href', 'transform', 'viewBox'],
                     USE_PROFILES: { html: true, svg: true, svgFilters: true }
                 }),

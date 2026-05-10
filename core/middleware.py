@@ -8,11 +8,16 @@ async def add_security_headers(request: Request, call_next):
     nonce = secrets.token_urlsafe(16)
     request.state.csp_nonce = nonce
 
-    # DoS Protection: Limit maximum request size (e.g., 10MB)
-    MAX_SIZE = 10 * 1024 * 1024 # 10MB
+    from core.config import SETTINGS
+    # DoS Protection: Limit maximum request size
+    max_mb = SETTINGS.get("max_request_size_mb", 10)
+    MAX_SIZE = max_mb * 1024 * 1024
     content_length = request.headers.get("content-length")
     if content_length and int(content_length) > MAX_SIZE:
-        return JSONResponse(status_code=413, content={"detail": "Request Entity Too Large: Max 10MB allowed"})
+        return JSONResponse(
+            status_code=413, 
+            content={"detail": f"Request Entity Too Large: Max {max_mb}MB allowed. You can increase this in System Settings."}
+        )
 
     # CSRF Protection for state-changing methods
     if request.method in ["POST", "PUT", "DELETE", "PATCH"]:
@@ -45,7 +50,7 @@ async def add_security_headers(request: Request, call_next):
     
     # Ensure CSRF token exists
     if not request.cookies.get("csrf_token"):
-        response.set_cookie(key="csrf_token", value=secrets.token_urlsafe(32), httponly=False, samesite="lax")
+        response.set_cookie(key="csrf_token", value=secrets.token_urlsafe(32), httponly=True, samesite="lax")
     
     # Modern Security Headers
     response.headers["X-Content-Type-Options"] = "nosniff"

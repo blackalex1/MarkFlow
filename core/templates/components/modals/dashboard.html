@@ -67,20 +67,10 @@
                     <button id="btn-admin-create-user" class="btn btn-primary" data-t="pages_btn_create">Create</button>
                 </div>
             </div>
-            <div style="margin-top: 20px;">
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th data-t="users_th_user">User</th>
-                            <th data-t="users_th_role">Role</th>
-                            <th data-t="users_th_actions">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="users-list-body"></tbody>
-                </table>
+            <div id="users-table-container" style="margin-top: 20px;">
+                <!-- Populated by admin.js (entire table structure) -->
             </div>
         </div>
-
         <div id="tab-git" class="tab-content hidden">
             <!-- Repositories List Table -->
             <div class="settings-plate" id="git-repos-list-container">
@@ -88,22 +78,11 @@
                     <i data-lucide="database"></i>
                     <span data-t="git_repos_list">Git Repositories</span>
                 </div>
-                <div class="plate-body" style="padding: 0;">
-                    <table class="data-table" id="git-repos-table" style="width: 100%;">
-                        <thead>
-                            <tr>
-                                <th style="text-align: left; padding: 10px;" data-t="repo_th_name">Name</th>
-                                <th style="text-align: left; padding: 10px;" data-t="repo_th_status">Status / Last Sync</th>
-                                <th style="text-align: right; padding: 10px;" data-t="repo_th_actions">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="git-repos-tbody">
-                            <!-- Populated by JS -->
-                        </tbody>
-                    </table>
-                    <div style="padding: 15px; border-top: 1px solid var(--border-color);">
-                        <button id="btn-add-repo" class="btn btn-sm btn-outline" style="width: 100%;" data-t="btn_add_repo">+ Add New Repository</button>
-                    </div>
+                <div class="plate-body" style="padding: 0;" id="git-repos-table-container">
+                    <!-- Populated by repos.js (entire table structure) -->
+                </div>
+                <div style="padding: 15px; border-top: 1px solid var(--border-color);">
+                    <button id="btn-add-repo" class="btn btn-sm btn-outline" style="width: 100%;" data-t="btn_add_repo">+ Add New Repository</button>
                 </div>
             </div>
 
@@ -159,14 +138,14 @@
                         <div class="input-group-vertical">
                             <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 8px;">
                                 <label data-t="repo_strategy_label" style="margin: 0;">Strategy</label>
-                                <i data-lucide="help-circle" style="width: 14px; height: 14px; color: var(--text-muted); cursor: help;" id="strategy-help-icon"></i>
                             </div>
                             <select id="repo-sync-strategy" style="width: 100%;">
                                 <option value="rebase" data-t="strategy_rebase">Rebase</option>
                                 <option value="force" data-t="strategy_force">Force</option>
                                 <option value="pr" data-t="strategy_pr">PR Style</option>
                             </select>
-                            <div id="strategy-info-box" style="margin-top: 8px; font-size: 11px; color: var(--text-muted); line-height: 1.4; padding: 8px; background: rgba(255,255,255,0.03); border-radius: 6px; border: 1px solid var(--border-color);">
+                            <div id="strategy-info-box" style="margin-top: 10px; font-size: 11px; color: var(--text-muted); line-height: 1.5; padding: 10px; background: rgba(99, 102, 241, 0.05); border-radius: 8px; border: 1px solid rgba(99, 102, 241, 0.1); display: flex; gap: 8px; align-items: flex-start;">
+                                <i data-lucide="info" style="width: 14px; height: 14px; flex-shrink: 0; color: var(--primary-color); margin-top: 2px;"></i>
                                 <span id="strategy-description"></span>
                             </div>
                         </div>
@@ -262,22 +241,25 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Global SSH Key Maintenance -->
+            <div class="settings-plate" style="margin-top: 20px; border-color: rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.02);">
+                <div class="plate-header">
+                    <i data-lucide="alert-triangle" style="color: #ef4444;"></i>
+                    <span data-t="git_regen_global_title" style="color: #ef4444;">Regenerate Global SSH Key</span>
+                </div>
+                <div class="plate-body">
+                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;" data-t="git_regen_global_warn">
+                        WARNING: All repositories using the global key will lose access until you update the new public key in your Git provider.
+                    </p>
+                    <button id="btn-generate-ssh-key" class="btn btn-sm" style="width: 100%; border: 1px solid rgba(239, 68, 68, 0.3); color: #ef4444;" data-t="git_regen_global_btn">Regenerate Now</button>
+                </div>
+            </div>
         </div>
 
         <div id="tab-logs" class="tab-content hidden">
-            <div id="logs-table-container" style="max-height: 400px; overflow-y: auto;">
-                <table class="admin-table">
-                    <thead>
-                        <tr>
-                            <th data-t="logs_th_time">Time</th>
-                            <th data-t="logs_th_user">User</th>
-                            <th data-t="logs_th_action">Action</th>
-                            <th data-t="logs_th_ip">IP</th>
-                            <th data-t="logs_th_details">Details</th>
-                        </tr>
-                    </thead>
-                    <tbody id="logs-list-body"></tbody>
-                </table>
+            <div id="audit-logs-container" style="max-height: 500px; overflow-y: auto;">
+                <!-- Populated by audit.js (entire table structure) -->
             </div>
         </div>
         {% if user_role == 'owner' %}
@@ -424,9 +406,20 @@
                             </div>
                             {% endfor %}
                         </div>
-                        <p class="hint-text" data-t="sys_limit_hint" style="margin-top: 15px;">
-                            Select the maximum number of requests allowed per period.
-                        </p>
+                        <div class="input-group-vertical" style="margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <label style="margin: 0; font-weight: 600;" data-t="sys_max_request_size">Max Request Size (MB)</label>
+                                <span class="badge badge-outline" style="font-size: 11px; padding: 2px 8px; border-radius: 10px; opacity: 0.8;" id="max-size-badge">{{ config.max_request_size_mb }} MB</span>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 15px;">
+                                <input type="range" id="sys-max-request-size-range" min="1" max="500" value="{{ config.max_request_size_mb }}" style="flex: 1; accent-color: var(--primary-color);">
+                                <input type="number" id="sys-max-request-size" value="{{ config.max_request_size_mb }}" min="1" max="500" style="width: 70px; text-align: center;">
+                            </div>
+                            <p class="hint-text" style="margin-top: 10px; font-size: 11px; opacity: 0.7;" data-t="sys_max_size_hint">
+                                Prevents Denial of Service (DoS) by rejecting oversized payloads. Default is 10MB. 
+                                <br>Note: This does NOT limit background Git sync operations.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>

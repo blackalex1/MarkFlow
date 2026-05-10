@@ -91,7 +91,8 @@ const manager = new ToastManager();
  */
 export const toast = (message, type, duration, action) => manager.show(message, type, duration, action);
 
-// Attach sugar methods to the function for toast.success() style calls
+// Attach sugar methods to the function for toast.show(), toast.success() style calls
+toast.show = (msg, type, dur, act) => manager.show(msg, type, dur, act);
 toast.success = (msg, dur) => manager.success(msg, dur);
 toast.error = (msg, dur) => manager.error(msg, dur);
 toast.warn = (msg, dur) => manager.warn(msg, dur);

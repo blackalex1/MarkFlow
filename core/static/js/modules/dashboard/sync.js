@@ -1,7 +1,7 @@
 import { ui, state } from '../ui.js';
 import { toast } from '../toasts.js';
 import * as i18n from '../i18n.js';
-import { loadRepositories } from './repos.js';
+import { loadRepositories } from './repos/index.js';
 import { API } from '../api.js';
 
 export function setSyncStatus(success, message = '') {

@@ -213,6 +213,27 @@ def init_db():
                 print(" Initial settings migrated to database.")
         except Exception as e:
             print(f" Warning: Could not migrate initial settings: {e}")
+
+    conn.commit() # Commit secrets before using encryption for keys
+
+    # Auto-generate global SSH key if missing
+    cursor.execute("SELECT value FROM settings WHERE key = 'git_ssh_private_key'")
+    if not cursor.fetchone():
+        try:
+            from core.services.ssh_service import generate_key_pair
+            from core.db.crypto import encrypt_value
+            priv, pub = generate_key_pair()
+            
+            cursor.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('git_ssh_private_key', ?)", (encrypt_value(priv),))
+            cursor.execute("INSERT OR REPLACE INTO settings (key, value) VALUES ('git_ssh_public_key', ?)", (pub,))
+            
+            # Also update Default Repo if it's missing keys
+            cursor.execute("UPDATE git_repositories SET ssh_private_key = ?, ssh_public_key = ? WHERE slug = 'main' AND ssh_private_key IS NULL", (encrypt_value(priv), pub))
+            
+            print(" Global SSH key pair generated and saved.")
+        except Exception as e:
+            print(f" Warning: Could not auto-generate initial SSH key: {e}")
+
     # Create FTS5 virtual table for documentation search
     try:
         cursor.execute('CREATE VIRTUAL TABLE IF NOT EXISTS fts_docs USING fts5(path, name, content)')

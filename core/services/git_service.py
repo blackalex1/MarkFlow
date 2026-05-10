@@ -4,7 +4,7 @@ import shlex
 from datetime import datetime
 from git import Repo, InvalidGitRepositoryError, GitCommandError
 from core.database import get_setting, set_setting, add_audit_log, reindex_all_docs, get_active_repository, get_db
-from core.config import DOCS_DIR
+from core.config import DOCS_DIR, BASE_DIR
 
 def get_repo(path=DOCS_DIR):
     if not os.path.exists(path):
@@ -92,6 +92,9 @@ def _sync_repository_internal(active_repo: dict, username: str, force: bool = Fa
         if not priv_key:
             from core.database import get_setting
             priv_key = get_setting('git_ssh_private_key')
+            if priv_key:
+                from core.db.crypto import decrypt_value
+                priv_key = decrypt_value(priv_key)
         
         if not priv_key:
             raise Exception("Neither repository-specific nor global SSH private key found.")
@@ -104,7 +107,7 @@ def _sync_repository_internal(active_repo: dict, username: str, force: bool = Fa
         if os.name != 'nt': os.chmod(tmp_path, 0o600)
         safe_tmp_path = tmp_path.replace("\\", "/")
         quoted_path = shlex.quote(safe_tmp_path)
-        ssh_cmd = f'ssh -i {quoted_path} -o StrictHostKeyChecking=yes -o UserKnownHostsFile={shlex.quote(os.path.join(os.path.dirname(BASE_DIR), "config", "known_hosts"))}'
+        ssh_cmd = f'ssh -i {quoted_path} -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile={shlex.quote(os.path.join(os.path.dirname(BASE_DIR), "config", "known_hosts"))}'
 
         try:
             with repo.git.custom_environment(GIT_SSH_COMMAND=ssh_cmd):
@@ -299,7 +302,7 @@ def get_remote_branches_list(repo_data: dict):
     if os.name != 'nt': os.chmod(tmp_path, 0o600)
     safe_ssh_path = tmp_path.replace("\\", "/")
     quoted_path = shlex.quote(safe_ssh_path)
-    ssh_cmd = f'ssh -i {quoted_path} -o StrictHostKeyChecking=yes -o UserKnownHostsFile={shlex.quote(os.path.join(os.path.dirname(BASE_DIR), "config", "known_hosts"))}'
+    ssh_cmd = f'ssh -i {quoted_path} -o StrictHostKeyChecking=accept-new -o UserKnownHostsFile={shlex.quote(os.path.join(os.path.dirname(BASE_DIR), "config", "known_hosts"))}'
     
     try:
         import subprocess

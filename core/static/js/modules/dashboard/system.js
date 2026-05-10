@@ -28,6 +28,24 @@ export function initSystemSettings() {
         btnFaviconTrigger.onclick = () => faviconUpload.click();
     }
 
+    // Max Request Size Sync
+    const maxRequestSizeInput = document.getElementById('sys-max-request-size');
+    const maxRequestSizeRange = document.getElementById('sys-max-request-size-range');
+    const maxSizeBadge = document.getElementById('max-size-badge');
+
+    if (maxRequestSizeInput && maxRequestSizeRange) {
+        maxRequestSizeInput.oninput = (e) => {
+            const val = e.target.value;
+            maxRequestSizeRange.value = val;
+            if (maxSizeBadge) maxSizeBadge.innerText = `${val} MB`;
+        };
+        maxRequestSizeRange.oninput = (e) => {
+            const val = e.target.value;
+            maxRequestSizeInput.value = val;
+            if (maxSizeBadge) maxSizeBadge.innerText = `${val} MB`;
+        };
+    }
+
     // Logo Fallback Handler (CSP Friendly)
     const mainLogo = document.getElementById('app-logo-main');
     if (mainLogo) {
@@ -216,6 +234,7 @@ export function initSystemSettings() {
                     use_logo, 
                     logo_path,
                     favicon_path,
+                    max_request_size_mb: parseInt(document.getElementById('sys-max-request-size').value || 10),
                     security_limits
                 })
             });

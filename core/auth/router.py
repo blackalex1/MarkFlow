@@ -53,6 +53,10 @@ def login(request: Request, login_data: LoginRequest, response: Response):
             add_audit_log(login_data.username, "2fa_failed", "", ip_address=request.client.host)
             raise HTTPException(status_code=401, detail="Invalid 2FA code")
             
+    # Clean old sessions before creating a new one to prevent accumulation
+    from core.services.session_service import clean_old_user_sessions
+    clean_old_user_sessions(user["username"], keep_latest=5)
+    
     create_session_cookie(response, user["username"])
     add_audit_log(user["username"], "login_success", "", ip_address=request.client.host)
     return {"message": "Logged in successfully", "username": user["username"]}
