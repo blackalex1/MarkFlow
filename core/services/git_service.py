@@ -101,11 +101,17 @@ def _sync_repository_internal(active_repo: dict, username: str, force: bool = Fa
 
         # Strict sanitization: find PEM boundaries and keep only what's inside
         priv_key = priv_key.strip()
-        match = re.search(r'(-----BEGIN.*?-----.*?-----END.*?-----)', priv_key, re.DOTALL)
+        match = re.search(r'(-----BEGIN(?P<label>.*?)-----)(?P<body>.*?)(-----END.*?-----)', priv_key, re.DOTALL)
         if match:
-            priv_key = match.group(1)
-        
-        priv_key = priv_key.replace('\r\n', '\n') + '\n'
+            label = match.group('label')
+            body = match.group('body').strip()
+            # Remove any existing whitespace/newlines from body to re-format it
+            clean_body = "".join(body.split())
+            # Re-wrap body to 64 chars (standard)
+            wrapped_body = "\n".join([clean_body[i:i+64] for i in range(0, len(clean_body), 64)])
+            priv_key = f"-----BEGIN{label}-----\n{wrapped_body}\n-----END{label}-----\n"
+        else:
+            priv_key = priv_key.replace('\r\n', '\n') + '\n'
         
         import tempfile
         # Use mode 'wb' and write encoded bytes directly
@@ -309,11 +315,17 @@ def get_remote_branches_list(repo_data: dict):
     
     # Strict sanitization: find PEM boundaries and keep only what's inside
     priv_key = priv_key.strip()
-    match = re.search(r'(-----BEGIN.*?-----.*?-----END.*?-----)', priv_key, re.DOTALL)
+    match = re.search(r'(-----BEGIN(?P<label>.*?)-----)(?P<body>.*?)(-----END.*?-----)', priv_key, re.DOTALL)
     if match:
-        priv_key = match.group(1)
-        
-    priv_key = priv_key.replace('\r\n', '\n') + '\n'
+        label = match.group('label')
+        body = match.group('body').strip()
+        # Remove any existing whitespace/newlines from body to re-format it
+        clean_body = "".join(body.split())
+        # Re-wrap body to 64 chars (standard)
+        wrapped_body = "\n".join([clean_body[i:i+64] for i in range(0, len(clean_body), 64)])
+        priv_key = f"-----BEGIN{label}-----\n{wrapped_body}\n-----END{label}-----\n"
+    else:
+        priv_key = priv_key.replace('\r\n', '\n') + '\n'
     
     import tempfile
     # Use mode 'wb' and write encoded bytes directly
