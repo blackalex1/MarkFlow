@@ -84,10 +84,19 @@ def verify_2fa(request: Request, data: TOTPVerifyRequest, user=Depends(get_curre
         return {"message": "2FA successfully enabled"}
     raise HTTPException(status_code=400, detail="Invalid 2FA code")
 
+class PasswordVerifyRequest(BaseModel):
+    password: str
+
 @router.post("/2fa/disable")
-def disable_2fa(request: Request, user=Depends(get_current_user)):
+def disable_2fa(request: Request, data: PasswordVerifyRequest, user=Depends(get_current_user)):
     if not user:
         raise HTTPException(status_code=401, detail="Not logged in")
+    
+    db_user = get_user_by_username(user["username"])
+    if not db_user or not verify_password(data.password, db_user["password_hash"]):
+        add_audit_log(user["username"], "2fa_disable_failed", "Invalid password", ip_address=request.client.host)
+        raise HTTPException(status_code=400, detail="Invalid password")
+
     set_user_totp_secret(user["username"], None)
     add_audit_log(user["username"], "2fa_disabled", ip_address=request.client.host)
     return {"message": "2FA successfully disabled"}
@@ -153,6 +162,16 @@ def api_list_users(user=Depends(get_owner_user)):
 @router.post("/users")
 @limiter.limit(SECURITY_LIMITS["create_user"])
 def api_create_user(request: Request, data: UserCreate, user=Depends(get_owner_user)):
+    # Validate password complexity
+    err = validate_password_complexity(data.password)
+    if err:
+        raise HTTPException(status_code=400, detail=err)
+        
+    # Validate role
+    allowed_roles = ['guest', 'reporter', 'developer', 'maintainer', 'owner']
+    if data.role not in allowed_roles:
+        raise HTTPException(status_code=400, detail=f"Invalid role. Allowed: {', '.join(allowed_roles)}")
+
     try:
         create_user(data.username, data.password, data.role)
         add_audit_log(user["username"], "user_created", f"User: {data.username}, Role: {data.role}", ip_address=request.client.host)

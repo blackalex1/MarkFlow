@@ -84,10 +84,29 @@ export function initSettings() {
     if (ui.btnToggle2FA) {
         ui.btnToggle2FA.onclick = async () => {
             if (state.currentUser.two_factor_enabled) {
-                toast.show('Disable 2FA?', 'warning', 0, { label: 'Disable', callback: async () => {
-                    const res = await fetch('/api/auth/2fa/disable', { method: 'POST' });
-                    if (res.ok) { state.currentUser.two_factor_enabled = false; update2FAStatusUI(); }
-                }});
+                const password = await window.promptAction(
+                    i18n.t('sec_2fa_disable_title'), 
+                    i18n.t('sec_2fa_disable_prompt'), 
+                    '', 
+                    i18n.t('sec_2fa_disable_confirm'), 
+                    i18n.t('btn_cancel'), 
+                    true
+                );
+                if (!password) return;
+
+                const res = await fetch('/api/auth/2fa/disable', { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+                if (res.ok) { 
+                    state.currentUser.two_factor_enabled = false; 
+                    update2FAStatusUI(); 
+                    toast.success(i18n.t('toast_2fa_disabled'));
+                } else {
+                    const err = await res.json();
+                    toast.error(err.detail || i18n.t('toast_2fa_disable_failed'));
+                }
             } else {
                 ui.dashboardModal.classList.add('hidden');
                 ui.totpSetupModal.classList.remove('hidden');

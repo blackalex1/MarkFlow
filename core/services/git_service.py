@@ -104,7 +104,7 @@ def _sync_repository_internal(active_repo: dict, username: str, force: bool = Fa
         if os.name != 'nt': os.chmod(tmp_path, 0o600)
         safe_tmp_path = tmp_path.replace("\\", "/")
         quoted_path = shlex.quote(safe_tmp_path)
-        ssh_cmd = f'ssh -i {quoted_path} -o StrictHostKeyChecking=no'
+        ssh_cmd = f'ssh -i {quoted_path} -o StrictHostKeyChecking=accept-new'
 
         try:
             with repo.git.custom_environment(GIT_SSH_COMMAND=ssh_cmd):
@@ -220,21 +220,59 @@ def validate_git_url(url: str):
     if not url:
         raise Exception("Git URL is required")
     
-    # Block local/private IPs
-    blocked_patterns = [
-        r'localhost',
-        r'127\.0\.0\.1',
-        r'0\.0\.0\.0',
-        r'169\.254\.',  # Metadata service
-        r'10\.',         # Private Class A
-        r'172\.(1[6-9]|2[0-9]|3[0-1])\.', # Private Class B
-        r'192\.168\.'   # Private Class C
-    ]
+    import socket
+    import ipaddress
+    from urllib.parse import urlparse
     
+    # Extract hostname
+    hostname = None
+    if url.startswith("git@"):
+        # git@github.com:user/repo.git
+        hostname = url.split("@")[-1].split(":")[0]
+    elif "://" in url:
+        # https://github.com/user/repo.git or ssh://git@github.com/user/repo.git
+        parsed = urlparse(url)
+        hostname = parsed.hostname
+    else:
+        # Assume it might just be a hostname or local path
+        hostname = url.split(":")[0]
+
+    if not hostname:
+        raise Exception(f"Could not extract hostname from URL: {url}")
+
+    # Block common suspicious patterns in the URL string itself
+    blocked_patterns = [
+        r'169\.254\.',  # Metadata service
+    ]
     for pattern in blocked_patterns:
-        if re.search(pattern, url, re.IGNORECASE):
-            clean_pattern = pattern.replace('\\', '')
-            raise Exception(f"Invalid Git URL: Access to {clean_pattern} is blocked for security reasons.")
+        if re.search(pattern, url):
+            raise Exception(f"Invalid Git URL: Potential metadata service access blocked.")
+
+    try:
+        # Resolve all IP addresses for the hostname
+        addr_info = socket.getaddrinfo(hostname, None)
+        for info in addr_info:
+            ip_str = info[4][0]
+            ip = ipaddress.ip_address(ip_str)
+            
+            if ip.is_private or ip.is_loopback or ip.is_link_local or ip.is_multicast or ip.is_unspecified:
+                raise Exception(f"Invalid Git URL: Access to private/local network ({ip_str}) is blocked.")
+                
+            # Extra check for IPv4 mapped IPv6 and other edge cases
+            if hasattr(ip, 'ipv4_mapped') and ip.ipv4_mapped:
+                if ip.ipv4_mapped.is_private:
+                     raise Exception(f"Invalid Git URL: Access to private network (via IPv6 mapped) is blocked.")
+
+    except socket.gaierror:
+        # If we can't resolve it, it might be a local name that doesn't resolve to an IP in this environment
+        # but could resolve elsewhere. For safety, we block it if it's not a known public domain format
+        # but since this is a documentation engine, we assume public Git hosts.
+        # However, let's allow it if it's not a direct IP (checked by ipaddress above).
+        pass
+    except Exception as e:
+        if "blocked" in str(e): raise e
+        # Other errors might be related to network issues or invalid hostnames
+        raise Exception(f"Git URL validation failed: {str(e)}")
 
 def get_remote_branches_list(repo_data: dict):
     url = repo_data['url']
@@ -262,7 +300,7 @@ def get_remote_branches_list(repo_data: dict):
     if os.name != 'nt': os.chmod(tmp_path, 0o600)
     safe_ssh_path = tmp_path.replace("\\", "/")
     quoted_path = shlex.quote(safe_ssh_path)
-    ssh_cmd = f'ssh -i {quoted_path} -o StrictHostKeyChecking=no'
+    ssh_cmd = f'ssh -i {quoted_path} -o StrictHostKeyChecking=accept-new'
     
     try:
         import subprocess
@@ -320,15 +358,7 @@ async def start_background_sync_worker():
                 
                 if should_sync:
                     print(f"Background sync triggered for repo: {repo['name']} (Strategy: {repo['sync_strategy']})")
-                    # Temporarily set this repo as active to use existing sync_repository logic
-                    # Or refactor sync_repository to accept a repo object
-                    # For simplicity, let's just use the current active repo logic but we need to be careful
-                    # Actually, sync_repository uses get_active_repository(). 
-                    # Let's modify sync_repository to accept an optional repo_id.
-                    
                     try:
-                        # We need a way to call sync_repository for a specific repo
-                        # Let's quickly update sync_repository to take repo_id
                         await asyncio.to_thread(sync_repository_by_id, repo['id'], "System")
                         
                         # Update last_auto_sync_at
@@ -344,12 +374,10 @@ async def start_background_sync_worker():
         except Exception as e:
             print(f"Background worker error: {e}")
             
-        await asyncio.sleep(60) # Check every minute
+        await asyncio.sleep(60)
 
 def sync_repository_by_id(repo_id: int, username: str):
     """Wrapper for sync_repository that targets a specific repo."""
-    # We need to temporarily mock get_active_repository or pass it directly
-    # Let's just modify sync_repository to accept an optional repo object
     repo = None
     conn = get_db()
     cur = conn.cursor()
@@ -364,5 +392,3 @@ def sync_repository_by_id(repo_id: int, username: str):
     # Call the main sync logic with this repo
     return _sync_repository_internal(repo, username)
 
-# I need to refactor sync_repository to call _sync_repository_internal
-# Let's do that in the next step to keep chunks clean.

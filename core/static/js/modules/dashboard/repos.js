@@ -2,6 +2,7 @@ import { ui } from '../ui.js';
 import { toast } from '../toasts.js';
 import { loadSyncConfig } from './sync.js';
 import { API } from '../api.js';
+import { escapeHTML } from '../security.js';
 
 export async function loadRepositories() {
     if (!ui.gitReposTbody) return;
@@ -49,11 +50,13 @@ export async function loadRepositories() {
                 `;
             }
 
+            const safeRepoName = escapeHTML(repo.name);
+            const safeRepoUrl = escapeHTML(repo.url);
             row.innerHTML = `
                 <td style="padding: 12px 10px;">
                     <div style="display: flex; flex-direction: column;">
-                        <span style="font-weight: 500; font-size: 14px;">${repo.name}</span>
-                        <span style="font-size: 11px; color: var(--text-muted); opacity: 0.8; margin-top: 2px;">${repo.url}</span>
+                        <span style="font-weight: 500; font-size: 14px;">${safeRepoName}</span>
+                        <span style="font-size: 11px; color: var(--text-muted); opacity: 0.8; margin-top: 2px;">${safeRepoUrl}</span>
                     </div>
                 </td>
                 <td style="padding: 12px 10px;">${syncInfo}</td>
@@ -287,7 +290,10 @@ export function initRepos() {
                 const res = await fetch(fetchUrl);
                 const data = await res.json();
                 if (res.ok && data.branches) {
-                    ui.repoBranchSelect.innerHTML = data.branches.map(b => `<option value="${b}">${b}</option>`).join('');
+                    ui.repoBranchSelect.innerHTML = data.branches.map(b => {
+                        const safeBranch = escapeHTML(b);
+                        return `<option value="${safeBranch}">${safeBranch}</option>`;
+                    }).join('');
                     toast.success('Branches loaded');
                 } else {
                     toast.error(data.detail || 'Failed to fetch branches');

@@ -249,5 +249,10 @@ export const en = {
     btn_generating: "Generating...",
     status_protected: "Protected",
     confirm_delete_user: "Are you sure you want to delete user",
-    error_fill_all: "Please fill all fields"
+    error_fill_all: "Please fill all fields",
+    sec_2fa_disable_title: "Disable 2FA",
+    sec_2fa_disable_prompt: "Enter your password to confirm:",
+    sec_2fa_disable_confirm: "Disable",
+    toast_2fa_disabled: "2FA disabled",
+    toast_2fa_disable_failed: "Failed to disable 2FA"
 };

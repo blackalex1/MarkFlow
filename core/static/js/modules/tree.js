@@ -2,6 +2,7 @@ import { ui, state } from './ui.js';
 import { toast } from './toasts.js';
 import { t } from './i18n.js';
 import { API } from './api.js';
+import { escapeHTML } from './security.js';
 
 export async function loadFileTree() {
     // 1. Fetch File Tree (Available to guests)
@@ -40,7 +41,8 @@ function renderFileTree(tree) {
             
             if (node.type === 'folder') {
                 const isOpen = state.openFolders.has(nodePath);
-                item.innerHTML = `<i data-lucide="chevron-right" class="icon-sm chevron"></i> <i data-lucide="folder" class="icon-sm"></i> <span>${node.name}</span>`;
+                const escapedName = escapeHTML(node.name);
+                item.innerHTML = `<i data-lucide="chevron-right" class="icon-sm chevron"></i> <i data-lucide="folder" class="icon-sm"></i> <span>${escapedName}</span>`;
                 if (isOpen) item.classList.add('open');
                 
                 const childrenContainer = document.createElement('div');
@@ -90,7 +92,8 @@ function renderFileTree(tree) {
                     statusDot = `<span class="status-dot ${statusClass}" title="${statusTitle}"></span>`;
                 }
 
-                item.innerHTML = `${statusDot}<i data-lucide="${icon}" class="icon-sm"></i> <span>${node.name.replace('.md', '')}</span>`;
+                const escapedName = escapeHTML(node.name.replace('.md', ''));
+                item.innerHTML = `${statusDot}<i data-lucide="${icon}" class="icon-sm"></i> <span>${escapedName}</span>`;
                 if (node.path === state.currentFilePath) item.classList.add('active');
                 
                 item.onclick = (e) => {

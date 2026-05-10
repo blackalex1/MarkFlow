@@ -128,6 +128,19 @@ async def upload_asset(request: Request, type: str = "custom", file: UploadFile 
     
     try:
         content = await file.read()
+        
+        # Security: limit size (e.g. 2MB for logos/favicons)
+        if len(content) > 2 * 1024 * 1024:
+             raise HTTPException(status_code=400, detail="File too large (max 2MB)")
+
+        # Security: Verify image content using Pillow
+        from PIL import Image
+        import io
+        try:
+            img = Image.open(io.BytesIO(content))
+            img.verify()
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid or malicious image content")
 
         with open(save_path, "wb") as f:
             f.write(content)

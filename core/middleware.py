@@ -1,8 +1,13 @@
 from fastapi import Request
 from fastapi.responses import JSONResponse
 from urllib.parse import urlparse
+import secrets
 
 async def add_security_headers(request: Request, call_next):
+    # Generate a unique nonce for this request
+    nonce = secrets.token_urlsafe(16)
+    request.state.csp_nonce = nonce
+
     # DoS Protection: Limit maximum request size (e.g., 10MB)
     MAX_SIZE = 10 * 1024 * 1024 # 10MB
     content_length = request.headers.get("content-length")
@@ -16,9 +21,9 @@ async def add_security_headers(request: Request, call_next):
         csrf_header = request.headers.get("X-CSRF-Token")
         csrf_cookie = request.cookies.get("csrf_token")
         
-        # Support for proxies: check X-Forwarded-Host
-        request_host = request.headers.get("X-Forwarded-Host", request.headers.get("host", ""))
-        clean_host = request_host.split(":")[0]
+        # Support for proxies: check X-Forwarded-Host or use validated request.url
+        request_host = request.url.hostname
+        clean_host = request_host
         
         # 1. Strict Token Check (Double Submit Cookie Pattern)
         if not csrf_header or not csrf_cookie or csrf_header != csrf_cookie:
@@ -40,7 +45,6 @@ async def add_security_headers(request: Request, call_next):
     
     # Ensure CSRF token exists
     if not request.cookies.get("csrf_token"):
-        import secrets
         response.set_cookie(key="csrf_token", value=secrets.token_urlsafe(32), httponly=False, samesite="lax")
     
     # Modern Security Headers
@@ -51,21 +55,22 @@ async def add_security_headers(request: Request, call_next):
     response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
     response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
     
-    # Tightened CSP
+    # Tightened CSP with Nonce and Strict-Dynamic
     csp = (
         "default-src 'self'; "
-        "script-src 'self' blob:; " # Allowed blob: for Mermaid/Workers
+        f"script-src 'self' blob: 'nonce-{nonce}' 'strict-dynamic' https: http:; " 
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; "
         "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; "
         "img-src 'self' data: blob: https:; " 
         "connect-src 'self'; "
-        "frame-src 'self' blob: data:; " # Allowed data: for some Mermaid types
+        "frame-src 'self' blob: data:; " 
         "frame-ancestors 'none'; "
         "object-src 'none'; "
         "base-uri 'self'; "
         "require-trusted-types-for 'script'; "
         "trusted-types dompurify default;"
     )
+
     response.headers["Content-Security-Policy"] = csp
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
 

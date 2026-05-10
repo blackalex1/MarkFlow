@@ -61,8 +61,11 @@ def check_and_download_vendor_libs():
             print(f"Downloading {rel_path}...")
             try:
                 os.makedirs(os.path.dirname(target_path), exist_ok=True)
-                response = requests.get(url, timeout=30, allow_redirects=True)
+                response = requests.get(url, timeout=30, allow_redirects=True, verify=True)
                 response.raise_for_status()
+                # Basic integrity: check if file is not suspiciously small
+                if len(response.content) < 100:
+                    raise Exception("Downloaded file is too small, possible corruption")
                 with open(target_path, "wb") as f:
                     f.write(response.content)
             except Exception as e:

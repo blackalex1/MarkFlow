@@ -91,7 +91,9 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.middleware("http")(add_security_headers)
 
 # Host Header Injection Protection
-allowed_hosts = os.getenv("ALLOWED_HOSTS", "*").split(",")
+allowed_hosts = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
+if "*" in allowed_hosts:
+    print("WARNING: ALLOWED_HOSTS is set to '*', disabling Host header protection.")
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
 
 # Routers
@@ -104,19 +106,38 @@ app.include_router(system_router, prefix="/api/system", tags=["system"])
 # Static and Templates
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 
-# Config assets with fallback
-config_dir = os.path.join(os.path.dirname(BASE_DIR), "config")
-if not os.path.exists(config_dir):
-    config_dir = os.path.join(BASE_DIR, "config_example")
-app.mount("/config", StaticFiles(directory=config_dir), name="config")
+# Config assets - Controlled serving to prevent sensitive file leaks (like .env)
+from fastapi.responses import FileResponse
+@app.get("/config/{file_path:path}")
+async def serve_config(file_path: str):
+    # Security: whitelist allowed assets in /config
+    allowed_assets = ["logo.png", "favicon.ico", "dark_logo.png", "custom.css"]
+    if file_path not in allowed_assets:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    config_dir = os.path.join(os.path.dirname(BASE_DIR), "config")
+    abs_path = os.path.join(config_dir, file_path)
+    if not os.path.exists(abs_path):
+        # Fallback to config_example
+        abs_path = os.path.join(BASE_DIR, "config_example", file_path)
+    
+    if not os.path.exists(abs_path):
+        raise HTTPException(status_code=404)
+    
+    return FileResponse(abs_path)
 
-app.mount("/config_default", StaticFiles(directory=os.path.join(BASE_DIR, "config_example")), name="config_default")
+# Remove dangerous broad mount: app.mount("/config", StaticFiles(directory=config_dir), name="config")
+# Remove dangerous broad mount: app.mount("/config_default", StaticFiles(directory=os.path.join(BASE_DIR, "config_example")), name="config_default")
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
 
 import time
 APP_VERSION = str(int(time.time()))
 
-templates.context_processors.append(lambda request: {"config": APP_CONFIG, "app_version": APP_VERSION})
+templates.context_processors.append(lambda request: {
+    "config": APP_CONFIG, 
+    "app_version": APP_VERSION,
+    "csp_nonce": getattr(request.state, "csp_nonce", "")
+})
 
 @app.get("/")
 def read_root(request: Request):

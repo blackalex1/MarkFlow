@@ -1,5 +1,6 @@
 import { ui, state } from './ui.js';
 import { t, getLang } from './i18n.js';
+import { escapeHTML } from './security.js';
 
 export function initAdmin() {
     const tabItems = document.querySelectorAll('.tab-item');
@@ -63,11 +64,13 @@ export async function loadUsers() {
         const users = await res.json();
         const currentLang = getLang();
         
-        listBody.innerHTML = users.map(u => `
+        listBody.innerHTML = users.map(u => {
+            const safeUsername = escapeHTML(u.username);
+            return `
             <tr>
-                <td>${u.username}</td>
+                <td>${safeUsername}</td>
                 <td>
-                    <select class="role-select" data-user="${u.username}" ${u.username === 'admin' ? 'disabled' : ''}>
+                    <select class="role-select" data-user="${safeUsername}" ${u.username === 'admin' ? 'disabled' : ''}>
                         ${['guest', 'reporter', 'developer', 'maintainer', 'owner'].map(r => 
                             `<option value="${r}" ${u.role === r ? 'selected' : ''}>${r}</option>`
                         ).join('')}
@@ -75,11 +78,11 @@ export async function loadUsers() {
                 </td>
                 <td>
                     ${u.username !== 'admin' && u.username !== state.currentUser.username ? 
-                        `<button class="btn-text delete-user-btn" data-user="${u.username}" style="color: var(--danger-color);">${t('btn_delete')}</button>` : 
+                        `<button class="btn-text delete-user-btn" data-user="${safeUsername}" style="color: var(--danger-color);">${t('btn_delete')}</button>` : 
                         `<span style="color: var(--text-muted); font-size: 11px;">(${t('status_protected')})</span>`}
                 </td>
             </tr>
-        `).join('');
+        `;}).join('');
 
         // Listeners for role change
         listBody.querySelectorAll('.role-select').forEach(sel => {
@@ -116,13 +119,17 @@ export async function loadLogs() {
         
         listBody.innerHTML = logs.map(l => {
             const date = new Date(l.timestamp + 'Z').toLocaleString(locale);
+            const safeUser = escapeHTML(l.username);
+            const safeAction = escapeHTML(l.action);
+            const safeIP = escapeHTML(l.ip_address || '-');
+            const safeDetails = escapeHTML(l.details || '-');
             return `
                 <tr>
                     <td style="font-size: 11px; white-space: nowrap;">${date}</td>
-                    <td style="font-weight: 600;">${l.username}</td>
-                    <td><span class="tag tag-sm">${l.action}</span></td>
-                    <td style="font-family: monospace; font-size: 11px;">${l.ip_address || '-'}</td>
-                    <td style="font-size: 12px; color: var(--text-muted);">${l.details || '-'}</td>
+                    <td style="font-weight: 600;">${safeUser}</td>
+                    <td><span class="tag tag-sm">${safeAction}</span></td>
+                    <td style="font-family: monospace; font-size: 11px;">${safeIP}</td>
+                    <td style="font-size: 12px; color: var(--text-muted);">${safeDetails}</td>
                 </tr>
             `;
         }).join('');

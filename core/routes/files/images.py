@@ -78,7 +78,7 @@ async def upload_image(request: Request, file: UploadFile = File(...), target_pa
             try:
                 result = subprocess.run(
                     ['ffprobe', '-v', 'error', '-show_format', '-show_streams', tmp_path],
-                    capture_output=True, text=True
+                    capture_output=True, text=True, timeout=10
                 )
                 if result.returncode != 0:
                     raise HTTPException(status_code=400, detail="Invalid or corrupted video file")

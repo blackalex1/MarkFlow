@@ -1,5 +1,6 @@
 from .base import get_db, pwd_context
 from .audit import add_audit_log
+from .crypto import encrypt_value, decrypt_value
 
 def get_user_by_username(username: str):
     conn = get_db()
@@ -7,12 +8,17 @@ def get_user_by_username(username: str):
     cursor.execute('SELECT * FROM users WHERE username = ?', (username,))
     user = cursor.fetchone()
     conn.close()
+    if user:
+        user = dict(user)
+        if user.get("totp_secret"):
+            user["totp_secret"] = decrypt_value(user["totp_secret"])
     return user
 
 def set_user_totp_secret(username: str, secret: str):
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute('UPDATE users SET totp_secret = ? WHERE username = ?', (secret, username))
+    encrypted_secret = encrypt_value(secret) if secret else None
+    cursor.execute('UPDATE users SET totp_secret = ? WHERE username = ?', (encrypted_secret, username))
     conn.commit()
     conn.close()
 

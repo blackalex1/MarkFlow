@@ -1,5 +1,5 @@
 # Use official Python runtime as a parent image
-FROM python:3.11-slim
+FROM python:3.11.9-slim
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1
@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y \
     git \
     openssh-client \
     libmagic1 \
+    ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies

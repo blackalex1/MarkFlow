@@ -20,7 +20,6 @@ export const ui = {
     
     // Dashboard (LK)
     dashboardModal: document.getElementById('user-dashboard-modal'),
-    btnNewPage: document.getElementById('btn-new-page'), // Actually it's not a button now, it's just a section? No, it's not used.
     btnCreatePage: document.getElementById('btn-create-page'),
     newItemType: document.getElementById('new-item-type'),
     newPageName: document.getElementById('new-page-name'),

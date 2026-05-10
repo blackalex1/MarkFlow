@@ -257,5 +257,10 @@ export const ru = {
     btn_generating: "Генерация...",
     status_protected: "Защищено",
     confirm_delete_user: "Вы уверены, что хотите удалить пользователя",
-    error_fill_all: "Пожалуйста, заполните все поля"
+    error_fill_all: "Пожалуйста, заполните все поля",
+    sec_2fa_disable_title: "Отключить 2FA",
+    sec_2fa_disable_prompt: "Введите ваш пароль для подтверждения:",
+    sec_2fa_disable_confirm: "Отключить",
+    toast_2fa_disabled: "2FA отключена",
+    toast_2fa_disable_failed: "Ошибка при отключении 2FA"
 };
