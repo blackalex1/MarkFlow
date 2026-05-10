@@ -35,6 +35,7 @@ echo "HTTP_PORT=$HTTP_PORT" >> ../.env
 echo "HTTPS_PORT=$HTTPS_PORT" >> ../.env
 echo "DOMAIN_NAME=$DOMAIN_NAME" >> ../.env
 echo "CERTBOT_EMAIL=$CERTBOT_EMAIL" >> ../.env
+echo "ALLOWED_HOSTS=localhost,127.0.0.1,$DOMAIN_NAME" >> ../.env
 
 echo ""
 echo "----------------------------------------------------------"
