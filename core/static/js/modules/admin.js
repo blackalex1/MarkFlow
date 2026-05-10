@@ -69,12 +69,30 @@ export async function loadUsers() {
                 <thead>
                     <tr>
                         <th data-t="users_th_user">${t('users_th_user') || 'User'}</th>
-                        <th data-t="users_th_role">${t('users_th_role') || 'Role'}</th>
-                        <th data-t="users_th_actions">${t('users_th_actions') || 'Actions'}</th>
+                        <th style="white-space: nowrap;" data-t="users_th_role">${t('users_th_role') || 'Role'}</th>
+                        <th style="white-space: nowrap; text-align: right;" data-t="users_th_actions">${t('users_th_actions') || 'Actions'}</th>
                     </tr>
                 </thead>
                 <tbody id="users-list-body">
-                    ${rows}
+                    ${users.map(u => {
+                        const safeUsername = escapeHTML(u.username);
+                        return `
+                        <tr>
+                            <td>${safeUsername}</td>
+                            <td style="white-space: nowrap;">
+                                <select class="role-select" data-user="${safeUsername}" ${u.username === 'admin' ? 'disabled' : ''}>
+                                    ${['guest', 'reporter', 'developer', 'maintainer', 'owner'].map(r => 
+                                        `<option value="${r}" ${u.role === r ? 'selected' : ''}>${r}</option>`
+                                    ).join('')}
+                                </select>
+                            </td>
+                            <td style="white-space: nowrap; text-align: right;">
+                                ${u.username !== 'admin' && u.username !== state.currentUser.username ? 
+                                    `<button class="btn-text delete-user-btn" data-user="${safeUsername}" style="color: var(--danger-color);">${t('btn_delete')}</button>` : 
+                                    `<span style="color: var(--text-muted); font-size: 11px;">(${t('status_protected')})</span>`}
+                            </td>
+                        </tr>
+                    `;}).join('')}
                 </tbody>
             </table>
         `;

@@ -23,6 +23,8 @@ export function updateCredsStatusUI(isValid) {
 }
 
 export function initSettings() {
+    if (state.currentUser?.role !== 'owner') return;
+    
     // Load Global PubKey immediately
     fetch(API.GIT_PUBKEY).then(r => r.json()).then(data => { 
         if (ui.sshPublicKey) ui.sshPublicKey.value = data.pubkey || ''; 

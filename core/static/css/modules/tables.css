@@ -1,13 +1,39 @@
-table {
+.table-wrapper {
     width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     margin: 2.5em 0;
     background: rgba(255, 255, 255, 0.02);
     border: 1px solid var(--border-color);
     border-radius: 12px;
-    overflow: hidden;
     box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+}
+
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 600px; /* Ensure table doesn't get too squashed */
+}
+
+/* Base table styles when NOT in a wrapper (e.g. static ones) */
+table:not(.admin-table) {
+    margin: 2.5em 0;
+}
+
+.table-wrapper table {
+    margin: 0;
+}
+
+table.admin-table {
+    width: 100% !important;
+    margin: 0 !important;
+    border: none !important;
+    border-top: 1px solid var(--border-color) !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    min-width: unset !important;
 }
 
 th {
@@ -15,12 +41,13 @@ th {
     color: var(--text-heading);
     font-weight: 700;
     text-align: left;
-    padding: 14px 20px;
+    padding: 14px 25px;
     border-bottom: 1px solid var(--border-color);
     border-right: 1px solid var(--border-color);
     font-size: 0.9em;
     text-transform: uppercase;
     letter-spacing: 1px;
+    white-space: nowrap; /* Keep headers on one line */
 }
 
 th:last-child {
@@ -28,7 +55,7 @@ th:last-child {
 }
 
 td {
-    padding: 14px 20px;
+    padding: 14px 25px;
     border-bottom: 1px solid var(--border-color);
     border-right: 1px solid var(--border-color);
     color: var(--text-main);
@@ -48,10 +75,11 @@ tr:hover td {
     background: rgba(255, 255, 255, 0.03);
 }
 
-[data-theme="light"] table {
+[data-theme="light"] .table-wrapper {
     background: white;
 }
 
 [data-theme="light"] th {
     background: #f8fafc;
 }
+

@@ -23,47 +23,46 @@ export async function renderStatusesTable() {
     
     container.innerHTML = `
         <table class="admin-table">
-            <thead>
-                <tr>
-                    <th style="width: 50px;"></th>
-                    <th>${t('repo_th_name') || 'Name'}</th>
-                    <th style="width: 120px;">Color</th>
-                    <th style="width: 100px; text-align: right;">${t('repo_th_actions') || 'Actions'}</th>
-                </tr>
-            </thead>
-            <tbody>
-                ${statuses.map(s => `
-                    <tr data-id="${s.id}">
+                <thead>
+                    <tr>
+                        <th data-t="status_name_header">Name</th>
+                        <th data-t="status_color_header">Color</th>
+                        <th style="text-align: right;" data-t="status_actions_header">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${statuses.map(s => `
+                    <tr data-id="${s.id}" data-slug="${s.slug}">
                         <td>
-                            <span class="status-dot" style="background-color: ${s.color}; width: 12px; height: 12px;"></span>
-                        </td>
-                        <td>
-                            <input type="text" class="status-name-input" value="${escapeHTML(s.name)}" 
-                                   ${s.is_system ? 'disabled' : ''} 
-                                   style="background: transparent; border: none; color: #fff; width: 100%; outline: none;">
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span class="status-dot" style="background-color: ${escapeHTML(s.color)}; width: 10px; height: 10px;"></span>
+                                <input type="text" class="status-name-input" value="${escapeHTML(s.name)}" 
+                                       ${s.is_system ? 'disabled' : ''} 
+                                       style="background: transparent; border: none; color: #fff; width: 100%; outline: none;">
+                            </div>
                         </td>
                         <td>
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <input type="color" class="status-color-input" value="${escapeHTML(s.color)}" 
-                                       style="width: 30px; height: 30px; padding: 0; border: none; background: none; cursor: pointer;">
+                                       style="width: 24px; height: 24px; padding: 0; border: none; background: none; cursor: pointer; border-radius: 4px;">
                                 <span style="font-family: monospace; font-size: 11px; opacity: 0.7;">${escapeHTML(s.color)}</span>
                             </div>
                         </td>
                         <td style="text-align: right;">
-                            <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                                <button class="btn-icon btn-save-status" title="Save">
-                                    <i data-lucide="save" class="icon-xs"></i>
+                            <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                                <button class="btn-save-status btn-icon-only" title="Save" style="background: rgba(255,255,255,0.05); border: none; color: var(--text-muted); cursor: pointer; padding: 5px; border-radius: 4px;">
+                                    <i data-lucide="save" style="width: 14px; height: 14px;"></i>
                                 </button>
-                                ${!s.is_system ? `
-                                    <button class="btn-icon btn-danger-hover btn-delete-status" title="Delete">
-                                        <i data-lucide="trash-2" class="icon-xs"></i>
-                                    </button>
-                                ` : ''}
+                                ${s.is_system ? '' : `
+                                <button class="btn-delete-status btn-icon-only" title="Delete" style="background: rgba(239, 68, 68, 0.1); border: none; color: #ef4444; cursor: pointer; padding: 5px; border-radius: 4px;">
+                                    <i data-lucide="trash-2" style="width: 14px; height: 14px;"></i>
+                                </button>
+                                `}
                             </div>
                         </td>
                     </tr>
-                `).join('')}
-            </tbody>
+                    `).join('')}
+                </tbody>
         </table>
     `;
 

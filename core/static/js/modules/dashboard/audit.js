@@ -38,10 +38,10 @@ function renderLogs(container, logs) {
         return `
             <tr>
                 <td style="white-space: nowrap; font-size: 11px;">${date}</td>
-                <td><span style="font-weight: 600;">${escapeHTML(log.username)}</span></td>
-                <td><span class="tag tag-sm" style="background: rgba(var(--primary-rgb), 0.1); color: var(--primary-color); padding: 2px 8px; border-radius: 4px; font-size: 11px;">${escapeHTML(log.action)}</span></td>
-                <td style="font-size: 11px; color: var(--text-muted); font-family: monospace;">${escapeHTML(log.ip_address || '-')}</td>
-                <td style="font-size: 11px; opacity: 0.8; max-width: 300px; overflow: hidden; text-overflow: ellipsis;" title="${escapeHTML(log.details || '')}">${escapeHTML(log.details || '-')}</td>
+                <td style="white-space: nowrap;"><span style="font-weight: 600;">${escapeHTML(log.username)}</span></td>
+                <td style="white-space: nowrap;"><span class="tag tag-sm" style="background: rgba(var(--primary-rgb), 0.1); color: var(--primary-color); padding: 2px 8px; border-radius: 4px; font-size: 11px;">${escapeHTML(log.action)}</span></td>
+                <td style="white-space: nowrap; font-size: 11px; color: var(--text-muted); font-family: monospace;">${escapeHTML(log.ip_address || '-')}</td>
+                <td style="font-size: 11px; opacity: 0.8;" title="${escapeHTML(log.details || '')}">${escapeHTML(log.details || '-')}</td>
             </tr>
         `;
     }).join('');
@@ -50,10 +50,10 @@ function renderLogs(container, logs) {
         <table class="admin-table">
             <thead>
                 <tr>
-                    <th data-t="logs_th_time">${t('logs_th_time') || 'Time'}</th>
-                    <th data-t="logs_th_user">${t('logs_th_user') || 'User'}</th>
-                    <th data-t="logs_th_action">${t('logs_th_action') || 'Action'}</th>
-                    <th data-t="logs_th_ip">${t('logs_th_ip') || 'IP'}</th>
+                    <th style="white-space: nowrap;" data-t="logs_th_time">${t('logs_th_time') || 'Time'}</th>
+                    <th style="white-space: nowrap;" data-t="logs_th_user">${t('logs_th_user') || 'User'}</th>
+                    <th style="white-space: nowrap;" data-t="logs_th_action">${t('logs_th_action') || 'Action'}</th>
+                    <th style="white-space: nowrap;" data-t="logs_th_ip">${t('logs_th_ip') || 'IP'}</th>
                     <th data-t="logs_th_details">${t('logs_th_details') || 'Details'}</th>
                 </tr>
             </thead>

@@ -69,8 +69,8 @@
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--border-color);
     border-radius: 12px;
-    padding: 16px;
     transition: var(--transition);
+    overflow: hidden;
 }
 
 .settings-plate:hover {
@@ -82,7 +82,12 @@
     display: flex;
     align-items: center;
     gap: 12px;
+    padding: 16px 25px 0 25px;
     margin-bottom: 12px;
+}
+
+.plate-body {
+    padding: 0 25px 16px 25px;
 }
 
 .plate-header i {
@@ -136,30 +141,4 @@
     display: flex !important;
     flex-direction: row !important;
     gap: 12px;
-}
-
-/* Admin Tables */
-.admin-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-    margin-top: 10px;
-}
-
-.admin-table th {
-    text-align: left;
-    padding: 10px;
-    border-bottom: 2px solid var(--border-color);
-    color: var(--text-muted);
-    font-weight: 500;
-}
-
-.admin-table td {
-    padding: 12px 10px;
-    border-bottom: 1px solid var(--border-color);
-    vertical-align: middle;
-}
-
-.admin-table tr:hover {
-    background: rgba(255, 255, 255, 0.02);
 }

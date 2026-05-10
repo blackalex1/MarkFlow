@@ -43,14 +43,14 @@ export async function loadRepositories() {
             
             return `
                 <tr>
-                    <td style="padding: 12px 10px;">
+                    <td>
                         <div style="display: flex; flex-direction: column;">
-                            <span style="font-weight: 500; font-size: 14px;">${safeRepoName}</span>
-                            <span style="font-size: 11px; color: var(--text-muted); opacity: 0.8; margin-top: 2px;">${safeRepoUrl}</span>
+                            <span style="font-weight: 500; font-size: 14px; word-break: break-all;">${safeRepoName}</span>
+                            <span style="font-size: 11px; color: var(--text-muted); opacity: 0.8; margin-top: 2px; word-break: break-all;">${safeRepoUrl}</span>
                         </div>
                     </td>
-                    <td style="padding: 12px 10px;">${syncInfo}</td>
-                    <td style="padding: 12px 10px; text-align: right;">
+                    <td style="white-space: nowrap;">${syncInfo}</td>
+                    <td style="text-align: right; white-space: nowrap;">
                         <div style="display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
                             ${repo.is_active ? 
                                 `<span class="tag tag-on" style="font-size: 11px; padding: 4px 10px;">${t('repo_btn_active', 'Active')}</span>` : 
@@ -65,12 +65,12 @@ export async function loadRepositories() {
         }).join('');
 
         container.innerHTML = `
-            <table class="data-table" style="width: 100%;">
+            <table class="admin-table">
                 <thead>
                     <tr>
-                        <th style="text-align: left; padding: 10px;" data-t="repo_th_name">${t('repo_th_name', 'Name')}</th>
-                        <th style="text-align: left; padding: 10px;" data-t="repo_th_status">${t('repo_th_status', 'Status / Last Sync')}</th>
-                        <th style="text-align: right; padding: 10px;" data-t="repo_th_actions">${t('repo_th_actions', 'Actions')}</th>
+                        <th style="text-align: left;" data-t="repo_th_name">${t('repo_th_name', 'Name')}</th>
+                        <th style="text-align: left; white-space: nowrap;" data-t="repo_th_status">${t('repo_th_status', 'Status / Last Sync')}</th>
+                        <th style="text-align: right; white-space: nowrap;" data-t="repo_th_actions">${t('repo_th_actions', 'Actions')}</th>
                     </tr>
                 </thead>
                 <tbody id="git-repos-tbody">

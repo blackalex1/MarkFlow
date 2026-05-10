@@ -37,12 +37,12 @@
                         <i data-lucide="key"></i>
                         <span data-t="sec_password">Change Password</span>
                     </div>
-                    <div class="plate-body">
+                    <div class="plate-body" style="display: flex; flex-direction: column; gap: 12px;">
                         <label for="old-password" class="sr-only">Old Password</label>
                         <input type="password" id="old-password" name="old-password" autocomplete="current-password" data-t="old_password" placeholder="Old Password">
                         <label for="new-password" class="sr-only">New Password</label>
                         <input type="password" id="new-password" name="new-password" autocomplete="new-password" data-t="new_password" placeholder="New Password">
-                        <button id="btn-change-password" class="btn btn-sm btn-primary" data-t="sec_password">Change Password</button>
+                        <button id="btn-change-password" class="btn btn-sm btn-primary" style="width: fit-content;" data-t="sec_password">Change Password</button>
                     </div>
                 </div>
             </div>
@@ -68,8 +68,10 @@
                     <button id="btn-admin-create-user" class="btn btn-primary" data-t="pages_btn_create">Create</button>
                 </div>
             </div>
-            <div id="users-table-container" style="margin-top: 20px;">
-                <!-- Populated by admin.js (entire table structure) -->
+            <div class="settings-plate" style="margin-top: 20px;">
+                <div class="plate-body" style="padding: 0;" id="users-table-container">
+                    <!-- Populated by admin.js -->
+                </div>
             </div>
         </div>
         <div id="tab-git" class="tab-content hidden">
@@ -82,7 +84,7 @@
                 <div class="plate-body" style="padding: 0;" id="git-repos-table-container">
                     <!-- Populated by repos.js (entire table structure) -->
                 </div>
-                <div style="padding: 15px; border-top: 1px solid var(--border-color);">
+                <div style="padding: 15px 25px; border-top: 1px solid var(--border-color);">
                     <button id="btn-add-repo" class="btn btn-sm btn-outline" style="width: 100%;" data-t="btn_add_repo">+ Add New Repository</button>
                 </div>
             </div>
@@ -222,10 +224,10 @@
                 </div>
             </div>
 
-            <div id="git-sync-controls" class="settings-plate">
+            <div id="git-sync-controls" class="settings-plate" style="margin-top: 25px;">
                 <div class="plate-header">
                     <i data-lucide="git-branch"></i>
-                    <span data-t="tab_git">Git Sync</span>
+                    <span data-t="tab_git" style="flex: 1;">Git Sync</span>
                     <div style="display: flex; gap: 10px; align-items: center;">
                         <div id="sync-status-indicator" style="display: flex; align-items: center; gap: 5px; margin-right: 5px;">
                             <span id="sync-status-text" style="font-size: 11px; color: var(--text-muted); opacity: 0.8;"></span>
@@ -259,8 +261,12 @@
         </div>
 
         <div id="tab-logs" class="tab-content hidden">
-            <div id="audit-logs-container" style="max-height: 500px; overflow-y: auto;">
-                <!-- Populated by audit.js (entire table structure) -->
+            <div class="settings-plate">
+                <div class="plate-body" style="padding: 0;">
+                    <div id="audit-logs-container" style="max-height: 600px; overflow-y: auto;">
+                        <!-- Populated by audit.js -->
+                    </div>
+                </div>
             </div>
         </div>
         {% if user_role == 'owner' %}
@@ -272,16 +278,19 @@
                 </div>
                 <div class="plate-body">
                     <p class="hint-text" style="margin-bottom: 15px;" data-t="statuses_hint">Manage statuses and their bullet colors across the system.</p>
-                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                    <div style="display: flex; gap: 10px; margin-bottom: 5px;">
                         <input type="text" id="status-new-name" data-t="status_name_placeholder" placeholder="Status Name" style="flex: 1;">
                         <div style="display: flex; align-items: center; gap: 8px;">
                             <input type="color" id="status-new-color" value="#6366f1" style="width: 45px; padding: 2px; height: 38px; cursor: pointer; border: none; background: none;">
                         </div>
                         <button id="btn-admin-create-status" class="btn btn-primary" data-t="pages_btn_create">Create</button>
                     </div>
-                    <div id="statuses-table-container">
-                        <!-- Populated by statuses.js -->
-                    </div>
+                </div>
+            </div>
+
+            <div class="settings-plate" style="margin-top: 20px;">
+                <div class="plate-body" style="padding: 0;" id="statuses-table-container">
+                    <!-- Populated by statuses.js -->
                 </div>
             </div>
         </div>

@@ -175,3 +175,18 @@ export function updateNavigation(currentPath) {
     
     if (window.lucide) lucide.createIcons();
 }
+
+export function wrapTables() {
+    if (!ui.contentViewer) return;
+    const tables = ui.contentViewer.querySelectorAll('table');
+    tables.forEach(table => {
+        // Skip tables already wrapped or admin tables
+        if (table.parentNode.classList.contains('table-wrapper') || table.classList.contains('admin-table')) return;
+        
+        const wrapper = document.createElement('div');
+        wrapper.className = 'table-wrapper';
+        table.parentNode.insertBefore(wrapper, table);
+        wrapper.appendChild(table);
+    });
+}
+

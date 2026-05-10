@@ -3,7 +3,7 @@ import { toast } from './toasts.js';
 import * as tree from './tree.js';
 import { t } from './i18n.js';
 import { initMarked } from './markdown.js';
-import { generateTOC, updateBreadcrumbs, addCopyButtons, updateNavigation } from './viewer_ui.js';
+import { generateTOC, updateBreadcrumbs, addCopyButtons, updateNavigation, wrapTables } from './viewer_ui.js';
 import { API } from './api.js';
 import { updateStatusDisplay } from './status.js';
 
@@ -66,6 +66,7 @@ export async function loadFileContent(path, pushState = true, hash = null) {
             }
 
             updateNavigation(path);
+            wrapTables();
             generateTOC();
             initTOCObserver();
             addCopyButtons();

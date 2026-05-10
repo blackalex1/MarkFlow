@@ -93,11 +93,10 @@ async function init() {
     initTheme();
     initSearch();
     initGlobalHandlers();
+    await auth.checkAuth();
     initDashboardListeners();
     await loadStatuses();
     await editor.init();
-    
-    await auth.checkAuth();
     await tree.loadFileTree();
     
     // Check URL on load
