@@ -2,6 +2,7 @@ import { API } from './api.js';
 import { state, ui } from './ui.js';
 import { toast } from './toasts.js';
 import { escapeHTML } from './security.js';
+import { t } from './i18n.js';
 
 /**
  * Loads all available document statuses from the server
@@ -36,6 +37,13 @@ export function getStatusColor(slug) {
 export function getStatusName(slug) {
     const status = state.statuses[slug];
     if (!status) return slug;
+    
+    // For system statuses, prefer translated name
+    if (status.is_system) {
+        const translated = t(`status_${status.slug}`);
+        if (translated && translated !== `status_${status.slug}`) return translated;
+    }
+    
     return status.name;
 }
 
@@ -50,16 +58,18 @@ export function renderStatusDropdown(container, onSelect) {
         const item = document.createElement('div');
         item.className = 'dropdown-item';
         item.dataset.value = status.slug;
-        item.innerHTML = `<span class="status-dot" style="background-color: ${status.color}; margin-right: 8px; width: 8px; height: 8px;"></span> ${escapeHTML(status.name)}`;
+        const displayName = status.is_system ? (t(`status_${status.slug}`) || status.name) : status.name;
+        item.innerHTML = `<span class="status-dot" style="background-color: ${status.color}; margin-right: 8px; width: 8px; height: 8px;"></span> ${escapeHTML(displayName)}`;
         
         item.onclick = (e) => {
             e.stopPropagation();
-            onSelect(status.slug, status.name);
+            onSelect(status.slug, displayName);
         };
         
         container.appendChild(item);
     });
 }
+
 
 /**
  * Updates the topbar status text

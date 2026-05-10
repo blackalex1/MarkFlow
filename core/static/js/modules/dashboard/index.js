@@ -1,8 +1,8 @@
 import { ui, state } from '../ui.js';
 import { logout } from '../auth.js';
 import { initRepos, loadRepositories } from './repos/index.js';
-import { initSync } from './sync.js';
-import { initSettings } from './settings.js';
+import { initSync, loadSyncConfig } from './sync.js';
+import { initSettings, loadGlobalSSHKey } from './settings.js';
 import { initSystemSettings } from './system.js';
 import { initAdmin } from '../admin.js';
 import { initAuditTab } from './audit.js';
@@ -16,6 +16,23 @@ export function initDashboardListeners() {
     
     const logoutBtn = document.getElementById('btn-logout');
     if (logoutBtn) logoutBtn.onclick = logout;
+
+    const loadActiveTab = () => {
+        const activeTab = document.querySelector('.dashboard-tabs .tab-item.active');
+        if (!activeTab) return;
+        const tabName = activeTab.getAttribute('data-tab');
+        
+        if (tabName === 'logs') initAuditTab();
+        if (tabName === 'users') {
+            import('../admin.js').then(m => m.loadUsers());
+        }
+        if (tabName === 'statuses') renderStatusesTable();
+        if (tabName === 'git') {
+            loadRepositories();
+            loadSyncConfig();
+            loadGlobalSSHKey();
+        }
+    };
 
     // Tab Switching Logic
     const tabs = document.querySelectorAll('.dashboard-tabs .tab-item');
@@ -32,48 +49,31 @@ export function initDashboardListeners() {
             const target = document.getElementById(`tab-${tabName}`);
             if (target) target.classList.remove('hidden');
 
-            // Specialized Initializers
-            if (tabName === 'logs') initAuditTab();
-            if (tabName === 'users') initAdmin();
-            if (tabName === 'statuses') renderStatusesTable();
-            if (tabName === 'system') initSystemSettings();
-            if (tabName === 'git') loadRepositories();
+            loadActiveTab();
         };
     });
 
-    // Initialize sub-modules
+    // Initialize sub-modules (LISTENERS ONLY, NO FETCHING)
     initRepos();
     initSync();
     initSettings();
     initSystemSettings();
-    initAdmin();
+    initAdmin(); 
     initStatuses();
 
     // Initial load check for active tab
-    const activeTab = document.querySelector('.dashboard-tabs .tab-item.active');
-    if (activeTab) {
-        const tabName = activeTab.getAttribute('data-tab');
-        if (tabName === 'logs') initAuditTab();
+    if (ui.dashboardModal && !ui.dashboardModal.classList.contains('hidden')) {
+        loadActiveTab();
     }
 
-    // Load repos on dashboard open
+    // Load repositories on dashboard open
     const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
             if (mutation.target.id === 'user-dashboard-modal' && !mutation.target.classList.contains('hidden')) {
-                if (state.currentUser && ['maintainer', 'owner'].includes(state.currentUser.role)) {
-                    loadRepositories();
-                    initAdmin();
-                    initSystemSettings();
-                }
+                loadActiveTab();
             }
         });
     });
     if (ui.dashboardModal) observer.observe(ui.dashboardModal, { attributes: true, attributeFilter: ['class'] });
-    
-    // Only load if already open (e.g. refresh on open dashboard)
-    if (ui.dashboardModal && !ui.dashboardModal.classList.contains('hidden')) {
-        if (state.currentUser && ['maintainer', 'owner'].includes(state.currentUser.role)) {
-            loadRepositories();
-        }
-    }
 }
+

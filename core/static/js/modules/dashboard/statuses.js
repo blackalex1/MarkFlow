@@ -31,12 +31,14 @@ export async function renderStatusesTable() {
                     </tr>
                 </thead>
                 <tbody>
-                    ${statuses.map(s => `
+                    ${statuses.map(s => {
+                        const displayName = s.is_system ? (t(`status_${s.slug}`) || s.name) : s.name;
+                        return `
                     <tr data-id="${s.id}" data-slug="${s.slug}">
                         <td>
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 <span class="status-dot" style="background-color: ${escapeHTML(s.color)}; width: 10px; height: 10px;"></span>
-                                <input type="text" class="status-name-input" value="${escapeHTML(s.name)}" 
+                                <input type="text" class="status-name-input" value="${escapeHTML(displayName)}" 
                                        ${s.is_system ? 'disabled' : ''} 
                                        style="background: transparent; border: none; color: #fff; width: 100%; outline: none;">
                             </div>
@@ -61,7 +63,9 @@ export async function renderStatusesTable() {
                             </div>
                         </td>
                     </tr>
-                    `).join('')}
+                    `;
+                    }).join('')}
+
                 </tbody>
         </table>
     `;

@@ -22,13 +22,17 @@ export function updateCredsStatusUI(isValid) {
     if (window.lucide) lucide.createIcons();
 }
 
+export async function loadGlobalSSHKey() {
+    if (state.currentUser?.role !== 'owner') return;
+    try {
+        const res = await fetch(API.GIT_PUBKEY);
+        const data = await res.json();
+        if (ui.sshPublicKey) ui.sshPublicKey.value = data.pubkey || '';
+    } catch (e) { console.error(e); }
+}
+
 export function initSettings() {
     if (state.currentUser?.role !== 'owner') return;
-    
-    // Load Global PubKey immediately
-    fetch(API.GIT_PUBKEY).then(r => r.json()).then(data => { 
-        if (ui.sshPublicKey) ui.sshPublicKey.value = data.pubkey || ''; 
-    });
 
     if (ui.btnCopySSHKey) {
         ui.btnCopySSHKey.onclick = () => {

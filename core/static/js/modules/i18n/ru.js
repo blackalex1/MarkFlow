@@ -156,7 +156,7 @@ export const ru = {
     status_label: "Статус",
     status_draft: "Черновик",
     status_in_progress: "В работе",
-    status_published: "Опубликовано",
+    status_published: "Готово к публикации",
     status_updated: "Статус обновлен на",
     
     // Menu

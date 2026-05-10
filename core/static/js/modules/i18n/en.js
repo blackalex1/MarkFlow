@@ -148,7 +148,7 @@ export const en = {
     status_label: "Status",
     status_draft: "Draft",
     status_in_progress: "In Progress",
-    status_published: "Published",
+    status_published: "Ready to Publish",
     status_updated: "Status updated to",
 
     // Menu

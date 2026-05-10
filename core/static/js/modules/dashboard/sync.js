@@ -61,11 +61,8 @@ export async function loadSyncConfig() {
 }
 
 export function initSync() {
-    if (state.currentUser && ['maintainer', 'owner'].includes(state.currentUser.role)) {
-        loadSyncConfig();
-    }
-
     if (ui.btnGitSync) {
+
         ui.btnGitSync.onclick = async () => {
             ui.btnGitSync.disabled = true;
             const originalText = ui.btnGitSync.innerText;
