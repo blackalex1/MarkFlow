@@ -5,6 +5,9 @@
     "use_logo": false,
     "logo_path": "/config/logo.png",
     "favicon_path": "/config/favicon.ico",
+    "bg_glow_enabled": true,
+    "bg_glow_opacity_light": 0.15,
+    "bg_glow_opacity_dark": 0.05,
     "max_request_size_mb": 10,
     "security_limits": {
         "login": "5/minute",

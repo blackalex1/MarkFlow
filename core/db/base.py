@@ -3,8 +3,8 @@ import os
 from contextlib import contextmanager
 from passlib.context import CryptContext
 
-# Project root is 3 levels up from core/db/base.py
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "app.db")
+# Project root is 3 levels up from core/db/base.py, but we store DB in config/
+DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "config", "app.db")
 pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 def get_db():

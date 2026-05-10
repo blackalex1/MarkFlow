@@ -1,66 +1,113 @@
 import { ui } from '../ui.js';
+import { API } from '../api.js';
 import { toast } from '../toasts.js';
 import * as i18n from '../i18n.js';
-import { API } from '../api.js';
+import { initSpectrumPicker } from '../color-picker-logic.js';
 
 export function initSystemSettings() {
     const btnSave = document.getElementById('btn-save-system-settings');
-    const inputAppName = document.getElementById('sys-app-name');
-    const inputPrimaryColor = document.getElementById('sys-primary-color');
-    const colorValueDisplay = document.getElementById('sys-color-value');
-    
-    // Custom Picker elements
+    if (btnSave) {
+        btnSave.onclick = saveSystemSettings;
+    }
+
+    // Custom Color Picker logic
     const colorTrigger = document.getElementById('sys-color-trigger');
     const colorDropdown = document.getElementById('sys-color-dropdown');
     const colorPreviewCircle = document.getElementById('sys-color-preview-circle');
-    const swatches = document.querySelectorAll('.color-swatch');
-    
-    // Logo/Favicon Triggers (CSP Friendly)
-    const btnLogoTrigger = document.getElementById('btn-sys-logo-trigger');
-    const btnFaviconTrigger = document.getElementById('btn-sys-favicon-trigger');
-    const logoUpload = document.getElementById('sys-logo-upload');
-    const faviconUpload = document.getElementById('sys-favicon-upload');
+    const colorValueDisplay = document.getElementById('sys-color-value');
+    const colorInput = document.getElementById('sys-primary-color');
+    const swatches = colorDropdown ? colorDropdown.querySelectorAll('.color-swatch') : [];
 
-    if (btnLogoTrigger && logoUpload) {
-        btnLogoTrigger.onclick = () => logoUpload.click();
-    }
-    if (btnFaviconTrigger && faviconUpload) {
-        btnFaviconTrigger.onclick = () => faviconUpload.click();
-    }
+    const updateColorPreview = (color) => {
+        if (!/^#(?:[0-9a-fA-F]{3}){1,2}$/.test(color)) return;
+        if (colorValueDisplay) colorValueDisplay.innerText = color;
+        if (colorPreviewCircle) colorPreviewCircle.style.backgroundColor = color;
+        if (colorInput) colorInput.value = color;
+        
+        swatches.forEach(s => {
+            if (s.dataset.color) {
+                s.classList.toggle('active', s.dataset.color.toLowerCase() === color.toLowerCase());
+            }
+        });
+        
+        // Update document theme colors immediately for preview
+        document.documentElement.style.setProperty('--primary-color', color);
+        const rgb = hexToRgb(color);
+        if (rgb) {
+            document.documentElement.style.setProperty('--primary-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`);
+        }
+    };
 
-    // Max Request Size Sync
-    const maxRequestSizeInput = document.getElementById('sys-max-request-size');
-    const maxRequestSizeRange = document.getElementById('sys-max-request-size-range');
-    const maxSizeBadge = document.getElementById('max-size-badge');
-
-    if (maxRequestSizeInput && maxRequestSizeRange) {
-        maxRequestSizeInput.oninput = (e) => {
-            const val = e.target.value;
-            maxRequestSizeRange.value = val;
-            if (maxSizeBadge) maxSizeBadge.innerText = `${val} MB`;
-        };
-        maxRequestSizeRange.oninput = (e) => {
-            const val = e.target.value;
-            maxRequestSizeInput.value = val;
-            if (maxSizeBadge) maxSizeBadge.innerText = `${val} MB`;
+    if (colorTrigger) {
+        colorTrigger.onclick = (e) => {
+            e.stopPropagation();
+            colorDropdown.classList.toggle('active');
         };
     }
 
-    // Logo Fallback Handler (CSP Friendly)
-    const mainLogo = document.getElementById('app-logo-main');
-    if (mainLogo) {
-        mainLogo.onerror = () => {
-            mainLogo.style.display = 'none';
-            const altName = document.getElementById('sidebar-app-name-alt');
-            if (altName) altName.style.display = 'block';
-        };
-    }
-    
-    if (!btnSave) return;
+    document.addEventListener('click', (e) => {
+        if (colorDropdown && !colorDropdown.contains(e.target) && !colorTrigger.contains(e.target)) {
+            colorDropdown.classList.remove('active');
+        }
+    });
 
-    // Force translations for new elements
+    // Swatches
+    swatches.forEach(swatch => {
+        swatch.onclick = (e) => {
+            const color = swatch.dataset.color;
+            if (color) {
+                updateColorPreview(color);
+                colorDropdown.classList.remove('active');
+            }
+        };
+    });
+
+    // Custom Spectrum Picker logic
+    initSpectrumPicker({
+        canvasId: 'sys-spectrum-canvas',
+        cursorId: 'sys-spectrum-cursor',
+        hueSliderId: 'sys-hue-slider',
+        triggerId: 'sys-spectrum-trigger',
+        containerId: 'sys-spectrum-container',
+        onUpdate: (color) => {
+            updateColorPreview(color);
+        }
+    });
+
+    // Ambient Glow Preview (Dual Theme)
+    const glowToggle = document.getElementById('sys-bg-glow-enabled');
+    const glowOpacityLight = document.getElementById('sys-bg-glow-opacity-light');
+    const glowOpacityDark = document.getElementById('sys-bg-glow-opacity-dark');
+    const glowBadgeLight = document.getElementById('sys-glow-opacity-light-badge');
+    const glowBadgeDark = document.getElementById('sys-glow-opacity-dark-badge');
+    const bgGlowEl = document.querySelector('.bg-glow');
+
+    if (glowToggle && bgGlowEl) {
+        const updateGlow = () => {
+            const enabled = glowToggle.checked;
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+            const opacityLight = glowOpacityLight.value;
+            const opacityDark = glowOpacityDark.value;
+            
+            bgGlowEl.style.display = enabled ? 'block' : 'none';
+            
+            // Apply only to current theme for preview
+            const targetOpacity = currentTheme === 'light' ? opacityLight : opacityDark;
+            document.documentElement.style.setProperty('--bg-glow-opacity', targetOpacity);
+            
+            if (glowBadgeLight) glowBadgeLight.innerText = `${Math.round(opacityLight * 100)}%`;
+            if (glowBadgeDark) glowBadgeDark.innerText = `${Math.round(opacityDark * 100)}%`;
+        };
+
+        glowToggle.onchange = updateGlow;
+        if (glowOpacityLight) glowOpacityLight.oninput = updateGlow;
+        if (glowOpacityDark) glowOpacityDark.oninput = updateGlow;
+    }
+
+    // Force translations and icons for new elements
     setTimeout(() => {
         i18n.updatePage();
+        if (window.lucide) window.lucide.createIcons();
     }, 100);
 
     const hexToRgb = (hex) => {
@@ -72,250 +119,148 @@ export function initSystemSettings() {
         } : null;
     };
 
-    const updateColorPreview = (color) => {
-        if (!/^#(?:[0-9a-fA-F]{3}){1,2}$/.test(color)) return;
-        
-        const rgb = hexToRgb(color);
-        if (colorValueDisplay) colorValueDisplay.innerText = color;
-        if (colorPreviewCircle) colorPreviewCircle.style.backgroundColor = color;
-        if (inputPrimaryColor) inputPrimaryColor.value = color;
-        
-        document.documentElement.style.setProperty('--primary-color', color, 'important');
-        if (rgb) {
-            document.documentElement.style.setProperty('--primary-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`, 'important');
-        }
-        
-        // Mark active swatch
-        swatches.forEach(s => {
-            s.classList.toggle('active', s.dataset.color.toLowerCase() === color.toLowerCase());
-        });
-    };
-
-    // Toggle Dropdown
-    if (colorTrigger) {
-        colorTrigger.onclick = (e) => {
-            e.stopPropagation();
-            colorDropdown.classList.toggle('active');
-        };
-    }
-
-    // Close on click outside
-    document.addEventListener('click', (e) => {
-        if (colorDropdown && !colorDropdown.contains(e.target) && !colorTrigger.contains(e.target)) {
-            colorDropdown.classList.remove('active');
-        }
-    });
-
-    // Swatches
-    swatches.forEach(swatch => {
-        swatch.onclick = (e) => {
-            const color = swatch.dataset.color;
-            updateColorPreview(color);
-            colorDropdown.classList.remove('active');
-        };
-    });
-
     // File Upload Handlers (Uses variables defined above)
     let pendingLogo = null;
     let pendingFavicon = null;
-    
-    const handleFilePreview = (input, type) => {
-        const file = input.files[0];
-        if (!file) return;
 
-        if (type === 'logo') pendingLogo = file;
-        else pendingFavicon = file;
+    const logoUpload = document.getElementById('sys-logo-upload');
+    const logoTrigger = document.getElementById('btn-sys-logo-trigger');
+    const logoPreview = document.getElementById('sys-logo-preview');
+    const logoPlaceholder = document.getElementById('logo-placeholder');
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            const previewId = type === 'logo' ? 'sys-logo-preview' : 'sys-favicon-preview';
-            const placeholderId = type === 'logo' ? 'logo-placeholder' : 'favicon-placeholder';
-            const previewEl = document.getElementById(previewId);
-            const placeholderEl = document.getElementById(placeholderId);
-            if (previewEl) {
-                previewEl.src = e.target.result;
-                previewEl.style.display = 'block';
+    if (logoTrigger && logoUpload) {
+        logoTrigger.onclick = () => logoUpload.click();
+        logoUpload.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                pendingLogo = file;
+                const reader = new FileReader();
+                reader.onload = (re) => {
+                    logoPreview.src = re.target.result;
+                    logoPreview.style.display = 'block';
+                    if (logoPlaceholder) logoPlaceholder.style.display = 'none';
+                };
+                reader.readAsDataURL(file);
             }
-            if (placeholderEl) {
-                placeholderEl.style.display = 'none';
-            }
-        };
-        reader.readAsDataURL(file);
-    };
-
-    const uploadAsset = async (file, type) => {
-        const formData = new FormData();
-        formData.append('file', file);
-
-        try {
-            const res = await fetch(`${API.SYSTEM_UPLOAD_ASSET}?type=${type}`, {
-                method: 'POST',
-                body: formData
-            });
-
-            if (res.ok) {
-                const data = await res.json();
-                return data.path;
-            } else {
-                const data = await res.json();
-                throw new Error(data.detail || "Upload failed");
-            }
-        } catch (err) {
-            console.error(err);
-            throw err;
-        }
-    };
-
-    if (logoUpload) logoUpload.onchange = () => handleFilePreview(logoUpload, 'logo');
-    if (faviconUpload) faviconUpload.onchange = () => handleFilePreview(faviconUpload, 'favicon');
-
-    if (inputPrimaryColor) {
-        inputPrimaryColor.oninput = (e) => {
-            let color = e.target.value;
-            if (!color.startsWith('#')) color = '#' + color;
-            updateColorPreview(color);
         };
     }
 
-    btnSave.onclick = async () => {
-        const app_name = inputAppName.value.trim();
-        const primary_color = inputPrimaryColor.value;
-        const use_logo = document.getElementById('sys-use-logo').checked;
-        
-        // Get clean paths (no ?v=)
-        const getCleanPath = (id) => {
-            const el = document.getElementById(id);
-            if (!el) return '';
-            const p = el.value || el.dataset.currentPath || '';
-            return p.includes('?') ? p.split('?')[0] : p;
-        };
+    const faviconUpload = document.getElementById('sys-favicon-upload');
+    const faviconTrigger = document.getElementById('btn-sys-favicon-trigger');
+    const faviconPreview = document.getElementById('sys-favicon-preview');
+    const faviconPlaceholder = document.getElementById('favicon-placeholder');
 
-        let logo_path = getCleanPath('sys-logo-path');
-        let favicon_path = getCleanPath('sys-favicon-path');
-        
-        toast.info(i18n.t('sys_saving') || "Saving...", 2000);
-
-        try {
-            if (pendingLogo) {
-                logo_path = await uploadAsset(pendingLogo, 'logo');
-                pendingLogo = null;
+    if (faviconTrigger && faviconUpload) {
+        faviconTrigger.onclick = () => faviconUpload.click();
+        faviconUpload.onchange = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                pendingFavicon = file;
+                const reader = new FileReader();
+                reader.onload = (re) => {
+                    faviconPreview.src = re.target.result;
+                    faviconPreview.style.display = 'block';
+                    if (faviconPlaceholder) faviconPlaceholder.style.display = 'none';
+                };
+                reader.readAsDataURL(file);
             }
-            if (pendingFavicon) {
-                favicon_path = await uploadAsset(pendingFavicon, 'favicon');
-                pendingFavicon = null;
-            }
-        } catch (err) {
-            return toast.error("Asset upload failed: " + err.message);
-        }
-        const getLimit = (key) => {
-            const num = document.getElementById(`sys-limit-${key}-num`).value;
-            const period = document.getElementById(`sys-limit-${key}-period`).value;
-            return `${num}/${period}`;
         };
+    }
+}
 
-        const security_limits = {
-            login: getLimit('login'),
-            "2fa_verify": getLimit('2fa-verify'),
-            change_password: getLimit('change-password'),
-            file_ops: getLimit('file-ops'),
-            search: getLimit('search'),
-            create_user: getLimit('create-user')
-        };
+async function saveSystemSettings() {
+    const btn = document.getElementById('btn-save-system-settings');
+    const appName = document.getElementById('sys-app-name').value;
+    const primaryColor = document.getElementById('sys-primary-color').value;
+    const useLogo = document.getElementById('sys-use-logo').checked;
+    
+    // Limits
+    const limits = {};
+    ['login', '2fa-verify', 'change-password', 'file-ops', 'search', 'create-user'].forEach(key => {
+        const num = document.getElementById(`sys-limit-${key}-num`).value;
+        const period = document.getElementById(`sys-limit-${key}-period`).value;
+        limits[key.replace(/-/g, '_')] = `${num}/${period}`;
+    });
 
-        if (!app_name) return toast.warn(i18n.t('sys_name_empty'));
+    const maxRequestSize = document.getElementById('sys-max-request-size').value;
 
-        try {
-            const res = await fetch(API.SETTINGS, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    app_name, 
-                    primary_color, 
-                    use_logo, 
-                    logo_path,
-                    favicon_path,
-                    max_request_size_mb: parseInt(document.getElementById('sys-max-request-size').value || 10),
-                    security_limits
-                })
-            });
-
-            if (res.ok) {
-                toast.success(i18n.t('sys_updated_success'));
-                
-                // Update title immediately
-                document.title = app_name;
-                
-                // Update sidebar branding
-                ['sidebar-app-name', 'sidebar-app-name-alt', 'sidebar-app-name-simple'].forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.innerText = app_name;
-                });
-                
-                // Update CSS variables
-                const rgb = hexToRgb(primary_color);
-                document.documentElement.style.setProperty('--primary-color', primary_color, 'important');
-                if (rgb) {
-                    document.documentElement.style.setProperty('--primary-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`, 'important');
-                }
-
-                // Update all logo/favicon images on the page to bypass cache
-                const version = Date.now();
-                const fullLogoPath = logo_path ? (logo_path.includes('?') ? logo_path.split('?')[0] : logo_path) : '';
-                const fullFaviconPath = favicon_path ? (favicon_path.includes('?') ? favicon_path.split('?')[0] : favicon_path) : '';
-
-                document.querySelectorAll('.app-logo, #sys-logo-preview').forEach(img => {
-                    if (fullLogoPath) {
-                        img.src = `${fullLogoPath}?v=${version}`;
-                        img.style.display = 'block';
-                    } else {
-                        img.style.display = 'none';
-                    }
-                });
-
-                document.querySelectorAll('#sys-favicon-preview').forEach(img => {
-                    if (fullFaviconPath) {
-                        img.src = `${fullFaviconPath}?v=${version}`;
-                        img.style.display = 'block';
-                    } else {
-                        img.style.display = 'none';
-                    }
-                });
-
-                // Update hidden inputs so subsequent saves don't use old data
-                const logoInput = document.getElementById('sys-logo-path');
-                const faviconInput = document.getElementById('sys-favicon-path');
-                if (logoInput) {
-                    logoInput.value = fullLogoPath;
-                    logoInput.dataset.currentPath = fullLogoPath;
-                }
-                if (faviconInput) {
-                    faviconInput.value = fullFaviconPath;
-                    faviconInput.dataset.currentPath = fullFaviconPath;
-                }
-                
-                // Hide placeholders if new assets are present
-                const logoPlaceholder = document.getElementById('logo-placeholder');
-                const faviconPlaceholder = document.getElementById('favicon-placeholder');
-                if (logoPlaceholder && fullLogoPath) logoPlaceholder.style.display = 'none';
-                if (faviconPlaceholder && fullFaviconPath) faviconPlaceholder.style.display = 'none';
-                
-                // Show/hide branding container in sidebar
-                const branding = document.querySelector('.app-branding');
-                const simpleName = document.getElementById('sidebar-app-name-simple');
-                if (branding) branding.style.display = use_logo ? 'flex' : 'none';
-                if (simpleName) simpleName.style.display = use_logo ? 'none' : 'block';
-            } else {
-                const data = await res.json();
-                let errMsg = i18n.t('sys_save_failed');
-                if (data.detail && Array.isArray(data.detail)) {
-                    errMsg = data.detail.map(e => e.msg).join(', ');
-                } else if (data.detail) {
-                    errMsg = data.detail;
-                }
-                toast.error(errMsg);
-            }
-        } catch (err) {
-            toast.error(i18n.t('sys_network_error'));
-        }
+    const data = {
+        app_name: appName,
+        primary_color: primaryColor,
+        use_logo: useLogo,
+        security_limits: limits,
+        max_request_size_mb: parseInt(maxRequestSize)
     };
+
+    const originalText = btn.innerText;
+    const { t } = i18n;
+    btn.disabled = true;
+    btn.innerText = t('sys_saving', 'Saving...');
+
+    try {
+        // 1. Handle file uploads first if any
+        let logoPath = document.getElementById('sys-logo-preview')?.src || '';
+        if (logoPath.startsWith('data:')) {
+            const logoFile = document.getElementById('sys-logo-upload').files[0];
+            const formData = new FormData();
+            formData.append('file', logoFile);
+            const res = await fetch(`${API.SYSTEM_UPLOAD_ASSET}?type=logo`, { method: 'POST', body: formData });
+            if (res.ok) {
+                const result = await res.json();
+                logoPath = result.path;
+            }
+        } else {
+            logoPath = logoPath.replace(window.location.origin, '');
+        }
+
+        let faviconPath = document.getElementById('sys-favicon-preview')?.src || '';
+        if (faviconPath.startsWith('data:')) {
+            const faviconFile = document.getElementById('sys-favicon-upload').files[0];
+            const formData = new FormData();
+            formData.append('file', faviconFile);
+            const res = await fetch(`${API.SYSTEM_UPLOAD_ASSET}?type=favicon`, { method: 'POST', body: formData });
+            if (res.ok) {
+                const result = await res.json();
+                faviconPath = result.path;
+            }
+        } else {
+            faviconPath = faviconPath.replace(window.location.origin, '');
+        }
+
+        // 2. Save core settings
+        const data = {
+            app_name: appName,
+            primary_color: primaryColor,
+            use_logo: useLogo,
+            logo_path: logoPath,
+            favicon_path: faviconPath,
+            bg_glow_enabled: document.getElementById('sys-bg-glow-enabled').checked,
+            bg_glow_opacity_light: parseFloat(document.getElementById('sys-bg-glow-opacity-light').value),
+            bg_glow_opacity_dark: parseFloat(document.getElementById('sys-bg-glow-opacity-dark').value),
+            security_limits: limits,
+            max_request_size_mb: parseInt(maxRequestSize)
+        };
+
+        const res = await fetch(API.SETTINGS, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        if (!res.ok) {
+            const errData = await res.json();
+            throw new Error(errData.detail || t('sys_updated_error', 'Failed to save settings'));
+        }
+
+        toast.success(t('sys_updated_success', 'System settings saved'));
+        
+        // Refresh page to apply branding changes
+        setTimeout(() => window.location.reload(), 1000);
+
+    } catch (err) {
+        toast.error(err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = originalText;
+    }
 }

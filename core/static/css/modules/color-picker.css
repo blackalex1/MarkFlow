@@ -40,11 +40,11 @@
 
 .color-dropdown {
     position: absolute;
-    bottom: calc(100% + 10px);
+    top: calc(100% + 5px);
     left: 0;
     width: 240px;
-    background: rgba(30, 41, 59, 0.95);
-    backdrop-filter: blur(16px);
+    background: var(--bg-card);
+    backdrop-filter: blur(25px);
     border: 1px solid var(--border-color);
     border-radius: 12px;
     padding: 16px;
@@ -88,6 +88,23 @@
     transform: scale(1.1);
 }
 
+.rainbow-swatch {
+    background: conic-gradient(from 0deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #8b00ff, #ff0000);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.rainbow-swatch i {
+    color: #fff !important;
+    width: 16px;
+    height: 16px;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    pointer-events: none;
+}
+
 .custom-hex-input {
     margin-top: 12px;
     border-top: 1px solid var(--border-color);
@@ -113,4 +130,87 @@
     font-size: 12px !important;
     padding: 0 8px !important;
     border-radius: 6px !important;
+}
+
+.spectrum-container {
+    margin-top: 15px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 15px;
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.spectrum-container.active {
+    display: flex;
+}
+
+.canvas-wrapper {
+    position: relative;
+    width: 100%;
+    height: 120px;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: crosshair;
+}
+
+.spectrum-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+}
+
+.spectrum-cursor {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    left: 0;
+    top: 0;
+}
+
+.hue-slider-container {
+    width: 100%;
+    position: relative;
+    height: 10px;
+    margin: 10px 0;
+}
+
+.hue-slider-track {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%);
+    border-radius: 5px;
+    z-index: 1;
+}
+
+.hue-slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 100%;
+    background: transparent !important;
+    outline: none;
+    cursor: pointer;
+    position: relative;
+    z-index: 2;
+    margin: 0;
+    display: block;
+}
+
+.hue-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #fff;
+    border: 2px solid var(--primary-color);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }

@@ -42,8 +42,8 @@ export function initSearch() {
 
         // Navigation in Quick Switcher
         if (!ui.qsModal.classList.contains('hidden')) {
-            const results = ui.qsResults.querySelectorAll('.search-result');
-            const active = ui.qsResults.querySelector('.search-result.active');
+            const results = ui.qsResults.querySelectorAll('.search-item');
+            const active = ui.qsResults.querySelector('.search-item.active');
             let index = Array.from(results).indexOf(active);
 
             if (e.key === 'ArrowDown') {
@@ -66,6 +66,7 @@ export function initSearch() {
                 }
             }
         }
+
     });
 
     // Close results when clicking outside
@@ -103,14 +104,31 @@ async function performSearch(q, container) {
         const data = await res.json();
         
         if (data && data.results && data.results.length > 0) {
-            container.innerHTML = data.results.map((r, idx) => `
-                <div class="search-result ${idx === 0 && container === ui.qsResults ? 'active' : ''}" data-path="${r.path}">
-                    <div class="search-item-name">${escapeHTML(r.name)}</div>
-                    <div class="search-item-snippet">${DOMPurify.sanitize(r.snippet)}</div>
+            container.innerHTML = data.results.map((r, idx) => {
+                // Highlight matches in snippet if server didn't
+                let snippet = r.snippet;
+                if (!snippet.includes('<b>') && !snippet.includes('<mark>')) {
+                    const regex = new RegExp(`(${q})`, 'gi');
+                    snippet = snippet.replace(regex, '<mark>$1</mark>');
+                }
+
+                return `
+                <div class="search-item ${idx === 0 && container === ui.qsResults ? 'active' : ''}" data-path="${r.path}">
+                    <div class="search-item-icon">
+                        <i data-lucide="file-text"></i>
+                    </div>
+                    <div class="search-item-content">
+                        <div class="search-item-title">${escapeHTML(r.name)}</div>
+                        <div class="search-item-snippet">${DOMPurify.sanitize(snippet)}</div>
+                    </div>
                 </div>
-            `).join('');
+            `;
+            }).join('');
             
-            container.querySelectorAll('.search-result').forEach(el => {
+            // Re-initialize icons for the new elements
+            if (window.lucide) window.lucide.createIcons();
+            
+            container.querySelectorAll('.search-item').forEach(el => {
                 el.onclick = () => {
                     loadFileContent(el.dataset.path);
                     if (container === ui.qsResults) {
@@ -123,8 +141,15 @@ async function performSearch(q, container) {
             });
             container.classList.remove('hidden');
         } else {
-            container.innerHTML = '<div class="search-no-results">Ничего не найдено</div>';
+            container.innerHTML = `
+                <div class="search-no-results">
+                    <i data-lucide="search-x"></i>
+                    <span>Ничего не найдено</span>
+                </div>
+            `;
+            if (window.lucide) window.lucide.createIcons();
             container.classList.remove('hidden');
         }
     } catch (err) { console.error(err); }
 }
+

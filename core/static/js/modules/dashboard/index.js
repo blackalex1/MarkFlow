@@ -32,6 +32,9 @@ export function initDashboardListeners() {
             loadSyncConfig();
             loadGlobalSSHKey();
         }
+
+        // Ensure all new elements are translated
+        if (window.i18n) window.i18n.updatePage();
     };
 
     // Tab Switching Logic

@@ -30,13 +30,10 @@ export function t(key) {
     return translations[currentLang][key] || key;
 }
 
-// Expose to window for dynamic JS templates
-window.i18n = { t, getLang, setLang };
-
-export function updatePage() {
-    document.querySelectorAll('[data-t]').forEach(el => {
+export function updatePage(root = document) {
+    root.querySelectorAll('[data-t]').forEach(el => {
         const key = el.dataset.t;
-        if (el.tagName === 'INPUT' && el.placeholder) {
+        if (el.tagName === 'INPUT' && (el.type === 'text' || el.type === 'password' || el.type === 'search') && el.placeholder) {
             el.placeholder = t(key);
         } else if (key.endsWith('_html')) {
             el.innerHTML = t(key);
@@ -46,7 +43,11 @@ export function updatePage() {
     });
     
     // Update titles for icon buttons
-    document.querySelectorAll('[data-t-title]').forEach(el => {
+    root.querySelectorAll('[data-t-title]').forEach(el => {
         el.title = t(el.dataset.tTitle);
     });
 }
+
+// Expose to window for dynamic JS templates
+window.i18n = { t, getLang, setLang, updatePage };
+

@@ -21,6 +21,8 @@
     /* Effects */
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --status-glow-opacity: 0.6;
+    --bg-glow-opacity: var(--bg-glow-opacity-dark, 0.05);
 }
 
 [data-theme="light"] {
@@ -34,5 +36,7 @@
     --text-heading: #0f172a;
     --border-color: #e2e8f0;
     --bg-code: #f1f5f9;
-    --accent-glow: rgba(var(--primary-rgb), 0.1);
+    --accent-glow: rgba(79, 70, 229, 0.2);
+    --status-glow-opacity: 0.8;
+    --bg-glow-opacity: var(--bg-glow-opacity-light, 0.15);
 }

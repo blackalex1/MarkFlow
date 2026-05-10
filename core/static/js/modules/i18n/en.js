@@ -295,4 +295,8 @@ export const en = {
     status_created: "Status created successfully",
     status_updated: "Status settings saved",
     status_deleted: "Status deleted successfully",
+    status_col_preview: "Preview",
+    status_col_name: "Name",
+    status_col_color: "Color",
+    status_col_actions: "Actions",
 };

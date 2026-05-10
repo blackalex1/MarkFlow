@@ -17,11 +17,14 @@ export async function loadStatuses() {
                 acc[s.slug] = s;
                 return acc;
             }, {});
+            return data;
         }
     } catch (e) {
         console.error("Failed to load statuses:", e);
     }
+    return [];
 }
+
 
 /**
  * Returns color for a status slug, or default gray

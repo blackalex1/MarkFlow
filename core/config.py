@@ -16,10 +16,13 @@ def load_settings():
     
     defaults = {
         "app_name": "MarkFlow",
-        "use_logo": False,
+        "use_logo": True,
         "logo_path": "/config/logo.png",
         "favicon_path": "/config/favicon.ico",
         "primary_color": "#6366f1",
+        "bg_glow_enabled": True,
+        "bg_glow_opacity_light": 0.15,
+        "bg_glow_opacity_dark": 0.05,
         "max_request_size_mb": 10,
         "security_limits": {
             "login": "5/minute",

@@ -10,7 +10,7 @@ async def add_security_headers(request: Request, call_next):
 
     from core.config import SETTINGS
     # DoS Protection: Limit maximum request size
-    max_mb = SETTINGS.get("max_request_size_mb", 10)
+    max_mb = int(SETTINGS.get("max_request_size_mb", 10))
     MAX_SIZE = max_mb * 1024 * 1024
     content_length = request.headers.get("content-length")
     if content_length and int(content_length) > MAX_SIZE:

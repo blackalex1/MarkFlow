@@ -4,10 +4,11 @@ services:
       context: ..
       dockerfile: deploy/Dockerfile
     container_name: markflow
+    env_file:
+      - ../.env
     expose:
       - "8000"
     volumes:
-      - ../app.db:/app/app.db
       - ../markdown_docs:/app/markdown_docs
       - ../config:/app/config
     networks:

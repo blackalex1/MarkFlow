@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 {% include 'components/head.html' %}
-<body>
-    <div class="bg-glow"></div>
+<body style="--bg-glow-opacity-light: {{ config.bg_glow_opacity_light if config.bg_glow_opacity_light is defined else 0.15 }}; --bg-glow-opacity-dark: {{ config.bg_glow_opacity_dark if config.bg_glow_opacity_dark is defined else 0.05 }};">
+    <div class="bg-glow" style="display: {{ 'block' if config.bg_glow_enabled else 'none' }};"></div>
     
     <!-- Mobile Navigation Toggle -->
     <button class="mobile-nav-toggle" id="mobile-toggle">

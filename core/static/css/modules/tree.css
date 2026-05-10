@@ -5,14 +5,21 @@
     padding-right: 8px;
 }
 
-.file-tree::-webkit-scrollbar { width: 4px; }
-.file-tree::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
+.file-tree::-webkit-scrollbar {
+    width: 4px;
+}
+
+.file-tree::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 10px;
+}
 
 .tree-node {
     margin-bottom: 2px;
 }
 
-.file-item, .folder-header {
+.file-item,
+.folder-header {
     padding: 6px 10px;
     border-radius: 6px;
     cursor: pointer;
@@ -25,7 +32,8 @@
     user-select: none;
 }
 
-.file-item:hover, .folder-header:hover {
+.file-item:hover,
+.folder-header:hover {
     background: var(--accent-glow);
     color: var(--text-heading);
 }
@@ -51,7 +59,7 @@
     color: var(--text-heading);
 }
 
-.folder-item.open > .chevron {
+.folder-item.open>.chevron {
     transform: rotate(90deg);
     color: var(--primary-color);
 }
@@ -74,25 +82,26 @@
     height: 7px;
     border-radius: 50%;
     flex-shrink: 0;
-    margin-right: -2px; /* Pull slightly closer to the icon */
+    margin-right: -2px;
+    /* Pull slightly closer to the icon */
 }
 
-.status-dot.public { 
-    background-color: #10b981; 
-    box-shadow: 0 0 6px rgba(16, 185, 129, 0.5); 
+.status-dot.public {
+    background-color: #10b981;
+    box-shadow: 0 0 6px rgba(16, 185, 129, var(--status-glow-opacity));
 }
 
-.status-dot.private { 
-    background-color: #f59e0b; 
-    box-shadow: 0 0 6px rgba(245, 158, 11, 0.5); 
+.status-dot.private {
+    background-color: #f59e0b;
+    box-shadow: 0 0 6px rgba(245, 158, 11, var(--status-glow-opacity));
 }
 
-.status-dot.draft { 
-    background-color: #94a3b8; 
-    box-shadow: 0 0 6px rgba(148, 163, 184, 0.5); 
+.status-dot.draft {
+    background-color: #94a3b8;
+    box-shadow: 0 0 6px rgba(148, 163, 184, var(--status-glow-opacity));
 }
 
-.status-dot.in_progress { 
-    background-color: #3b82f6; 
-    box-shadow: 0 0 6px rgba(59, 130, 246, 0.5); 
+.status-dot.in_progress {
+    background-color: #3b82f6;
+    box-shadow: 0 0 6px rgba(59, 130, 246, var(--status-glow-opacity));
 }

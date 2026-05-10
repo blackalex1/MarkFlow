@@ -45,6 +45,9 @@ class SystemSettings(BaseModel):
     use_logo: bool
     logo_path: str
     favicon_path: str
+    bg_glow_enabled: bool = True
+    bg_glow_opacity_light: float = Field(default=0.15, ge=0, le=1.0)
+    bg_glow_opacity_dark: float = Field(default=0.05, ge=0, le=1.0)
     max_request_size_mb: int = Field(default=10, ge=1, le=500)
     security_limits: SecurityLimits
 
@@ -70,6 +73,9 @@ def update_system_settings(request: Request, data: SystemSettings, user=Depends(
         set_setting("use_logo", "true" if data.use_logo else "false")
         set_setting("logo_path", data.logo_path)
         set_setting("favicon_path", data.favicon_path)
+        set_setting("bg_glow_enabled", "true" if data.bg_glow_enabled else "false")
+        set_setting("bg_glow_opacity_light", str(data.bg_glow_opacity_light))
+        set_setting("bg_glow_opacity_dark", str(data.bg_glow_opacity_dark))
         set_setting("max_request_size_mb", str(data.max_request_size_mb))
         
         # Convert Pydantic model to dict, respecting aliases
@@ -83,6 +89,9 @@ def update_system_settings(request: Request, data: SystemSettings, user=Depends(
             "use_logo": data.use_logo,
             "logo_path": data.logo_path,
             "favicon_path": data.favicon_path,
+            "bg_glow_enabled": data.bg_glow_enabled,
+            "bg_glow_opacity_light": data.bg_glow_opacity_light,
+            "bg_glow_opacity_dark": data.bg_glow_opacity_dark,
             "max_request_size_mb": data.max_request_size_mb,
             "security_limits": limits_dict
         })
