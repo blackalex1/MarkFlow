@@ -120,7 +120,10 @@ def _sync_repository_internal(active_repo: dict, username: str, force: bool = Fa
             tmp_path = tmp.name
         
         if os.name != 'nt':
-            os.chmod(tmp_path, 0o600)
+            os.chmod(tmp_path, 0o400)
+            
+        print(f"DEBUG: Key sanitized. Length: {len(priv_key)}. Start: {priv_key[:20]}... End: ...{priv_key[-20:]}")
+        
         safe_tmp_path = tmp_path.replace("\\", "/")
         quoted_path = shlex.quote(safe_tmp_path)
         # Ensure config dir exists for known_hosts
@@ -305,11 +308,20 @@ def get_remote_branches_list(repo_data: dict):
         clean_path = re.sub(r'\.git$', '', path).strip('/')
         url = f"git@github.com:{clean_path}.git"
 
-    priv_key = repo_data['ssh_private_key']
+    priv_key = repo_data.get('ssh_private_key')
     if not priv_key:
         from core.database import get_setting
         priv_key = get_setting('git_ssh_private_key')
-        
+    
+    if priv_key:
+        try:
+            from core.db.crypto import decrypt_value
+            priv_key = decrypt_value(priv_key)
+        except Exception as e:
+            print(f"DEBUG: Decryption failed in branches list: {e}")
+            # If it's already plaintext (for some reason), we'll keep it
+            pass
+            
     if not priv_key:
         raise Exception("Neither repository-specific nor global SSH private key found.")
     
@@ -334,7 +346,10 @@ def get_remote_branches_list(repo_data: dict):
         tmp_path = tmp.name
     
     if os.name != 'nt':
-        os.chmod(tmp_path, 0o600)
+        os.chmod(tmp_path, 0o400)
+        
+    print(f"DEBUG: Key sanitized (branches). Length: {len(priv_key)}. Start: {priv_key[:20]}... End: ...{priv_key[-20:]}")
+    
     safe_ssh_path = tmp_path.replace("\\", "/")
     quoted_path = shlex.quote(safe_ssh_path)
     # Ensure config dir exists for known_hosts
