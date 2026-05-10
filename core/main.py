@@ -115,7 +115,11 @@ from fastapi.responses import FileResponse
 @app.get("/config/{file_path:path}")
 async def serve_config(file_path: str):
     # Security: whitelist allowed assets in /config
-    allowed_assets = ["logo.png", "favicon.ico", "dark_logo.png", "custom.css"]
+    allowed_assets = [
+        "logo.png", "logo.jpg", "logo.jpeg", "logo.svg",
+        "favicon.ico", "favicon.png", "favicon.svg",
+        "dark_logo.png", "custom.css"
+    ]
     if file_path not in allowed_assets:
         raise HTTPException(status_code=403, detail="Access denied")
     
