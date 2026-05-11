@@ -34,6 +34,7 @@ certbot/
 markdown_docs/
 core/static/vendor/
 core/scratch/
+markdown_docs/Argument_Documentation.md
 
 # 7. Allow Internal Templates
 !core/config_example/

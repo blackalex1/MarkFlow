@@ -129,8 +129,9 @@ export const ui = {
     
     // Layout
     sidebar: document.getElementById('sidebar'),
+    sidebarHeader: document.querySelector('.sidebar-header'),
     mobileToggle: document.getElementById('mobile-toggle'),
-    sidebarTitle: document.getElementById('sidebar-app-name-simple')
+    sidebarTitle: document.querySelector('.app-branding, #sidebar-app-name-simple')
 };
 
 export const state = {

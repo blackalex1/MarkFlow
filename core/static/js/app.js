@@ -131,7 +131,10 @@ window.addEventListener('auth-changed', () => {
 
 // Actions
 if (ui.btnDelete) ui.btnDelete.onclick = viewer.deleteCurrentFile;
-if (ui.sidebarTitle) ui.sidebarTitle.onclick = viewer.renderWelcomePage;
+if (ui.sidebarHeader) {
+    ui.sidebarHeader.style.cursor = 'pointer';
+    ui.sidebarHeader.onclick = viewer.renderWelcomePage;
+}
 
 if (ui.btnLangToggle) {
     ui.btnLangToggle.onclick = () => {
