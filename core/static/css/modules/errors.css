@@ -17,15 +17,15 @@
 .error-icon-wrapper {
     width: 120px;
     height: 120px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
     border-radius: 30px;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-bottom: 30px;
     position: relative;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    box-shadow: var(--shadow-lg);
 }
 
 .error-icon-wrapper i {
@@ -38,7 +38,7 @@
     font-family: 'Outfit', sans-serif;
     font-size: 80px;
     font-weight: 800;
-    background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.4) 100%);
+    background: linear-gradient(135deg, var(--text-heading) 0%, var(--text-muted) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     line-height: 1;
@@ -48,7 +48,7 @@
 .error-title {
     font-size: 24px;
     font-weight: 600;
-    color: #fff;
+    color: var(--text-heading);
     margin-bottom: 15px;
 }
 
@@ -80,7 +80,7 @@
 
 .error-btn-primary {
     background: var(--primary-color);
-    color: #000;
+    color: #fff;
     border: none;
 }
 
@@ -92,10 +92,11 @@
 .error-btn-outline {
     background: transparent;
     border: 1px solid var(--border-color);
-    color: #fff;
+    color: var(--text-main);
 }
 
 .error-btn-outline:hover {
-    background: rgba(255,255,255,0.05);
-    border-color: #fff;
+    background: var(--bg-card);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
 }
