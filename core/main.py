@@ -144,7 +144,8 @@ APP_VERSION = str(int(time.time()))
 templates.context_processors.append(lambda request: {
     "config": APP_CONFIG, 
     "app_version": APP_VERSION,
-    "csp_nonce": getattr(request.state, "csp_nonce", "")
+    "csp_nonce": getattr(request.state, "csp_nonce", ""),
+    "csrf_token": getattr(request.state, "csrf_token", "")
 })
 
 @app.get("/")

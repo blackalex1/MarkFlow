@@ -19,6 +19,12 @@ async def add_security_headers(request: Request, call_next):
             content={"detail": f"Request Entity Too Large: Max {max_mb}MB allowed. You can increase this in System Settings."}
         )
 
+    # CSRF Logic: Ensure token is available for templates even on first visit
+    csrf_token = request.cookies.get("csrf_token")
+    if not csrf_token:
+        csrf_token = secrets.token_urlsafe(32)
+    request.state.csrf_token = csrf_token
+
     # CSRF Protection for state-changing methods
     if request.method in ["POST", "PUT", "DELETE", "PATCH"]:
         origin = request.headers.get("origin")
@@ -48,9 +54,9 @@ async def add_security_headers(request: Request, call_next):
 
     response = await call_next(request)
     
-    # Ensure CSRF token exists
+    # Ensure CSRF token is set in cookies
     if not request.cookies.get("csrf_token"):
-        response.set_cookie(key="csrf_token", value=secrets.token_urlsafe(32), httponly=True, samesite="lax")
+        response.set_cookie(key="csrf_token", value=csrf_token, httponly=True, samesite="lax")
     
     # Modern Security Headers
     response.headers["X-Content-Type-Options"] = "nosniff"
