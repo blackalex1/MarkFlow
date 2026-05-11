@@ -29,6 +29,12 @@
     background: linear-gradient(135deg, var(--text-heading) 0%, var(--text-muted) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.sidebar-header h2:hover {
+    filter: brightness(1.2);
 }
 
 .sidebar-footer {

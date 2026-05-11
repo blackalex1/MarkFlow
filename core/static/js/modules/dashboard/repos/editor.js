@@ -14,7 +14,7 @@ export function initRepos() {
         ui.repoSyncStrategy.onchange = () => {
             const val = ui.repoSyncStrategy.value;
             if (ui.strategyDescription && ui.strategyInfoBox) {
-                ui.strategyDescription.textContent = t(`strategy_help_${val}`) || '';
+                ui.strategyDescription.textContent = t(`strategy_help_${val}`);
                 
                 const isForce = val === 'force';
                 // Dynamic styling for danger
@@ -49,9 +49,9 @@ export function initRepos() {
             const res = await fetch('/api/git/pubkey');
             const data = await res.json();
             if (data.pubkey) {
-                showKeyDrawer(data.pubkey, t('git_global_key_title', 'Global SSH Public Key'), t('git_global_key_desc', 'This is your common key for all repositories.'));
+                showKeyDrawer(data.pubkey, t('git_global_key_title'), t('git_global_key_desc'));
             } else {
-                toast.warn('Global key is not configured');
+                toast.warn(t('error_generic'));
             }
         };
     }
@@ -74,7 +74,7 @@ export function initRepos() {
     if (ui.btnRepoFetchBranches) {
         ui.btnRepoFetchBranches.onclick = async () => {
             const url = ui.repoUrl.value.trim();
-            if (!url) return toast.warn('Enter URL first');
+            if (!url) return toast.warn(t('warn_enter_url'));
             ui.btnRepoFetchBranches.disabled = true;
             try {
                 let fetchUrl = `/api/git/branches?url=${encodeURIComponent(url)}`;
@@ -91,9 +91,9 @@ export function initRepos() {
                         option.textContent = b;
                         ui.repoBranchSelect.appendChild(option);
                     });
-                    toast.success('Branches loaded');
+                    toast.success(t('toast_branches_loaded'));
                 } else {
-                    toast.error(data.detail || 'Failed to fetch branches');
+                    toast.error(data.detail || t('error_fetch_branches'));
                 }
             } finally {
                 ui.btnRepoFetchBranches.disabled = false;
@@ -132,7 +132,7 @@ export function initRepos() {
         ui.btnCopyGeneratedKey.onclick = () => {
             if (tempKeyPair.public) {
                 navigator.clipboard.writeText(tempKeyPair.public);
-                toast.success('Public key copied!');
+                toast.success(t('toast_pubkey_copied'));
             }
         };
     }
@@ -142,7 +142,7 @@ export function initRepos() {
         ui.btnAddRepo.onclick = () => {
             ui.repoEditorForm.classList.remove('hidden');
             ui.repoEditorForm.scrollIntoView({ behavior: 'smooth' });
-            document.getElementById('repo-editor-title').innerText = t('repo_add_title', 'Add New Repository');
+            document.getElementById('repo-editor-title').innerText = t('repo_add_title');
             ui.repoName.value = '';
             ui.repoUrl.value = '';
             ui.repoSlug.value = '';
@@ -158,7 +158,8 @@ export function initRepos() {
             
             ui.btnRepoGenUniqueKey.classList.remove('hidden');
             ui.btnRepoGenUniqueKey.disabled = false;
-            ui.btnRepoGenUniqueKey.innerText = t('git_repo_gen_unique', 'Generate Unique Key');
+            ui.btnRepoGenUniqueKey.innerText = t('git_repo_gen_unique');
+            if (ui.btnRepoManualKey) ui.btnRepoManualKey.classList.remove('hidden');
             
             ui.repoBranchSelect.innerHTML = '<option value="master">master</option><option value="main">main</option>';
             if (ui.repoAutoSyncInterval) ui.repoAutoSyncInterval.value = 30;
@@ -211,7 +212,7 @@ export async function editRepo(id) {
         if (repo) {
             ui.repoEditorForm.classList.remove('hidden');
             ui.repoEditorForm.scrollIntoView({ behavior: 'smooth' });
-            document.getElementById('repo-editor-title').innerText = t('repo_edit_title', 'Edit Repository');
+            document.getElementById('repo-editor-title').innerText = t('repo_edit_title');
             ui.repoName.value = repo.name;
             ui.repoUrl.value = repo.url;
             ui.repoSlug.value = repo.slug;
@@ -230,17 +231,18 @@ export async function editRepo(id) {
                 if (ui.repoKeyGenArea) ui.repoKeyGenArea.classList.add('hidden');
                 
                 if (ui.btnViewCurrentUniqueKey) {
-                    ui.btnViewCurrentUniqueKey.onclick = () => showKeyDrawer(repo.ssh_public_key, t('repo_view_key_title', 'Current Unique Key'), '');
+                    ui.btnViewCurrentUniqueKey.onclick = () => showKeyDrawer(repo.ssh_public_key, t('repo_view_key_title'), '');
                 }
                 if (ui.btnTriggerRegenKey) {
-                    ui.btnTriggerRegenKey.onclick = async () => {
-                        const confirmed = await window.confirmAction(
-                            t('repo_confirm_regen_title', 'Regenerate SSH Key'),
-                            t('repo_confirm_regen_msg', 'WARNING: This will replace the current SSH key. You will need to update it on GitHub. Continue?'),
-                            t('btn_confirm_gen', 'Regenerate'),
-                            t('btn_cancel', 'Cancel')
-                        );
-                        if (confirmed) createKeyPair();
+                    ui.btnTriggerRegenKey.onclick = () => {
+                        ui.repoCurrentKeyStatus.classList.add('hidden');
+                        ui.repoKeyGenArea.classList.remove('hidden');
+                        if (ui.btnRepoManualKey) ui.btnRepoManualKey.classList.remove('hidden');
+                        if (ui.btnRepoGenUniqueKey) {
+                            ui.btnRepoGenUniqueKey.classList.remove('hidden');
+                            ui.btnRepoGenUniqueKey.disabled = false;
+                            ui.btnRepoGenUniqueKey.innerText = t('git_repo_gen_unique');
+                        }
                     };
                 }
             } else {
@@ -319,7 +321,7 @@ async function saveRepo() {
         flatten_in_tree: ui.repoFlattenToggle ? ui.repoFlattenToggle.checked : false
     };
 
-    if (!data.name || !data.slug || !data.url) return toast.warn('Fill Name, Slug and URL');
+    if (!data.name || !data.slug || !data.url) return toast.warn(t('warn_fill_required'));
     
     // Safety check for Force strategy
     if (data.sync_strategy === 'force') {
@@ -343,7 +345,7 @@ async function saveRepo() {
         });
         
         if (res.ok) {
-            toast.success(id ? (t('toast_repo_updated', 'Repository updated')) : (t('toast_repo_added', 'Repository added')));
+            toast.success(id ? t('toast_repo_updated') : t('toast_repo_added'));
             ui.repoEditorForm.classList.add('hidden');
             
             const repoListContainer = document.getElementById('git-repos-list-container');
@@ -356,9 +358,9 @@ async function saveRepo() {
             resetTempKeyPair();
         } else {
             const err = await res.json();
-            toast.error(err.detail || 'Failed to save repository');
+            toast.error(err.detail || t('error_save_repo'));
         }
     } catch (err) {
-        toast.error('Network error while saving repository');
+        toast.error(t('error_network'));
     }
 }

@@ -73,7 +73,7 @@ def get_file_tree(request: Request):
                     })
         return nodes
 
-    return {"tree": build_tree(DOCS_DIR, is_root=True)}
+    return {"tree": build_tree(DOCS_DIR, is_root=True), "flattened_slugs": flattened_slugs}
 
 @router.get("/folder")
 @limiter.limit(SECURITY_LIMITS["file_ops"])
@@ -87,8 +87,13 @@ def get_folder_content(path: str, request: Request):
     full_path = get_safe_path(DOCS_DIR, path)
     
     if not os.path.isdir(full_path):
-        from fastapi import HTTPException
-        raise HTTPException(status_code=400, detail="Not a folder")
+        from .utils import resolve_flattened_path
+        alt_path = resolve_flattened_path(DOCS_DIR, path, request)
+        if alt_path and os.path.isdir(alt_path):
+            full_path = alt_path
+        else:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=400, detail="Not a folder")
         
     def has_markdown(p):
         for root, dirs, files in os.walk(p):
@@ -127,5 +132,6 @@ def get_folder_content(path: str, request: Request):
                     "public": public,
                     "status": status
                 })
-                
-    return {"name": os.path.basename(path) or "Root", "path": path, "items": nodes}
+    
+    actual_rel_path = os.path.relpath(full_path, DOCS_DIR).replace('\\', '/')
+    return {"name": os.path.basename(path) or "Root", "path": actual_rel_path, "items": nodes}

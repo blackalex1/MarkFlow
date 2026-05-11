@@ -122,7 +122,6 @@ def _sync_repository_internal(active_repo: dict, username: str, force: bool = Fa
         if os.name != 'nt':
             os.chmod(tmp_path, 0o400)
             
-        print(f"DEBUG: Key sanitized. Length: {len(priv_key)}. Start: {priv_key[:20]}... End: ...{priv_key[-20:]}")
         
         safe_tmp_path = tmp_path.replace("\\", "/")
         quoted_path = shlex.quote(safe_tmp_path)
@@ -348,7 +347,6 @@ def get_remote_branches_list(repo_data: dict):
     if os.name != 'nt':
         os.chmod(tmp_path, 0o400)
         
-    print(f"DEBUG: Key sanitized (branches). Length: {len(priv_key)}. Start: {priv_key[:20]}... End: ...{priv_key[-20:]}")
     
     safe_ssh_path = tmp_path.replace("\\", "/")
     quoted_path = shlex.quote(safe_ssh_path)

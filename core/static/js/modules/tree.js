@@ -9,6 +9,7 @@ export async function loadFileTree() {
     // 1. Fetch File Tree (Available to guests)
     const treeRes = await fetch(API.FILE_TREE);
     const treeData = await treeRes.json();
+    state.flattenedSlugs = treeData.flattened_slugs || [];
     
     // 2. Fetch Repos only if user is Staff (for context menus)
     const isStaff = state.currentUser && ['developer', 'maintainer', 'owner'].includes(state.currentUser.role);

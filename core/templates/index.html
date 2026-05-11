@@ -20,8 +20,6 @@
 
                 <div id="view-mode-container">
                     <div id="content-viewer" class="markdown-body">
-                        <h1 data-t="welcome_title">Welcome</h1>
-                        <p data-t="welcome_msg">Select a document from the sidebar to view.</p>
                     </div>
 
                     <!-- Page Navigation (Next/Prev) -->
@@ -77,6 +75,12 @@
     {% endif %}
 
 
+    <script nonce="{{ csp_nonce }}">
+        window.MARKFLOW_CONFIG = {
+            homePagePath: "{{ config.home_page_path if config.home_page_path else '' }}",
+            flattenedSlugs: {{ flattened_slugs | tojson if flattened_slugs is defined else '[]' }}
+        };
+    </script>
     <script nonce="{{ csp_nonce }}" type="module" src="/static/js/app.js?v={{ app_version }}"></script>
 </body>
 </html>

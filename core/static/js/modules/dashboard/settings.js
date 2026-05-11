@@ -10,7 +10,7 @@ export function update2FAStatusUI() {
     ui.status2FA.innerText = i18n.t(isEnabled ? 'totp_status_on' : 'totp_status_off');
     ui.status2FA.className = `tag ${isEnabled ? 'tag-on' : 'tag-off'}`;
     ui.btnToggle2FA.innerText = i18n.t(isEnabled ? 'totp_btn_disable' : 'totp_btn_setup');
-    ui.desc2FA.innerText = isEnabled ? 'Ваш аккаунт защищен вторым фактором' : 'Дополнительная защита вашего аккаунта';
+    ui.desc2FA.innerText = i18n.t(isEnabled ? 'sec_2fa_desc_on' : 'sec_2fa_desc_off');
 }
 
 export function updateCredsStatusUI(isValid) {
@@ -139,7 +139,7 @@ export function initSettings() {
     if (ui.btnChangePassword) {
         ui.btnChangePassword.onclick = async () => {
             const old_password = ui.oldPassword.value, new_password = ui.newPassword.value;
-            if (!old_password || !new_password) return toast.warn('Заполните оба поля');
+            if (!old_password || !new_password) return toast.warn(i18n.t('sec_pass_fill_both'));
             
             try {
                 const res = await fetch('/api/auth/change-password', {
@@ -149,20 +149,20 @@ export function initSettings() {
                 });
                 const data = await res.json();
                 if (res.ok) {
-                    toast.success('Пароль изменен! Пожалуйста, войдите снова.');
+                    toast.success(i18n.t('sec_pass_changed'));
                     setTimeout(() => logout(), 1500);
                 } else {
-                    toast.error(data.detail || 'Ошибка');
+                    toast.error(data.detail || i18n.t('error_generic'));
                 }
             } catch (err) {
-                toast.error('Ошибка сети');
+                toast.error(i18n.t('sec_network_error'));
             }
         };
     }
 
     if (ui.btnLogoutAll) {
         ui.btnLogoutAll.onclick = async () => {
-            if (confirm('Выйти со всех устройств?')) {
+            if (confirm(i18n.t('sec_logout_all_confirm'))) {
                 const res = await fetch('/api/auth/logout-all', { method: 'POST' });
                 if (res.ok) logout();
             }

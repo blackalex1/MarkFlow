@@ -14,29 +14,55 @@ if (window.mermaid) {
         startOnLoad: false, 
         theme: 'dark',
         securityLevel: 'antiscript',
-        fontFamily: 'inherit'
+        fontFamily: 'Inter, system-ui, sans-serif',
+        flowchart: { useMaxWidth: false, htmlLabels: true },
+        themeVariables: {
+            fontSize: '14px'
+        }
     });
 }
 
-export async function loadFileContent(path, pushState = true, hash = null) {
-    // Ensure we exit edit mode when switching files
-    const editor = await import('../editor/index.js');
-    if (editor && editor.actions) editor.actions.exitEditMode(false);
-
-    ui.contentViewer.classList.add('fade-out');
-    setTimeout(async () => {
-        state.currentFilePath = path;
-        if (pushState) {
-            const url = new URL(window.location);
-            url.searchParams.set('p', path);
-            window.history.pushState({ path }, '', url);
+function updateURL(path, pushState, hash = null) {
+    if (!pushState) return;
+    const url = new URL(window.location);
+    
+    const homePath = state.homePagePath || "system/home.md";
+    if (path === homePath) {
+        url.searchParams.delete('p');
+    } else {
+        // Create "pretty" path for URL if it's a flattened repo
+        let displayPath = path;
+        const parts = path.split('/');
+        if (parts.length > 0 && state.flattenedSlugs.includes(parts[0])) {
+            displayPath = parts.slice(1).join('/');
         }
+        
+        if (displayPath) url.searchParams.set('p', displayPath);
+        else url.searchParams.delete('p');
+    }
+    
+    if (hash) url.hash = hash;
+    window.history.pushState({ path }, '', url);
+}
+
+export async function loadFileContent(path, pushState = true, hash = null) {
+    ui.contentViewer.classList.add('fade-out');
+    
+    // Ensure we exit edit mode when switching files without circular imports
+    if (document.body.classList.contains('is-editing') && ui.btnCancel) {
+        ui.btnCancel.click();
+    }
+
+    setTimeout(async () => {
+        try {
+            state.currentFilePath = path;
+        updateURL(path, pushState, hash);
 
         const res = await fetch(`${API.FILE_CONTENT}?path=${encodeURIComponent(path)}`);
         if (res.ok) {
             const data = await res.json();
             if (data.is_folder) {
-                return loadFolderContent(path);
+                return loadFolderContent(path, false);
             }
             const cleanHTML = DOMPurify.sanitize(marked.parse(data.content), {
                 ADD_ATTR: ['target', 'data-target', 'data-tab-id', 'data-lucide', 'id', 'class', 'data-code'],
@@ -44,14 +70,19 @@ export async function loadFileContent(path, pushState = true, hash = null) {
                 RETURN_TRUSTED_TYPE: true // Support for Trusted Types
             });
             
-            if (ui.contentViewer) {
-                ui.contentViewer.innerHTML = cleanHTML;
-                ui.contentViewer.classList.remove('fade-out');
-                ui.contentViewer.classList.add('fade-in');
-                ui.contentViewer.querySelectorAll('pre code').forEach(b => {
-                    if (!b.classList.contains('language-end')) hljs.highlightElement(b);
-                });
-            }
+            // Sync state with the real path from server
+            if (data.path) state.currentFilePath = data.path;
+            const finalPath = data.path || path;
+            
+            ui.viewModeContainer.classList.remove('hidden');
+            ui.contentViewer.innerHTML = cleanHTML;
+            ui.contentViewer.classList.remove('fade-out');
+            ui.contentViewer.classList.add('fade-in');
+            ui.contentViewer.style.opacity = '1';
+            
+            ui.contentViewer.querySelectorAll('pre code').forEach(b => {
+                if (!b.classList.contains('language-end')) hljs.highlightElement(b);
+            });
 
             if (window.renderMathInElement && ui.contentViewer) {
                 renderMathInElement(ui.contentViewer, {
@@ -65,12 +96,12 @@ export async function loadFileContent(path, pushState = true, hash = null) {
                 });
             }
 
-            updateNavigation(path);
+            updateNavigation(finalPath);
             wrapTables();
             generateTOC();
             initTOCObserver();
             addCopyButtons();
-            updateBreadcrumbs(path);
+            updateBreadcrumbs(finalPath);
             
             if (window.mermaid && ui.contentViewer) {
                 // Ensure elements are truly visible and have dimensions
@@ -94,7 +125,7 @@ export async function loadFileContent(path, pushState = true, hash = null) {
                     } catch (e) {
                         console.error('Mermaid render error:', e);
                     }
-                }, 400); // Stable delay for complex SVG layouts
+                }, 150);
             }
             if (window.lucide) lucide.createIcons();
             
@@ -119,33 +150,50 @@ export async function loadFileContent(path, pushState = true, hash = null) {
                 } else ui.topBar.classList.add('hidden');
             }
             
-            tree.updateTreeHighlighting(path);
+            tree.updateTreeHighlighting(finalPath);
         } else renderErrorPage(res.status, path);
+    } catch (err) {
+        console.error("Load failed:", err);
+        renderErrorPage(500, path);
+    } finally {
+        ui.contentViewer.classList.remove('fade-out');
+        ui.contentViewer.classList.add('fade-in');
+    }
     }, 300);
 }
 
-export async function loadFolderContent(path) {
+export async function loadFolderContent(path, pushState = true) {
     ui.contentViewer.classList.add('fade-out');
+    updateURL(path, pushState);
     
     setTimeout(async () => {
-        const res = await fetch(`${API.FOLDER_CONTENT}?path=${encodeURIComponent(path)}`);
-        if (res.ok) {
-            const data = await res.json();
-            const { renderFolderGrid, updateBreadcrumbs } = await import('./viewer_ui.js');
-            
-            renderFolderGrid(data);
-            updateBreadcrumbs(path);
-            
+        try {
+            const res = await fetch(`${API.FOLDER_CONTENT}?path=${encodeURIComponent(path)}`);
+            if (res.ok) {
+                const data = await res.json();
+                const realPath = data.path || path;
+                state.currentFilePath = realPath;
+                
+                const { renderFolderGrid, updateBreadcrumbs } = await import('./viewer_ui.js');
+                
+                renderFolderGrid(data);
+                updateBreadcrumbs(realPath);
+                
+                ui.viewModeContainer.classList.remove('hidden');
+                ui.topBar.classList.add('hidden');
+                if (ui.pageNav) ui.pageNav.classList.add('hidden');
+                if (ui.tocSidebar) ui.tocSidebar.classList.add('hidden');
+                
+                tree.updateTreeHighlighting(realPath);
+                ui.contentViewer.style.opacity = '1';
+            } else renderErrorPage(res.status, path);
+        } catch (err) {
+            console.error("Folder load failed:", err);
+            renderErrorPage(500, path);
+        } finally {
             ui.contentViewer.classList.remove('fade-out');
             ui.contentViewer.classList.add('fade-in');
-            
-            ui.viewModeContainer.classList.remove('hidden');
-            ui.topBar.classList.add('hidden');
-            if (ui.pageNav) ui.pageNav.classList.add('hidden');
-            if (ui.tocSidebar) ui.tocSidebar.classList.add('hidden');
-            
-            tree.updateTreeHighlighting(path);
-        } else renderErrorPage(res.status, path);
+        }
     }, 300);
 }
 
@@ -193,6 +241,13 @@ function renderErrorPage(status, path) {
 
     if (window.lucide) lucide.createIcons();
 }
+
+
+export function renderWelcomePage() {
+    const homePath = state.homePagePath || "system/home.md";
+    loadFileContent(homePath, true);
+}
+
 
 
 let tocObserver = null;

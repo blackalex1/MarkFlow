@@ -109,6 +109,8 @@ async function init() {
     if (path) {
         const hash = window.location.hash.substring(1);
         viewer.loadFileContent(path, false, hash);
+    } else {
+        viewer.renderWelcomePage();
     }
 }
 
@@ -120,6 +122,7 @@ function updateLangLabel() {
 
 // --- Event Listeners ---
 window.addEventListener('load-file', (e) => viewer.loadFileContent(e.detail.path));
+window.addEventListener('go-home', () => viewer.renderWelcomePage());
 window.addEventListener('tree-update-required', () => tree.loadFileTree());
 window.addEventListener('auth-changed', () => {
     auth.checkAuth();
@@ -128,6 +131,7 @@ window.addEventListener('auth-changed', () => {
 
 // Actions
 if (ui.btnDelete) ui.btnDelete.onclick = viewer.deleteCurrentFile;
+if (ui.sidebarTitle) ui.sidebarTitle.onclick = viewer.renderWelcomePage;
 
 if (ui.btnLangToggle) {
     ui.btnLangToggle.onclick = () => {
@@ -169,6 +173,14 @@ window.addEventListener('load-file', () => {
             icon.setAttribute('data-lucide', 'menu');
             if (window.lucide) lucide.createIcons();
         }
+    }
+});
+
+window.addEventListener('popstate', (e) => {
+    if (e.state && e.state.path) {
+        viewer.loadFileContent(e.state.path, false);
+    } else {
+        viewer.renderWelcomePage();
     }
 });
 

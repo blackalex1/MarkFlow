@@ -24,6 +24,7 @@ def load_settings():
         "bg_glow_opacity_light": 0.15,
         "bg_glow_opacity_dark": 0.05,
         "max_request_size_mb": 10,
+        "home_page_path": "",
         "security_limits": {
             "login": "5/minute",
             "2fa_verify": "5/minute",

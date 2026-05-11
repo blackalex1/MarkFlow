@@ -22,9 +22,17 @@ def get_file_content(path: str, request: Request):
     user_role = user.get("role", "guest") if user else "guest"
     can_see_private = ROLES.get(user_role, 0) >= ROLES.get("reporter", 0)
     
-    full_path = get_safe_path(DOCS_DIR, path)
+    if path == "system/home.md":
+        from core.config import BASE_DIR
+        config_dir = os.path.join(os.path.dirname(BASE_DIR), "config")
+        full_path = os.path.join(config_dir, "home.md")
+        if not os.path.exists(full_path):
+             return {"content": "# Welcome\nSelect a document from the sidebar to view.", "public": True, "status": "published", "path": "system/home.md"}
+        public = True
+    else:
+        full_path = get_safe_path(DOCS_DIR, path)
+        public = is_public(path)
         
-    public = is_public(path)
     if not public and not can_see_private:
         raise HTTPException(status_code=403, detail="Access denied")
         
@@ -32,7 +40,12 @@ def get_file_content(path: str, request: Request):
         return {"is_folder": True}
         
     if not os.path.exists(full_path):
-        raise HTTPException(status_code=404, detail="File not found")
+        from .utils import resolve_flattened_path
+        alt_path = resolve_flattened_path(DOCS_DIR, path, request)
+        if alt_path and os.path.exists(alt_path):
+            full_path = alt_path
+        else:
+            raise HTTPException(status_code=404, detail="File not found")
         
     if path.lower().endswith((".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp", ".mp4", ".webm", ".ogg")):
         from fastapi.responses import FileResponse
@@ -51,17 +64,27 @@ def get_file_content(path: str, request: Request):
         
     from core.database import get_file_status
     status = get_file_status(path)
-    return {"content": content, "public": public, "status": status}
+    
+    # Return the real relative path (relative to DOCS_DIR) so the frontend can update its state
+    if path == "system/home.md":
+        actual_rel_path = "system/home.md"
+    else:
+        actual_rel_path = os.path.relpath(full_path, DOCS_DIR).replace('\\', '/')
+    return {"content": content, "public": public, "status": status, "path": actual_rel_path}
     
 @router.put("/content")
 @limiter.limit(SECURITY_LIMITS["file_ops"])
 async def save_file_content(path: str, data: FileContent, request: Request, background_tasks: BackgroundTasks, user=Depends(get_developer_user)):
     """Saves file content and handles image cleanup."""
-    full_path = get_safe_path(DOCS_DIR, path)
-    
-    # Security: Ensure we don't write outside DOCS_DIR
-    if not full_path.startswith(os.path.abspath(DOCS_DIR)):
-         raise HTTPException(status_code=403, detail="Illegal path")
+    if path == "system/home.md":
+        from core.config import BASE_DIR
+        config_dir = os.path.join(os.path.dirname(BASE_DIR), "config")
+        full_path = os.path.join(config_dir, "home.md")
+    else:
+        full_path = get_safe_path(DOCS_DIR, path)
+        # Security: Ensure we don't write outside DOCS_DIR
+        if not full_path.startswith(os.path.abspath(DOCS_DIR)):
+             raise HTTPException(status_code=403, detail="Illegal path")
 
     os.makedirs(os.path.dirname(full_path), exist_ok=True)
     
@@ -100,7 +123,9 @@ async def save_file_content(path: str, data: FileContent, request: Request, back
     with open(full_path, "w", encoding="utf-8") as f:
         f.write(sanitized_content)
         
-    update_fts_index(path, os.path.basename(path).replace(".md", ""), sanitized_content)
+    if path != "system/home.md":
+        update_fts_index(path, os.path.basename(path).replace(".md", ""), sanitized_content)
+    
     add_audit_log(user["username"], "file_updated", f"Path: {path}", ip_address=request.client.host)
     return {"message": "File saved"}
 

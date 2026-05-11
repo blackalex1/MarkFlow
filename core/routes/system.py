@@ -49,6 +49,7 @@ class SystemSettings(BaseModel):
     bg_glow_opacity_light: float = Field(default=0.15, ge=0, le=1.0)
     bg_glow_opacity_dark: float = Field(default=0.05, ge=0, le=1.0)
     max_request_size_mb: int = Field(default=10, ge=1, le=500)
+    home_page_path: str = ""
     security_limits: SecurityLimits
 
     @validator('primary_color')
@@ -77,6 +78,7 @@ def update_system_settings(request: Request, data: SystemSettings, user=Depends(
         set_setting("bg_glow_opacity_light", str(data.bg_glow_opacity_light))
         set_setting("bg_glow_opacity_dark", str(data.bg_glow_opacity_dark))
         set_setting("max_request_size_mb", str(data.max_request_size_mb))
+        set_setting("home_page_path", data.home_page_path)
         
         # Convert Pydantic model to dict, respecting aliases
         limits_dict = data.security_limits.dict(by_alias=True)
@@ -93,6 +95,7 @@ def update_system_settings(request: Request, data: SystemSettings, user=Depends(
             "bg_glow_opacity_light": data.bg_glow_opacity_light,
             "bg_glow_opacity_dark": data.bg_glow_opacity_dark,
             "max_request_size_mb": data.max_request_size_mb,
+            "home_page_path": data.home_page_path,
             "security_limits": limits_dict
         })
         

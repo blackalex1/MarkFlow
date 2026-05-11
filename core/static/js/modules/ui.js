@@ -129,7 +129,8 @@ export const ui = {
     
     // Layout
     sidebar: document.getElementById('sidebar'),
-    mobileToggle: document.getElementById('mobile-toggle')
+    mobileToggle: document.getElementById('mobile-toggle'),
+    sidebarTitle: document.getElementById('sidebar-app-name-simple')
 };
 
 export const state = {
@@ -138,5 +139,7 @@ export const state = {
     setupTotpSecret: null,
     openFolders: new Set(),
     isSidebarActive: false,
-    statuses: {} // Map: slug -> {name, color, id}
+    statuses: {}, // Map: slug -> {name, color, id}
+    flattenedSlugs: (window.MARKFLOW_CONFIG && window.MARKFLOW_CONFIG.flattenedSlugs) || [],
+    homePagePath: (window.MARKFLOW_CONFIG && window.MARKFLOW_CONFIG.homePagePath) || ""
 };

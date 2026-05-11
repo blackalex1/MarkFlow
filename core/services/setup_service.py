@@ -171,17 +171,63 @@ pie title Распределение задач
     "Тестирование" : 25
     "Документация" : 35
 ```
+const markFlow = {
+  engine: 'Marked.js',
+  style: 'Vanilla CSS',
+  backend: 'FastAPI',
+  frontend: 'Modular JS'
+};
+console.log("Ready to scale!");
+```
+@endtabs
+
+---
+
+## 📊 Интерактивные элементы
+
+Вы можете вставлять сложные диаграммы и математические формулы, которые отрендерятся прямо в браузере.
+
+@dropdown Нажми, чтобы увидеть Mermaid диаграмму и формулы
+### Схема работы
+```mermaid
+graph LR
+    A[Markdown] --> B{MarkFlow}
+    B --> C[HTML]
+    B --> D[PDF]
+    B --> E[Mobile]
+    
+    style B fill:#6366f1,stroke:#fff,stroke-width:2px,color:#fff
+```
+
+### Математика (KaTeX)
+Формула нормального распределения:
+$$
+f(x) = \frac{1}{\sigma\sqrt{2\pi}} e^{-\frac{1}{2}\left(\frac{x-\mu}{\sigma}\right)^2}
+$$
 @enddropdown
 
 ---
 
-## 11. Изображения
+## 📝 Задачи и Статусы
 
-![Random Image](https://picsum.photos/seed/markflow_full/800/400)
+Поддерживаются списки задач и наглядные таблицы:
+
+- [x] Развернуть MarkFlow в Docker
+- [x] Настроить Git-репозиторий
+- [ ] Написать первую статью
+- [ ] Пригласить команду
+
+| Модуль | Статус | Приоритет |
+| :--- | :---: | ---: |
+| **Viewer** | `Ready` | High |
+| **Editor** | `Active` | High |
+| **Search** | `Beta` | Medium |
+
+> [!TIP]
+> Нажмите иконку **карандаша** в верхней панели, чтобы отредактировать этот текст и настроить главную страницу под свои нужды.
 
 ---
-
-**MarkFlow** — создано для тех, кто ценит эстетику и функциональность.
+*Сделано с любовью для эффективных команд.*
 """
 
 DEFAULT_SECURITY = {
@@ -220,3 +266,9 @@ def initialize_volumes():
         else:
             if not os.path.exists(d):
                 shutil.copy2(s, d)
+                
+    # 3. Initialize Home Page
+    home_md = os.path.join(config_dir, "home.md")
+    if not os.path.exists(home_md):
+        with open(home_md, "w", encoding="utf-8") as f:
+            f.write(WELCOME_CONTENT)

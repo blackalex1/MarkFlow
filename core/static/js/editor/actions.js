@@ -4,7 +4,6 @@
 import { ui, state } from '../modules/ui.js';
 import { toast } from '../modules/toasts.js';
 import { getEditorValue, getEditor } from './instance.js';
-import { loadFileContent } from '../modules/viewer.js';
 import { t } from '../modules/i18n.js';
 import { updateStatusDisplay } from '../modules/status.js';
 
@@ -23,9 +22,16 @@ export const saveContent = async () => {
         return;
     }
 
+    // Safety check: Don't save empty content for system home to prevent "black screen"
+    if ((!content || !content.trim()) && path === 'system/home.md') {
+        console.error('Editor returned empty content for home page. Save aborted.');
+        toast(t('toast_save_failed'), 'error');
+        return;
+    }
+
     try {
         // 1. Upload pending files first
-        const { uploadPendingFiles } = await import(`./image-handler.js?v=${window.APP_VERSION || Date.now()}`);
+        const { uploadPendingFiles } = await import('./image-handler.js');
         toast(t('toast_uploading'), 'info');
         content = await uploadPendingFiles(content);
 
@@ -63,11 +69,9 @@ export const enterEditMode = async () => {
         // Use cache-busting version for dynamic imports
         const v = window.APP_VERSION || Date.now();
         
-        let editorInstance = getEditor();
-        if (!editorInstance) {
-            const { createEditor } = await import(`./instance.js?v=${v}`);
-            editorInstance = createEditor(ui.contentEditor, path);
-        }
+        // Always create a fresh editor instance for the current file
+        const { createEditor } = await import('./instance.js');
+        createEditor(ui.contentEditor, path);
         
         if (ui.contentViewer) ui.contentViewer.classList.add('hidden');
         if (ui.contentEditor) ui.contentEditor.classList.remove('hidden');
@@ -89,7 +93,7 @@ export const enterEditMode = async () => {
         }
 
         // 2. Update editor value
-        const { setEditorValue } = await import(`./instance.js?v=${v}`);
+        const { setEditorValue } = await import('./instance.js');
         setEditorValue(data.content);
         
         // 3. Show notification if draft exists
@@ -140,7 +144,7 @@ export const exitEditMode = (reload = false, discardDraft = false) => {
     }
 
     if (reload && state.currentFilePath) {
-        loadFileContent(state.currentFilePath, false);
+        window.dispatchEvent(new CustomEvent('load-file', { detail: { path: state.currentFilePath, pushState: false } }));
     }
 };
 

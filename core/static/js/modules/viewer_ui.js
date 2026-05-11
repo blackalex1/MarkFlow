@@ -1,6 +1,5 @@
 import { ui, state } from './ui.js';
 import * as tree from './tree.js';
-import { loadFileContent } from './viewer.js';
 import { t } from './i18n.js';
 import { getStatusColor, getStatusName } from './status.js';
 
@@ -113,22 +112,39 @@ export function addCopyButtons() {
 }
 
 export function updateBreadcrumbs(path) {
-    if (!ui.breadcrumb || !path) return;
-    const parts = path.split('/');
+    if (!ui.breadcrumb) return;
     ui.breadcrumb.innerHTML = '';
+    
+    const homeWrapper = document.createElement('span');
+    homeWrapper.className = 'breadcrumb-home-wrapper';
+    homeWrapper.style.cursor = 'pointer';
+    homeWrapper.style.display = 'inline-flex';
+    homeWrapper.onclick = () => window.dispatchEvent(new CustomEvent('go-home'));
     
     const homeIcon = document.createElement('i');
     homeIcon.setAttribute('data-lucide', 'home');
     homeIcon.className = 'breadcrumb-home-icon';
-    homeIcon.style.cursor = 'pointer';
-    homeIcon.onclick = () => location.href = '/';
-    ui.breadcrumb.appendChild(homeIcon);
+    homeWrapper.appendChild(homeIcon);
+    
+    ui.breadcrumb.appendChild(homeWrapper);
+
+    const homePath = state.homePagePath || "system/home.md";
+    if (!path || path === homePath) {
+        if (window.lucide) lucide.createIcons();
+        return;
+    }
+
+    const parts = path.split('/');
 
     let currentPath = '';
     parts.forEach((part, index) => {
         if (!part) return;
+        
+        const isFlattenedRepo = index === 0 && state.flattenedSlugs.includes(part);
         currentPath += (index > 0 ? '/' : '') + part;
         const thisPath = currentPath;
+        
+        if (isFlattenedRepo) return; // Skip rendering this segment
         
         const sep = document.createElement('span');
         sep.className = 'breadcrumb-separator';
@@ -142,9 +158,9 @@ export function updateBreadcrumbs(path) {
         
         if (!isLast) {
             span.onclick = () => {
-                if (part.endsWith('.md')) {
-                    loadFileContent(thisPath);
-                } else {
+                window.dispatchEvent(new CustomEvent('load-file', { detail: { path: thisPath } }));
+                // Also ensure the folder is expanded in the tree if it's a folder
+                if (!part.endsWith('.md')) {
                     state.openFolders.add(thisPath);
                     tree.loadFileTree();
                 }
@@ -173,13 +189,13 @@ export function updateNavigation(currentPath) {
     if (prev) {
         ui.navPrev.classList.remove('hidden');
         ui.navPrev.querySelector('.nav-title').textContent = prev.name;
-        ui.navPrev.onclick = () => loadFileContent(prev.path);
+        ui.navPrev.onclick = () => window.dispatchEvent(new CustomEvent('load-file', { detail: { path: prev.path } }));
     } else ui.navPrev.classList.add('hidden');
     
     if (next) {
         ui.navNext.classList.remove('hidden');
         ui.navNext.querySelector('.nav-title').textContent = next.name;
-        ui.navNext.onclick = () => loadFileContent(next.path);
+        ui.navNext.onclick = () => window.dispatchEvent(new CustomEvent('load-file', { detail: { path: next.path } }));
     } else ui.navNext.classList.add('hidden');
     
     if (window.lucide) lucide.createIcons();

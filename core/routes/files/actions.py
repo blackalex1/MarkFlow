@@ -113,8 +113,17 @@ def delete_file(request: Request, path: str, user=Depends(get_maintainer_user)):
     
     add_audit_log(user["username"], "file_deleted", f"Path: {path}", ip_address=request.client.host)
     
+    def on_rm_error(func, path, exc_info):
+        # path is the file that failed to be deleted
+        import stat
+        try:
+            os.chmod(path, stat.S_IWRITE)
+            func(path)
+        except:
+            pass
+
     if os.path.isdir(full_path):
-        shutil.rmtree(full_path)
+        shutil.rmtree(full_path, onerror=on_rm_error)
     else:
         os.remove(full_path)
         delete_fts_index(path)

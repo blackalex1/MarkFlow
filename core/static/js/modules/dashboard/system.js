@@ -237,6 +237,7 @@ async function saveSystemSettings() {
             bg_glow_enabled: document.getElementById('sys-bg-glow-enabled').checked,
             bg_glow_opacity_light: parseFloat(document.getElementById('sys-bg-glow-opacity-light').value),
             bg_glow_opacity_dark: parseFloat(document.getElementById('sys-bg-glow-opacity-dark').value),
+            home_page_path: document.getElementById('sys-home-page').value,
             security_limits: limits,
             max_request_size_mb: parseInt(maxRequestSize)
         };

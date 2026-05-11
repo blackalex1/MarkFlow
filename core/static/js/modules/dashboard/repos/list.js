@@ -19,7 +19,7 @@ export async function loadRepositories() {
         if (!Array.isArray(repos)) return;
         
         const rows = repos.map(repo => {
-            let syncInfo = `<span style="color: var(--text-muted); font-size: 11px;">${t('sync_never', 'Never synced')}</span>`;
+            let syncInfo = `<span style="color: var(--text-muted); font-size: 11px;">${t('sync_never')}</span>`;
             if (repo.last_sync_at) {
                 const date = new Date(repo.last_sync_at);
                 const timeStr = date.toLocaleString();
@@ -31,7 +31,7 @@ export async function loadRepositories() {
                     <div style="display: flex; flex-direction: column; gap: 2px;">
                         <div style="display: flex; align-items: center; gap: 4px; color: ${color}; font-size: 12px; font-weight: 600;">
                             <i data-lucide="${icon}" style="width: 14px; height: 14px;"></i>
-                            <span>${isSuccess ? (t('sync_success', 'Успешно')) : (t('sync_failed', 'Ошибка'))}</span>
+                            <span>${isSuccess ? t('sync_success') : t('sync_failed')}</span>
                         </div>
                         <span style="color: var(--text-muted); font-size: 10px;">${timeStr}</span>
                     </div>
@@ -53,11 +53,11 @@ export async function loadRepositories() {
                     <td style="text-align: right; white-space: nowrap;">
                         <div style="display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
                             ${repo.is_active ? 
-                                `<span class="tag tag-on" style="font-size: 11px; padding: 4px 10px;">${t('repo_btn_active', 'Active')}</span>` : 
-                                `<button class="btn btn-sm btn-outline btn-activate" style="padding: 4px 12px;" data-id="${repo.id}">${t('repo_btn_activate', 'Activate')}</button>`
+                                `<span class="tag tag-on" style="font-size: 11px; padding: 4px 10px;">${t('repo_btn_active')}</span>` : 
+                                `<button class="btn btn-sm btn-outline btn-activate" style="padding: 4px 12px;" data-id="${repo.id}">${t('repo_btn_activate')}</button>`
                             }
-                            <button class="btn btn-sm btn-text btn-edit" style="padding: 4px 8px;" data-id="${repo.id}">${t('repo_btn_edit', 'Edit')}</button>
-                            <button class="btn btn-sm btn-text btn-danger btn-delete" style="padding: 4px 8px;" data-id="${repo.id}">${t('repo_btn_delete', 'Delete')}</button>
+                            <button class="btn btn-sm btn-text btn-edit" style="padding: 4px 8px;" data-id="${repo.id}">${t('repo_btn_edit')}</button>
+                            <button class="btn btn-sm btn-text btn-danger btn-delete" style="padding: 4px 8px;" data-id="${repo.id}">${t('repo_btn_delete')}</button>
                         </div>
                     </td>
                 </tr>
@@ -68,9 +68,9 @@ export async function loadRepositories() {
             <table class="admin-table">
                 <thead>
                     <tr>
-                        <th style="text-align: left;" data-t="repo_th_name">${t('repo_th_name', 'Name')}</th>
-                        <th style="text-align: left; white-space: nowrap;" data-t="repo_th_status">${t('repo_th_status', 'Status / Last Sync')}</th>
-                        <th style="text-align: right; white-space: nowrap;" data-t="repo_th_actions">${t('repo_th_actions', 'Actions')}</th>
+                        <th style="text-align: left;" data-t="repo_th_name">${t('repo_th_name')}</th>
+                        <th style="text-align: left; white-space: nowrap;" data-t="repo_th_status">${t('repo_th_status')}</th>
+                        <th style="text-align: right; white-space: nowrap;" data-t="repo_th_actions">${t('repo_th_actions')}</th>
                     </tr>
                 </thead>
                 <tbody id="git-repos-tbody">
@@ -104,12 +104,12 @@ export async function activateRepo(id) {
     try {
         const res = await fetch(`/api/git/repos/${id}/activate`, { method: 'POST' });
         if (res.ok) {
-            toast.success('Repository activated');
+            toast.success(t('toast_repo_activated'));
             loadRepositories();
             loadSyncConfig();
         }
     } catch (err) {
-        toast.error('Error activating repository');
+        toast.error(t('toast_repo_activate_error'));
     }
 }
 
@@ -128,10 +128,10 @@ export async function deleteRepo(id) {
     try {
         const res = await fetch(`/api/git/repos/${id}`, { method: 'DELETE' });
         if (res.ok) {
-            toast.success('Repository deleted');
+            toast.success(t('toast_repo_deleted'));
             loadRepositories();
         }
     } catch (err) {
-        toast.error('Error deleting repository');
+        toast.error(t('toast_repo_delete_error'));
     }
 }

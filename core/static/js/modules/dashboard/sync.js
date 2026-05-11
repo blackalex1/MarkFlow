@@ -82,7 +82,7 @@ export function initSync() {
                     setSyncStatus(true);
                     loadRepositories();
                 } else {
-                    toast.error('Ошибка: ' + (data.detail || 'Error'));
+                    toast.error(`${i18n.t('error_prefix')}: ${data.detail || i18n.t('error_generic')}`);
                     setSyncStatus(false, 'Failed');
                 }
             } catch (e) {
@@ -123,7 +123,7 @@ export function initSync() {
                     loadRepositories();
                     window.dispatchEvent(new CustomEvent('tree-update-required'));
                 } else {
-                    toast.error('Error: ' + (data.detail || 'Error'));
+                    toast.error(`${i18n.t('error_prefix')}: ${data.detail || i18n.t('error_generic')}`);
                     setSyncStatus(false, 'Failed');
                 }
             } catch (e) {
