@@ -22,6 +22,7 @@ export async function editRepo(id) {
             ui.repoSlug.value = repo.slug;
             ui.repoSlugDisplay.innerText = repo.slug;
             ui.repoName.dataset.id = repo.id;
+            ui.repoName.dataset.currentPubKey = repo.ssh_public_key || '';
             
             const hasUnique = repo.ssh_public_key && repo.ssh_public_key.length > 0;
             ui.repoUseGlobalSSH.checked = !hasUnique;
@@ -113,9 +114,9 @@ export async function saveRepo() {
         branch: ui.repoBranchSelect.value,
         key_id: ui.repoUseGlobalSSH.checked ? null : tempKeyPair.keyId,
         public_key: ui.repoUseGlobalSSH.checked ? 
-            null : (tempKeyPair.public || ui.repoManualPublicKey.value.trim()),
+            '' : (tempKeyPair.public || ui.repoManualPublicKey.value.trim() || ui.repoName.dataset.currentPubKey),
         private_key: ui.repoUseGlobalSSH.checked ?
-            null : ui.repoManualPrivateKey.value.trim(),
+            '' : ui.repoManualPrivateKey.value.trim(),
         auto_sync_interval: ui.repoAutoSyncToggle.checked ? 
             ((parseInt(ui.repoAutoSyncInterval.value) || 30) * parseInt(ui.repoAutoSyncUnit.value)) : 0,
         sync_strategy: ui.repoSyncStrategy.value,
