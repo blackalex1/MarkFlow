@@ -2,7 +2,7 @@ import { ui, state } from './ui.js';
 import { toast } from './toasts.js';
 import * as tree from './tree.js';
 import { t } from './i18n.js';
-import { initMarked } from './markdown.js';
+import { initMarked, resolveRelativePath } from './markdown.js';
 import { generateTOC, updateBreadcrumbs, addCopyButtons, updateNavigation, wrapTables } from './viewer_ui.js';
 import { API } from './api.js';
 import { updateStatusDisplay } from './status.js';
@@ -279,3 +279,4 @@ export async function deleteCurrentFile() {
     if (res.ok) location.href = '/';
     else toast.error('Error');
 }
+export { resolveRelativePath };

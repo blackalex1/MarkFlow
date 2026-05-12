@@ -97,7 +97,7 @@ export function initGlobalHandlers() {
                     if (target) target.scrollIntoView({ behavior: 'smooth' });
                     return;
                 }
-                if (href.includes('.md')) {
+                if (href.toLowerCase().includes('.md')) {
                     e.preventDefault();
                     const [relPath, encodedHash] = href.split('#');
                     const absolutePath = viewer.resolveRelativePath(state.currentFilePath, relPath);

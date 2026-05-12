@@ -6,8 +6,8 @@ function escapeHtml(text) {
     return text.replace(/[&<>"']/g, m => map[m]);
 }
 
-function resolveRelativePath(currentPath, href) {
-    if (!href || href.startsWith('http') || href.startsWith('/') || href.startsWith('data:') || href.startsWith('blob:')) return href;
+export function resolveRelativePath(currentPath, href) {
+    if (!href || href.startsWith('http') || href.startsWith('/') || href.startsWith('data:') || href.startsWith('blob:') || href.startsWith('mailto:') || href.startsWith('tel:')) return href;
     if (!currentPath) return href;
 
     const currentDir = currentPath.split('/').filter(p => p);
