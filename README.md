@@ -1,96 +1,54 @@
 # 🌊 MarkFlow
 
-**MarkFlow** — a modern, lightweight, and secure documentation platform inspired by Notion. Designed for teams that value aesthetics, Markdown flexibility, and reliable Git synchronization.
+**MarkFlow** — a high-performance, secure, and beautiful documentation engine. It combines the flexibility of Markdown with Git-based synchronization and a premium Notion-like interface.
 
-**MarkFlow** — это современная, легковесная и безопасная платформа для ведения документации в стиле Notion. Спроектирована для команд, которым важна эстетика, гибкость Markdown и надежность синхронизации через Git.
-
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Python](https://img.shields.io/badge/python-3.9+-green.svg)
-![FastAPI](https://img.shields.io/badge/FastAPI-v0.100+-009688.svg)
+**MarkFlow** — это высокопроизводительный, безопасный и красивый движок для документации. Сочетает в себе гибкость Markdown, синхронизацию через Git и премиальный интерфейс в стиле Notion.
 
 ---
 
-## ✨ Key Features / Основные возможности
+## 📸 Screenshots
 
-*   **🔎 Ultra-Fast Search / Сверхбыстрый поиск**: Powered by SQLite FTS5 with smart snippet centering and Markdown cleaning. Matches highlighted in titles, paths, and content.
-*   **⚡ High Performance / Высокая производительность**: In-memory metadata caching and SQLite WAL mode ensure sub-millisecond response times even during heavy background tasks.
-*   **🔄 Smart Git Sync / Умная синхронизация**: Incremental reindexing via Git delta changes. No full scans — only modified files are updated.
-*   **📝 Markdown+**: Native support for Mermaid diagrams, KaTeX formulas, Tabs, Dropdowns, and GitHub-style Callouts (Alerts).
-*   **🎨 Premium Design / Премиальный дизайн**: Responsive layout with Glassmorphism, smooth animations, and optimized Light/Dark themes.
-*   **🔐 Enterprise Security / Безопасность**: Advanced RBAC (Roles), Session security (SSRF/CSP protected), and 2FA via Google Authenticator (TOTP).
+*(Screenshots coming soon...)*
 
 ---
 
-## 🚀 Live Feature Demo / Демонстрация возможностей
+## ✨ Features / Возможности
 
-### 1. Headings
-# Heading 1
-## Heading 2
-### Heading 3
+*   **🔎 Smart Search**: Instant search with snippet centering and Markdown cleaning.
+*   **⚡ Performance**: Built-in metadata caching and SQLite WAL mode for maximum speed.
+*   **🔄 Git Sync**: Automatic incremental synchronization with remote repositories.
+*   **📝 Markdown+**: Support for Mermaid diagrams, KaTeX formulas, and custom callouts.
+*   **🔐 Security**: RBAC roles, 2FA (TOTP), and SSRF/CSP protection.
 
-### 2. Code & Diagrams
-```python
-def hello_markflow():
-    print("Welcome to the premium documentation engine!")
+---
+
+## 🐳 Deployment (Docker) / Развертывание
+
+The easiest way to start MarkFlow is using Docker Compose.
+
+Самый простой способ запустить MarkFlow — использовать Docker Compose.
+
+```bash
+# Clone the repository
+git clone https://github.com/blackalex1/MarkFlow.git
+cd MarkFlow
+
+# Start using Docker Compose
+docker-compose -f deploy/docker-compose.yml up -d
 ```
 
-```mermaid
-graph TD
-    A[Idea] --> B{Does it work?}
-    B -- Yes --> C[Joy]
-    B -- No --> D[Debug]
-    D --> B
-```
-
-### 3. Math & Formulas
-Inline: $E = mc^2$
-Block:
-$$
-\phi = \frac{1+\sqrt{5}}{2} \approx 1.618
-$$
-
-### 4. Interactive Elements
-@tabs
-@tab 🐍 Python
-```python
-print("Hello from Python")
-```
-@tab 📜 JS
-```javascript
-console.log("Hello from JS");
-```
-@endtabs
+The application will be available at `http://localhost:8000`.
+Приложение будет доступно по адресу `http://localhost:8000`.
 
 ---
 
-## 🛠 Tech Stack / Технологический стек
+## 📦 Manual Setup / Ручная установка
 
-*   **Backend**: FastAPI (Python), SQLite (FTS5), GitPython.
-*   **Frontend**: Vanilla JS (ES6 Modules), CSS3 (Variables, Grid, Flexbox).
-
----
-
-## 📦 Quick Start / Быстрый старт
-
-1.  **Clone the repo / Клонируйте репозиторий:**
-    ```bash
-    git clone https://github.com/blackalex1/MarkFlow.git
-    cd MarkFlow
-    ```
-
-2.  **Setup environment / Настройте окружение:**
-    ```bash
-    python -m venv venv
-    source venv/bin/activate  # Or venv\Scripts\activate for Windows
-    pip install -r requirements.txt
-    ```
-
-3.  **Run the server / Запустите сервер:**
-    ```bash
-    uvicorn core.main:app --reload
-    ```
+1.  **Install dependencies:** `pip install -r requirements.txt`
+2.  **Run the server:** `uvicorn core.main:app --reload`
+3.  **Login:** `admin` / `admin`
 
 ---
 
-**MarkFlow** — created for those who value aesthetics and functionality.
+**MarkFlow** — built for those who value aesthetics and functionality.
 Создано для тех, кто ценит эстетику и функциональность.
