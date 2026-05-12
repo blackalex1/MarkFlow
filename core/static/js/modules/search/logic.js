@@ -23,12 +23,13 @@ export async function performSearch(q, container) {
     try {
         const res = await fetch(`${API.SEARCH}?q=${encodeURIComponent(q)}`);
         if (!res.ok) throw new Error(`Search failed: ${res.status}`);
-        const data = await res.json();
+        const results = await res.json();
         
-        if (data && data.results && data.results.length > 0) {
-            container.innerHTML = data.results.map((r, idx) => {
+        if (results && results.length > 0) {
+            container.innerHTML = results.map((r, idx) => {
                 let snippet = r.snippet;
-                if (!snippet.includes('<b>') && !snippet.includes('<mark>')) {
+                // If backend didn't provide highlighting, do a simple fallback
+                if (!snippet.includes('<mark>')) {
                     const regex = new RegExp(`(${q})`, 'gi');
                     snippet = snippet.replace(regex, '<mark>$1</mark>');
                 }

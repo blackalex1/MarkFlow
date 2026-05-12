@@ -5,7 +5,7 @@ from core.metadata import is_public
 
 router = APIRouter()
 
-@router.get("/")
+@router.get("")
 def api_search(request: Request, q: str, user=Depends(get_current_user)):
     results = search_fts(q)
     

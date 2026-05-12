@@ -25,53 +25,53 @@ if (window.mermaid) {
 
 
 export async function loadFileContent(path, pushState = true, hash = null) {
-    ui.contentViewer.classList.add('fade-out');
-    
-    // Ensure we exit edit mode when switching files without circular imports
     if (document.body.classList.contains('is-editing') && ui.btnCancel) {
         ui.btnCancel.click();
     }
 
-    setTimeout(async () => {
-        try {
-            state.currentFilePath = path;
+    try {
+        state.currentFilePath = path;
         updateURL(path, pushState, hash);
 
+        // 1. Fetch first (keep old content visible during loading)
         const res = await fetch(`${API.FILE_CONTENT}?path=${encodeURIComponent(path)}`);
-        if (res.ok) {
-            const data = await res.json();
-            if (data.is_folder) {
-                return loadFolderContent(path, false);
-            }
-            const cleanHTML = DOMPurify.sanitize(marked.parse(data.content), {
-                ADD_ATTR: ['target', 'data-target', 'data-tab-id', 'data-lucide', 'id', 'class', 'data-code'],
-                USE_PROFILES: { html: true, mathMl: true, svg: true },
-                RETURN_TRUSTED_TYPE: true // Support for Trusted Types
-            });
-            
-            // Sync state with the real path from server
-            if (data.path) state.currentFilePath = data.path;
-            const finalPath = data.path || path;
-            
+        if (!res.ok) throw new Error(res.status);
+        
+        const data = await res.json();
+        if (data.is_folder) return loadFolderContent(path, false);
+        
+        const cleanHTML = DOMPurify.sanitize(marked.parse(data.content), {
+            ADD_TAGS: ['mark'],
+            ADD_ATTR: ['target', 'data-target', 'data-tab-id', 'data-lucide', 'id', 'class', 'data-code'],
+            USE_PROFILES: { html: true, mathMl: true, svg: true },
+            RETURN_TRUSTED_TYPE: true
+        });
+
+        if (data.path) state.currentFilePath = data.path;
+        const finalPath = data.path || path;
+
+        // 2. Start the transition only when data is ready
+        ui.contentViewer.classList.remove('fade-in');
+        ui.contentViewer.classList.add('fade-out');
+
+        setTimeout(() => {
             ui.viewModeContainer.classList.remove('hidden');
             ui.contentViewer.innerHTML = cleanHTML;
+            ui.contentViewer.scrollTop = 0;
+            window.scrollTo(0, 0);
+
             ui.contentViewer.classList.remove('fade-out');
             ui.contentViewer.classList.add('fade-in');
-            ui.contentViewer.style.opacity = '1';
-            
+
+            // Standard processing
             ui.contentViewer.querySelectorAll('pre code').forEach(b => {
                 if (!b.classList.contains('language-end')) hljs.highlightElement(b);
             });
 
-            if (window.renderMathInElement && ui.contentViewer) {
+            if (window.renderMathInElement) {
                 renderMathInElement(ui.contentViewer, {
-                    delimiters: [
-                        {left: '$$', right: '$$', display: true}, 
-                        {left: '$', right: '$', display: false}
-                    ],
-                    throwOnError: false,
-                    strict: false,
-                    trust: false
+                    delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}],
+                    throwOnError: false, strict: false, trust: false
                 });
             }
 
@@ -82,43 +82,20 @@ export async function loadFileContent(path, pushState = true, hash = null) {
             addCopyButtons();
             updateBreadcrumbs(finalPath);
             
-            if (window.mermaid && ui.contentViewer) {
-                // Ensure elements are truly visible and have dimensions
-                setTimeout(() => {
-                    try {
-                        const nodes = ui.contentViewer.querySelectorAll('.mermaid');
-                        if (nodes.length > 0) {
-                            nodes.forEach(n => {
-                                // Store original code for re-renders in tabs/dropdowns
-                                if (!n.dataset.code) n.dataset.code = n.textContent;
-                            });
-                            // Verify viewer width to avoid "translate(undefined, NaN)" errors
-                            const rect = ui.contentViewer.getBoundingClientRect();
-                            if (rect.width > 0) {
-                                mermaid.run({
-                                    nodes: nodes,
-                                    suppressErrors: true
-                                });
-                            }
-                        }
-                    } catch (e) {
-                        console.error('Mermaid render error:', e);
-                    }
-                }, 150);
+            if (window.mermaid) {
+                const nodes = ui.contentViewer.querySelectorAll('.mermaid');
+                if (nodes.length > 0) {
+                    nodes.forEach(n => { if (!n.dataset.code) n.dataset.code = n.textContent; });
+                    mermaid.run({ nodes: nodes, suppressErrors: true });
+                }
             }
             if (window.lucide) lucide.createIcons();
-            
-            if (ui.contentViewer) {
-                ui.contentViewer.querySelectorAll('.task-list-item input[type="checkbox"]').forEach(cb => {
-                    cb.disabled = true;
-                });
-            }
             
             if (hash) {
                 setTimeout(() => {
                     const target = document.getElementById(decodeURIComponent(hash));
-                    if (target) target.scrollIntoView();
-                }, 100);
+                    if (target) target.scrollIntoView({ behavior: 'smooth' });
+                }, 200);
             }
             
             if (ui.topBar) {
@@ -128,17 +105,14 @@ export async function loadFileContent(path, pushState = true, hash = null) {
                     if (ui.visibilityCheckbox) ui.visibilityCheckbox.checked = data.public;
                 } else ui.topBar.classList.add('hidden');
             }
-            
             tree.updateTreeHighlighting(finalPath);
-        } else renderErrorPage(res.status, path);
+        }, 150); // Short blank state
+
     } catch (err) {
         console.error("Load failed:", err);
-        renderErrorPage(500, path);
-    } finally {
-        ui.contentViewer.classList.remove('fade-out');
-        ui.contentViewer.classList.add('fade-in');
+        const status = parseInt(err.message) || 500;
+        renderErrorPage(status, path);
     }
-    }, 300);
 }
 
 export async function loadFolderContent(path, pushState = true) {

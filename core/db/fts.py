@@ -30,10 +30,13 @@ def search_fts(query_str: str, limit: int = 20):
     cursor = conn.cursor()
     # Using bm25 ranking and snippet function for results
     # We escape double quotes in query to prevent syntax errors
+    # We use <mark> tags for highlighting
     safe_query = query_str.replace('"', '""')
     try:
+        # SQLite FTS5 rank is lower for better matches (BM25)
+        # snippet(table, column, start, end, ellipsis, tokens)
         cursor.execute('''
-            SELECT path, name, snippet(fts_docs, 2, '...', '...', '...', 10) as snippet
+            SELECT path, name, snippet(fts_docs, 2, '<mark>', '</mark>', '...', 15) as snippet, rank
             FROM fts_docs 
             WHERE fts_docs MATCH ? 
             ORDER BY rank 
