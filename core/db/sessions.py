@@ -2,6 +2,15 @@ import secrets
 from datetime import datetime, timedelta
 from .base import db_session
 
+def init_table(cursor):
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS sessions (
+            id TEXT PRIMARY KEY,
+            username TEXT,
+            expires_at DATETIME
+        )
+    ''')
+
 def create_session(username: str, days: int = 7) -> str:
     session_id = secrets.token_urlsafe(32)
     expires_at = datetime.now() + timedelta(days=days)

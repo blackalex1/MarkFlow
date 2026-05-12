@@ -12,10 +12,14 @@ import { update2FAStatusUI, updateCredsStatusUI } from './settings.js';
 export { update2FAStatusUI, updateCredsStatusUI };
 
 export function initDashboardListeners() {
-    if (ui.btnCloseDashboard) ui.btnCloseDashboard.onclick = () => ui.dashboardModal.classList.add('hidden');
+    if (ui.btnCloseDashboard) {
+        ui.btnCloseDashboard.addEventListener('click', () => ui.dashboardModal.classList.add('hidden'));
+    }
     
     const logoutBtn = document.getElementById('btn-logout');
-    if (logoutBtn) logoutBtn.onclick = logout;
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', logout);
+    }
 
     const loadActiveTab = () => {
         const activeTab = document.querySelector('.dashboard-tabs .tab-item.active');
@@ -40,7 +44,7 @@ export function initDashboardListeners() {
     // Tab Switching Logic
     const tabs = document.querySelectorAll('.dashboard-tabs .tab-item');
     tabs.forEach(tab => {
-        tab.onclick = () => {
+        tab.addEventListener('click', () => {
             const tabName = tab.getAttribute('data-tab');
             if (!tabName) return;
             
@@ -53,7 +57,7 @@ export function initDashboardListeners() {
             if (target) target.classList.remove('hidden');
 
             loadActiveTab();
-        };
+        });
     });
 
     // Initialize sub-modules (LISTENERS ONLY, NO FETCHING)
@@ -79,4 +83,3 @@ export function initDashboardListeners() {
     });
     if (ui.dashboardModal) observer.observe(ui.dashboardModal, { attributes: true, attributeFilter: ['class'] });
 }
-

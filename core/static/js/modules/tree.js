@@ -6,8 +6,6 @@ import { escapeHTML } from './security.js';
 import { getStatusColor, getStatusName } from './status.js';
 import { showContextMenu } from './tree/menu.js';
 
-
-
 export async function loadFileTree() {
     // 1. Fetch File Tree (Available to guests)
     const treeRes = await fetch(API.FILE_TREE);
@@ -53,7 +51,7 @@ function renderFileTree(tree) {
                 const childrenContainer = document.createElement('div');
                 childrenContainer.className = 'children' + (isOpen ? '' : ' hidden');
                 
-                item.onclick = async (e) => {
+                item.addEventListener('click', async (e) => {
                     e.stopPropagation();
                     const { loadFolderContent } = await import('./viewer.js');
                     loadFolderContent(nodePath);
@@ -68,15 +66,15 @@ function renderFileTree(tree) {
                         item.classList.remove('open');
                         state.openFolders.delete(nodePath);
                     }
-                };
+                });
 
                 const isStaff = state.currentUser && ['developer', 'maintainer', 'owner'].includes(state.currentUser.role);
-                item.oncontextmenu = (e) => {
+                item.addEventListener('contextmenu', (e) => {
                     if (!isStaff) return;
                     e.preventDefault();
                     e.stopPropagation();
                     showContextMenu(e, { path: nodePath, type: 'folder', name: node.name });
-                };
+                });
                 
                 parentEl.appendChild(item);
                 parentEl.appendChild(childrenContainer);
@@ -100,17 +98,17 @@ function renderFileTree(tree) {
                 item.innerHTML = `${statusDot}<i data-lucide="${icon}" class="icon-sm"></i> <span>${escapedName}</span>`;
                 if (node.path === state.currentFilePath) item.classList.add('active');
                 
-                item.onclick = (e) => {
+                item.addEventListener('click', (e) => {
                     e.stopPropagation();
                     window.dispatchEvent(new CustomEvent('load-file', { detail: { path: node.path } }));
-                };
+                });
 
-                item.oncontextmenu = (e) => {
+                item.addEventListener('contextmenu', (e) => {
                     if (!isStaff) return;
                     e.preventDefault();
                     e.stopPropagation();
                     showContextMenu(e, { path: node.path, type: 'file', name: node.name });
-                };
+                });
                 parentEl.appendChild(item);
             }
         });
@@ -119,14 +117,14 @@ function renderFileTree(tree) {
     renderNode(tree, ui.fileTree);
     
     // Context menu on empty space
-    ui.fileTree.oncontextmenu = (e) => {
+    ui.fileTree.addEventListener('contextmenu', (e) => {
         const isStaff = state.currentUser && ['developer', 'maintainer', 'owner'].includes(state.currentUser.role);
         if (!isStaff) return;
         if (e.target !== ui.fileTree) return; // Only trigger if clicking exactly on the container
         
         e.preventDefault();
         showContextMenu(e, { type: 'empty' });
-    };
+    });
 
     if (window.lucide) lucide.createIcons();
 }
@@ -152,6 +150,3 @@ export function getAllFiles() {
     });
     return files;
 }
-
-// showContextMenu and handleMenuCommand moved to ./tree/menu.js and ./tree/actions.js
-

@@ -1,6 +1,24 @@
+import sqlite3
 from .base import db_session, pwd_context
 from .audit import add_audit_log
 from .crypto import encrypt_value, decrypt_value
+
+def init_table(cursor):
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            is_admin BOOLEAN NOT NULL DEFAULT 0,
+            totp_secret TEXT DEFAULT NULL,
+            role TEXT DEFAULT "guest"
+        )
+    ''')
+    # Migrations
+    try: cursor.execute('ALTER TABLE users ADD COLUMN totp_secret TEXT DEFAULT NULL')
+    except sqlite3.OperationalError: pass
+    try: cursor.execute('ALTER TABLE users ADD COLUMN role TEXT DEFAULT "guest"')
+    except sqlite3.OperationalError: pass
 
 def get_user_by_username(username: str):
     with db_session() as conn:

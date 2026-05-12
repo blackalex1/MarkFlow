@@ -1,6 +1,7 @@
 import os
 from fastapi import APIRouter, Request
-from core.database import is_public
+from core.db.repos import list_repositories
+from core.metadata import is_public, get_file_status
 from core.auth import get_current_user, ROLES
 from core.config import DOCS_DIR, limiter, SECURITY_LIMITS
 
@@ -17,7 +18,6 @@ def get_file_tree(request: Request):
     if not os.path.exists(DOCS_DIR):
         os.makedirs(DOCS_DIR)
         
-    from core.database import list_repositories
     flattened_slugs = [r['slug'] for r in list_repositories() if r.get('flatten_in_tree')]
         
     def has_markdown(path):
@@ -60,7 +60,6 @@ def get_file_tree(request: Request):
                     "children": children
                 })
             elif item.endswith(".md"):
-                from core.database import get_file_status
                 public = is_public(rel_path)
                 status = get_file_status(rel_path)
                 if public or can_see_private:
@@ -121,7 +120,6 @@ def get_folder_content(path: str, request: Request):
                 "path": item_rel_path
             })
         elif item.endswith(".md"):
-            from core.database import get_file_status
             public = is_public(item_rel_path)
             status = get_file_status(item_rel_path)
             if public or can_see_private:

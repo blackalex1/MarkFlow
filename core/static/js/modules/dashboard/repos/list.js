@@ -79,16 +79,16 @@ export async function loadRepositories() {
             </table>
         `;
 
-        // Attach listeners
+        // Attach listeners using addEventListener
         const tbody = container.querySelector('#git-repos-tbody');
         tbody.querySelectorAll('.btn-activate').forEach(btn => {
-            btn.onclick = () => activateRepo(btn.dataset.id);
+            btn.addEventListener('click', () => activateRepo(btn.dataset.id));
         });
         tbody.querySelectorAll('.btn-edit').forEach(btn => {
-            btn.onclick = () => editRepo(btn.dataset.id);
+            btn.addEventListener('click', () => editRepo(btn.dataset.id));
         });
         tbody.querySelectorAll('.btn-delete').forEach(btn => {
-            btn.onclick = () => deleteRepo(btn.dataset.id);
+            btn.addEventListener('click', () => deleteRepo(btn.dataset.id));
         });
 
         if (window.lucide) window.lucide.createIcons();

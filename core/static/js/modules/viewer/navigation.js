@@ -10,7 +10,7 @@ export function updateBreadcrumbs(path) {
     homeWrapper.className = 'breadcrumb-home-wrapper';
     homeWrapper.style.cursor = 'pointer';
     homeWrapper.style.display = 'inline-flex';
-    homeWrapper.onclick = () => window.dispatchEvent(new CustomEvent('go-home'));
+    homeWrapper.addEventListener('click', () => window.dispatchEvent(new CustomEvent('go-home')));
     
     const homeIcon = document.createElement('i');
     homeIcon.setAttribute('data-lucide', 'home');
@@ -48,14 +48,14 @@ export function updateBreadcrumbs(path) {
         span.textContent = part.replace('.md', '');
         
         if (!isLast) {
-            span.onclick = () => {
+            span.addEventListener('click', () => {
                 window.dispatchEvent(new CustomEvent('load-file', { detail: { path: thisPath } }));
                 // Also ensure the folder is expanded in the tree if it's a folder
                 if (!part.endsWith('.md')) {
                     state.openFolders.add(thisPath);
                     tree.loadFileTree();
                 }
-            };
+            });
         }
         ui.breadcrumb.appendChild(span);
     });
@@ -80,13 +80,13 @@ export function updateNavigation(currentPath) {
     if (prev) {
         ui.navPrev.classList.remove('hidden');
         ui.navPrev.querySelector('.nav-title').textContent = prev.name;
-        ui.navPrev.onclick = () => window.dispatchEvent(new CustomEvent('load-file', { detail: { path: prev.path } }));
+        ui.navPrev.addEventListener('click', () => window.dispatchEvent(new CustomEvent('load-file', { detail: { path: prev.path } })), { once: true });
     } else ui.navPrev.classList.add('hidden');
     
     if (next) {
         ui.navNext.classList.remove('hidden');
         ui.navNext.querySelector('.nav-title').textContent = next.name;
-        ui.navNext.onclick = () => window.dispatchEvent(new CustomEvent('load-file', { detail: { path: next.path } }));
+        ui.navNext.addEventListener('click', () => window.dispatchEvent(new CustomEvent('load-file', { detail: { path: next.path } })), { once: true });
     } else ui.navNext.classList.add('hidden');
     
     if (window.lucide) lucide.createIcons();

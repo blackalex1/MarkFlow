@@ -142,6 +142,7 @@ export const en = {
     btn_sync_now: "Sync Now",
     btn_reindex: "Reindex Search",
     btn_syncing: "Syncing...",
+    btn_reindexing: "Reindexing...",
     btn_fetch_branches: "Fetch Branches",
     btn_save_config: "Save Config",
     git_branch_label: "Target Branch",

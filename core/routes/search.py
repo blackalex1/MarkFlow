@@ -1,28 +1,18 @@
-from fastapi import APIRouter, Request
-from core.config import limiter, SECURITY_LIMITS
-from core.database import search_fts, is_public
-from core.auth import get_current_user, ROLES
+from fastapi import APIRouter, Depends, Request
+from core.auth import get_current_user
+from core.db.fts import search_fts
+from core.metadata import is_public
 
 router = APIRouter()
 
-@router.get("")
-@limiter.limit(SECURITY_LIMITS["search"])
-def search_docs(q: str, request: Request):
-    if not q or len(q) < 2:
-        return {"results": []}
+@router.get("/")
+def api_search(request: Request, q: str, user=Depends(get_current_user)):
+    results = search_fts(q)
+    
+    # Filter by visibility if not admin
+    is_admin = user and user.get('role') in ['developer', 'maintainer', 'owner']
+    
+    if not is_admin:
+        results = [r for r in results if is_public(r['path'])]
         
-    user = get_current_user(request)
-    user_role = user.get("role", "guest") if user else "guest"
-    can_see_private = ROLES.get(user_role, 0) >= ROLES.get("reporter", 0)
-    
-    # Use FTS5 ranked search
-    db_results = search_fts(q)
-    
-    results = []
-    for r in db_results:
-        # Check permissions
-        if not is_public(r["path"]) and not can_see_private:
-            continue
-        results.append(r)
-                
-    return {"results": results}
+    return results

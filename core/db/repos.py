@@ -1,5 +1,57 @@
-from .base import db_session
+import sqlite3
+from .base import db_session, get_db
 from .crypto import encrypt_value, decrypt_value
+
+def init_table(cursor):
+    # Git Repositories
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS git_repositories (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            slug TEXT UNIQUE NOT NULL,
+            url TEXT NOT NULL,
+            branch TEXT DEFAULT 'master',
+            ssh_private_key TEXT,
+            ssh_public_key TEXT,
+            is_active BOOLEAN DEFAULT 0,
+            auto_sync_interval INTEGER DEFAULT 0,
+            sync_strategy TEXT DEFAULT 'rebase',
+            last_auto_sync_at DATETIME,
+            last_sync_status TEXT,
+            last_sync_error TEXT,
+            last_sync_at DATETIME,
+            flatten_in_tree BOOLEAN DEFAULT 0
+        )
+    ''')
+    
+    # Temp keys for SSH generation
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS temp_ssh_keys (
+            id TEXT PRIMARY KEY,
+            private_key TEXT NOT NULL,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+
+    # Migrations
+    try:
+        cursor.execute('ALTER TABLE git_repositories ADD COLUMN slug TEXT')
+        cursor.execute('UPDATE git_repositories SET slug = "repo_" || id WHERE slug IS NULL')
+    except sqlite3.OperationalError: pass
+    try: cursor.execute('ALTER TABLE git_repositories ADD COLUMN last_sync_status TEXT')
+    except sqlite3.OperationalError: pass
+    try: cursor.execute('ALTER TABLE git_repositories ADD COLUMN last_sync_error TEXT')
+    except sqlite3.OperationalError: pass
+    try: cursor.execute('ALTER TABLE git_repositories ADD COLUMN last_sync_at DATETIME')
+    except sqlite3.OperationalError: pass
+    try: cursor.execute('ALTER TABLE git_repositories ADD COLUMN auto_sync_interval INTEGER DEFAULT 0')
+    except sqlite3.OperationalError: pass
+    try: cursor.execute('ALTER TABLE git_repositories ADD COLUMN sync_strategy TEXT DEFAULT "rebase"')
+    except sqlite3.OperationalError: pass
+    try: cursor.execute('ALTER TABLE git_repositories ADD COLUMN last_auto_sync_at DATETIME')
+    except sqlite3.OperationalError: pass
+    try: cursor.execute('ALTER TABLE git_repositories ADD COLUMN flatten_in_tree BOOLEAN DEFAULT 0')
+    except sqlite3.OperationalError: pass
 
 def list_repositories(include_secrets: bool = False):
     with db_session() as conn:

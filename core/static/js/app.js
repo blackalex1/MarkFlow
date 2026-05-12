@@ -131,30 +131,30 @@ window.addEventListener('auth-changed', () => {
 });
 
 // Actions
-if (ui.btnDelete) ui.btnDelete.onclick = viewer.deleteCurrentFile;
+if (ui.btnDelete) ui.btnDelete.addEventListener('click', viewer.deleteCurrentFile);
 if (ui.sidebarHeader) {
     ui.sidebarHeader.style.cursor = 'pointer';
-    ui.sidebarHeader.onclick = viewer.renderWelcomePage;
+    ui.sidebarHeader.addEventListener('click', viewer.renderWelcomePage);
 }
 
 if (ui.btnLangToggle) {
-    ui.btnLangToggle.onclick = () => {
+    ui.btnLangToggle.addEventListener('click', () => {
         const nextLang = i18n.getLang() === 'ru' ? 'en' : 'ru';
         i18n.setLang(nextLang);
         updateLangLabel();
         if (window.lucide) lucide.createIcons();
-    };
+    });
 }
 
 // Auth Actions
-if (ui.loginForm) ui.loginForm.onsubmit = auth.login;
-if (ui.closeLogin) ui.closeLogin.onclick = () => ui.loginModal.classList.add('hidden');
-if (ui.closeTotpSetup) ui.closeTotpSetup.onclick = () => ui.totpSetupModal.classList.add('hidden');
-if (ui.btnVerify2fa) ui.btnVerify2fa.onclick = auth.verify2FA;
+if (ui.loginForm) ui.loginForm.addEventListener('submit', auth.login);
+if (ui.closeLogin) ui.closeLogin.addEventListener('click', () => ui.loginModal.classList.add('hidden'));
+if (ui.closeTotpSetup) ui.closeTotpSetup.addEventListener('click', () => ui.totpSetupModal.classList.add('hidden'));
+if (ui.btnVerify2fa) ui.btnVerify2fa.addEventListener('click', auth.verify2FA);
 
 // Mobile Navigation
 if (ui.mobileToggle) {
-    ui.mobileToggle.onclick = () => {
+    ui.mobileToggle.addEventListener('click', () => {
         state.isSidebarActive = !state.isSidebarActive;
         ui.sidebar.classList.toggle('active', state.isSidebarActive);
         
@@ -164,7 +164,7 @@ if (ui.mobileToggle) {
             icon.setAttribute('data-lucide', state.isSidebarActive ? 'x' : 'menu');
             if (window.lucide) lucide.createIcons();
         }
-    };
+    });
 }
 
 // Close sidebar on file load (mobile)

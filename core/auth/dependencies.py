@@ -1,6 +1,6 @@
 from fastapi import Request, HTTPException, status
 from itsdangerous import BadSignature, SignatureExpired
-from core.database import get_session
+from core.db.sessions import get_session
 from .utils import get_serializer
 
 # Role Hierarchy

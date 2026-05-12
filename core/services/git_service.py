@@ -14,7 +14,8 @@ def get_repo(path=DOCS_DIR):
         from git import Git
         Git().config("--global", "--add", "safe.directory", path.replace('\\', '/'))
     except Exception as e:
-        print(f"Warning: Could not set git safe.directory for {path}: {e}")
+        # Non-fatal: the directory might already be safe
+        pass
 
     try:
         repo = Repo(path)
@@ -24,6 +25,10 @@ def get_repo(path=DOCS_DIR):
         return repo
 
 
+
+class GitConflictError(Exception):
+    """Raised when a git operation fails due to merge/rebase conflicts."""
+    pass
 
 def sync_repository(username: str, force: bool = False, ip_address: str = "", is_auto: bool = False):
     active_repo = get_active_repository(include_secrets=True)
@@ -57,7 +62,10 @@ def _sync_repository_internal(active_repo: dict, username: str, force: bool = Fa
         if not re.match(r"^[a-z0-9_\-]+$", repo_slug):
              raise Exception(f"Invalid repository slug: {repo_slug}")
              
-        Git().config("--global", "--add", "safe.directory", target_dir.replace('\\', '/'))
+        try:
+            Git().config("--global", "--add", "safe.directory", target_dir.replace('\\', '/'))
+        except:
+            pass
         
         repo = None
         try:
@@ -217,13 +225,24 @@ def _sync_repository_internal(active_repo: dict, username: str, force: bool = Fa
                     # 2. Pull with strategy
                     if strategy == 'rebase':
                         try:
-                            repo.git.pull('origin', branch_name, '--rebase')
+                            # 1. Fetch the specific branch first
+                            repo.git.fetch('origin', branch_name)
+                            # 2. Rebase onto the remote branch explicitly
+                            repo.git.rebase(f'origin/{branch_name}')
                         except Exception as e:
                             try: repo.git.rebase('--abort')
                             except: pass
-                            raise Exception(f"Rebase conflict detected: {str(e)}. Please resolve manually or use 'PR Style' strategy.")
+                            raise GitConflictError(f"Rebase conflict: {str(e)}")
                     else:
-                        repo.git.pull('origin', branch_name, '--no-rebase', '--allow-unrelated-histories')
+                        try:
+                            # 1. Fetch first
+                            repo.git.fetch('origin', branch_name)
+                            # 2. Merge explicitly
+                            repo.git.merge(f'origin/{branch_name}', '--allow-unrelated-histories')
+                        except Exception as e:
+                            try: repo.git.merge('--abort')
+                            except: pass
+                            raise GitConflictError(f"Merge conflict: {str(e)}")
                     
                     # 3. Push
                     repo.git.push('origin', branch_name)

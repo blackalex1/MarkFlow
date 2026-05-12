@@ -36,6 +36,15 @@ table.admin-table {
     min-width: unset !important;
 }
 
+/* Allow dropdowns to overflow table cells */
+.admin-table td, .admin-table tr {
+    overflow: visible !important;
+}
+
+#users-table-container, #git-repos-table-container, #statuses-table-container {
+    overflow: visible !important;
+}
+
 th {
     background: rgba(255, 255, 255, 0.04);
     color: var(--text-heading);

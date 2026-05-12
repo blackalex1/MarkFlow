@@ -2,9 +2,9 @@ import os
 import re
 from fastapi import APIRouter, Depends, HTTPException, Request, BackgroundTasks
 from pydantic import BaseModel
-from core.database import (
-    update_fts_index, add_audit_log, is_public, is_image_referenced
-)
+from core.db.fts import update_fts_index, is_image_referenced
+from core.db.audit import add_audit_log
+from core.metadata import is_public, get_file_status, set_file_status
 from core.auth import get_current_user, get_developer_user, ROLES
 from core.config import DOCS_DIR, limiter, SECURITY_LIMITS
 from .utils import get_safe_path
@@ -62,7 +62,6 @@ def get_file_content(path: str, request: Request):
             with open(full_path, "r", encoding="utf-8", errors="replace") as f:
                 content = f.read()
         
-    from core.database import get_file_status
     status = get_file_status(path)
     
     # Return the real relative path (relative to DOCS_DIR) so the frontend can update its state

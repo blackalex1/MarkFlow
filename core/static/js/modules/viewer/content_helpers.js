@@ -17,13 +17,15 @@ export function generateTOC() {
         a.href = `#${header.id}`;
         a.textContent = header.textContent;
         a.className = `toc-${header.tagName.toLowerCase()}`;
-        a.onclick = (e) => {
+        
+        a.addEventListener('click', (e) => {
             e.preventDefault();
             header.scrollIntoView({ behavior: 'smooth' });
             const url = new URL(window.location);
             url.hash = header.id;
             history.pushState({path: state.currentFilePath}, '', url);
-        };
+        });
+        
         li.appendChild(a);
         ul.appendChild(li);
     });
@@ -36,13 +38,15 @@ export function addCopyButtons() {
         const button = document.createElement('button');
         button.className = 'copy-btn';
         button.innerText = 'Copy';
-        button.onclick = () => {
+        
+        button.addEventListener('click', () => {
             const code = pre.querySelector('code').innerText;
             navigator.clipboard.writeText(code).then(() => {
                 button.innerText = 'Copied!';
                 setTimeout(() => button.innerText = 'Copy', 2000);
             });
-        };
+        });
+        
         pre.appendChild(button);
     });
 }

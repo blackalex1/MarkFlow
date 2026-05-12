@@ -1,5 +1,16 @@
 from .base import get_db
 
+def init_table(cursor):
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS document_statuses (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            slug TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            color TEXT NOT NULL,
+            is_system BOOLEAN DEFAULT 0
+        )
+    ''')
+
 def list_statuses():
     conn = get_db()
     cursor = conn.cursor()

@@ -5,14 +5,18 @@ from io import BytesIO
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Response, Request
 from pydantic import BaseModel
-from core.database import (
-    verify_password, get_user_by_username, set_user_totp_secret, 
-    add_audit_log, delete_session, clear_user_sessions,
-    list_users, create_user, delete_user, update_user_role, update_user_password
-)
 from .dependencies import get_current_user, get_admin_user, get_owner_user
 from .utils import create_session_cookie, validate_password_complexity
 from core.config import limiter, SECURITY_LIMITS
+
+# Modular DB Imports
+from core.db.users import (
+    verify_password, get_user_by_username, set_user_totp_secret, 
+    list_users, create_user, delete_user, update_user_role, update_user_password
+)
+from core.db.sessions import delete_session, clear_user_sessions
+from core.db.audit import add_audit_log, get_audit_logs
+
 router = APIRouter()
 
 class ChangePasswordRequest(BaseModel):
@@ -215,5 +219,4 @@ def api_update_role(request: Request, username: str, data: RoleUpdate, user=Depe
 
 @router.get("/audit-logs")
 def api_get_logs(user=Depends(get_owner_user)):
-    from core.database import get_audit_logs
     return get_audit_logs()

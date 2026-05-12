@@ -61,12 +61,14 @@ export async function loadSyncConfig() {
 }
 
 export function initSync() {
-    if (ui.btnGitSync) {
+    if (!ui.btnGitSync || ui.btnGitSync._syncInitialized) return;
+    ui.btnGitSync._syncInitialized = true;
 
-        ui.btnGitSync.onclick = async () => {
+    if (ui.btnGitSync) {
+        ui.btnGitSync.addEventListener('click', async () => {
             ui.btnGitSync.disabled = true;
-            const originalText = ui.btnGitSync.innerText;
-            ui.btnGitSync.innerText = i18n.t('btn_syncing') || 'Syncing...';
+            const originalHTML = ui.btnGitSync.innerHTML;
+            ui.btnGitSync.innerHTML = `<div class="spinner-small" style="display:inline-block; vertical-align:middle; margin-right:8px;"></div> ${i18n.t('btn_syncing') || 'Syncing...'}`;
             
             if (ui.syncStatusIcon) ui.syncStatusIcon.innerHTML = '<div class="spinner-small"></div>';
             if (ui.syncStatusText) {
@@ -82,20 +84,21 @@ export function initSync() {
                     setSyncStatus(true);
                     loadRepositories();
                 } else {
-                    toast.error(`${i18n.t('error_prefix')}: ${data.detail || i18n.t('error_generic')}`);
-                    setSyncStatus(false, 'Failed');
+                    const errorMsg = data.detail || i18n.t('error_generic');
+                    toast.error(`${i18n.t('error_prefix')}: ${errorMsg}`);
+                    setSyncStatus(false, errorMsg);
                 }
             } catch (e) {
                 setSyncStatus(false, 'Error');
             } finally {
                 ui.btnGitSync.disabled = false;
-                ui.btnGitSync.innerText = originalText;
+                ui.btnGitSync.innerHTML = originalHTML;
             }
-        };
+        });
     }
 
     if (ui.btnGitForceSync) {
-        ui.btnGitForceSync.onclick = async () => {
+        ui.btnGitForceSync.addEventListener('click', async () => {
             const confirmed = await window.confirmAction(
                 i18n.t('confirm_force_sync_title') || 'Force Sync',
                 i18n.t('confirm_force_sync') || 'WARNING: This will replace all local changes with the remote state.',
@@ -105,8 +108,8 @@ export function initSync() {
             if (!confirmed) return;
 
             ui.btnGitForceSync.disabled = true;
-            const originalText = ui.btnGitForceSync.innerText;
-            ui.btnGitForceSync.innerText = '...';
+            const originalHTML = ui.btnGitForceSync.innerHTML;
+            ui.btnGitForceSync.innerHTML = `<div class="spinner-small" style="display:inline-block; vertical-align:middle; margin-right:8px;"></div> ${i18n.t('btn_syncing') || 'Syncing...'}`;
             
             if (ui.syncStatusIcon) ui.syncStatusIcon.innerHTML = '<div class="spinner-small"></div>';
             if (ui.syncStatusText) {
@@ -123,23 +126,24 @@ export function initSync() {
                     loadRepositories();
                     window.dispatchEvent(new CustomEvent('tree-update-required'));
                 } else {
-                    toast.error(`${i18n.t('error_prefix')}: ${data.detail || i18n.t('error_generic')}`);
-                    setSyncStatus(false, 'Failed');
+                    const errorMsg = data.detail || i18n.t('error_generic');
+                    toast.error(`${i18n.t('error_prefix')}: ${errorMsg}`);
+                    setSyncStatus(false, errorMsg);
                 }
             } catch (e) {
                 setSyncStatus(false, 'Error');
             } finally {
                 ui.btnGitForceSync.disabled = false;
-                ui.btnGitForceSync.innerText = originalText;
+                ui.btnGitForceSync.innerHTML = originalHTML;
             }
-        };
+        });
     }
 
     if (ui.btnReindex) {
-        ui.btnReindex.onclick = async () => {
+        ui.btnReindex.addEventListener('click', async () => {
             ui.btnReindex.disabled = true;
-            const originalText = ui.btnReindex.innerText;
-            ui.btnReindex.innerText = '...';
+            const originalHTML = ui.btnReindex.innerHTML;
+            ui.btnReindex.innerHTML = `<div class="spinner-small" style="display:inline-block; vertical-align:middle; margin-right:8px;"></div> ${i18n.t('btn_reindexing') || 'Reindexing...'}`;
             
             try {
                 const res = await fetch('/api/files/reindex', { method: 'POST' });
@@ -153,8 +157,8 @@ export function initSync() {
                 console.error(e);
             } finally {
                 ui.btnReindex.disabled = false;
-                ui.btnReindex.innerText = originalText;
+                ui.btnReindex.innerHTML = originalHTML;
             }
-        };
+        });
     }
 }

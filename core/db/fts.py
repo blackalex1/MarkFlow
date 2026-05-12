@@ -1,6 +1,13 @@
 import os
 import sqlite3
+import sqlite3
 from .base import get_db
+
+def init_table(cursor):
+    try:
+        cursor.execute('CREATE VIRTUAL TABLE IF NOT EXISTS fts_docs USING fts5(path, name, content)')
+    except sqlite3.OperationalError:
+        pass
 
 def update_fts_index(path: str, name: str, content: str):
     conn = get_db()

@@ -1,4 +1,19 @@
+import sqlite3
 from .base import get_db
+
+def init_table(cursor):
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS audit_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            username TEXT,
+            action TEXT,
+            details TEXT,
+            ip_address TEXT
+        )
+    ''')
+    try: cursor.execute('ALTER TABLE audit_logs ADD COLUMN ip_address TEXT')
+    except sqlite3.OperationalError: pass
 
 def add_audit_log(username: str, action: str, details: str = "", ip_address: str = ""):
     conn = get_db()

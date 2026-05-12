@@ -7,7 +7,7 @@ import { initSpectrumPicker } from '../color-picker-logic.js';
 export function initSystemSettings() {
     const btnSave = document.getElementById('btn-save-system-settings');
     if (btnSave) {
-        btnSave.onclick = saveSystemSettings;
+        btnSave.addEventListener('click', saveSystemSettings);
     }
 
     // Custom Color Picker logic
@@ -39,10 +39,10 @@ export function initSystemSettings() {
     };
 
     if (colorTrigger) {
-        colorTrigger.onclick = (e) => {
+        colorTrigger.addEventListener('click', (e) => {
             e.stopPropagation();
             colorDropdown.classList.toggle('active');
-        };
+        });
     }
 
     document.addEventListener('click', (e) => {
@@ -53,13 +53,13 @@ export function initSystemSettings() {
 
     // Swatches
     swatches.forEach(swatch => {
-        swatch.onclick = (e) => {
+        swatch.addEventListener('click', (e) => {
             const color = swatch.dataset.color;
             if (color) {
                 updateColorPreview(color);
                 colorDropdown.classList.remove('active');
             }
-        };
+        });
     });
 
     // Custom Spectrum Picker logic
@@ -99,9 +99,9 @@ export function initSystemSettings() {
             if (glowBadgeDark) glowBadgeDark.innerText = `${Math.round(opacityDark * 100)}%`;
         };
 
-        glowToggle.onchange = updateGlow;
-        if (glowOpacityLight) glowOpacityLight.oninput = updateGlow;
-        if (glowOpacityDark) glowOpacityDark.oninput = updateGlow;
+        glowToggle.addEventListener('change', updateGlow);
+        if (glowOpacityLight) glowOpacityLight.addEventListener('input', updateGlow);
+        if (glowOpacityDark) glowOpacityDark.addEventListener('input', updateGlow);
     }
 
     // Force translations and icons for new elements
@@ -129,8 +129,8 @@ export function initSystemSettings() {
     const logoPlaceholder = document.getElementById('logo-placeholder');
 
     if (logoTrigger && logoUpload) {
-        logoTrigger.onclick = () => logoUpload.click();
-        logoUpload.onchange = (e) => {
+        logoTrigger.addEventListener('click', () => logoUpload.click());
+        logoUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
                 pendingLogo = file;
@@ -142,7 +142,7 @@ export function initSystemSettings() {
                 };
                 reader.readAsDataURL(file);
             }
-        };
+        });
     }
 
     const faviconUpload = document.getElementById('sys-favicon-upload');
@@ -151,8 +151,8 @@ export function initSystemSettings() {
     const faviconPlaceholder = document.getElementById('favicon-placeholder');
 
     if (faviconTrigger && faviconUpload) {
-        faviconTrigger.onclick = () => faviconUpload.click();
-        faviconUpload.onchange = (e) => {
+        faviconTrigger.addEventListener('click', () => faviconUpload.click());
+        faviconUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
                 pendingFavicon = file;
@@ -164,7 +164,7 @@ export function initSystemSettings() {
                 };
                 reader.readAsDataURL(file);
             }
-        };
+        });
     }
 }
 

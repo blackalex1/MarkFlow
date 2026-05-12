@@ -17,7 +17,7 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from core.database import init_db, update_fts_index, delete_fts_index, reindex_all_docs
 from core.auth import router as auth_router, get_current_user
-from core.git_sync import router as git_router
+from core.routes.git import router as git_router
 from core.routes.files import router as files_router
 from core.routes.search import router as search_router
 from core.routes.system import router as system_router

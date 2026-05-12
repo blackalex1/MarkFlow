@@ -1,5 +1,13 @@
 from .base import get_db
 
+def init_table(cursor):
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS settings (
+            key TEXT PRIMARY KEY,
+            value TEXT
+        )
+    ''')
+
 def get_setting(key: str):
     conn = get_db()
     cursor = conn.cursor()

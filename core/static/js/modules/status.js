@@ -64,10 +64,10 @@ export function renderStatusDropdown(container, onSelect) {
         const displayName = status.is_system ? (t(`status_${status.slug}`) || status.name) : status.name;
         item.innerHTML = `<span class="status-dot" style="background-color: ${status.color}; margin-right: 8px; width: 8px; height: 8px;"></span> ${escapeHTML(displayName)}`;
         
-        item.onclick = (e) => {
+        item.addEventListener('click', (e) => {
             e.stopPropagation();
             onSelect(status.slug, displayName);
-        };
+        });
         
         container.appendChild(item);
     });
@@ -91,7 +91,7 @@ export function updateStatusDisplay(slug) {
 export function initVisibilityToggle() {
     if (!ui.visibilityCheckbox) return;
 
-    ui.visibilityCheckbox.onchange = async () => {
+    ui.visibilityCheckbox.addEventListener('change', async () => {
         if (!state.currentFilePath) return;
         
         const isPublic = ui.visibilityCheckbox.checked;
@@ -120,5 +120,5 @@ export function initVisibilityToggle() {
             console.error('Visibility toggle failed:', err);
             ui.visibilityCheckbox.checked = !isPublic;
         }
-    };
+    });
 }

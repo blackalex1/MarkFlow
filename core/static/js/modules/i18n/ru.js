@@ -139,6 +139,7 @@ export const ru = {
     btn_sync_now: "Синхронизировать сейчас",
     btn_reindex: "Переиндексировать поиск",
     btn_syncing: "Синхронизация...",
+    btn_reindexing: "Индексация...",
     btn_fetch_branches: "Загрузить ветки",
     btn_save_config: "Сохранить конфиг",
     git_branch_label: "Целевая ветка",

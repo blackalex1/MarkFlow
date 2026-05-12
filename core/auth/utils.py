@@ -1,7 +1,8 @@
 import re
 from fastapi import Response
 from itsdangerous import URLSafeTimedSerializer
-from core.database import get_setting, create_session
+from core.db.settings import get_setting
+from core.db.sessions import create_session
 
 def get_serializer(secret_key_name: str):
     secret = get_setting(secret_key_name)
