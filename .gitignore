@@ -13,26 +13,26 @@
 !requirements.txt
 !.env_example
 
-# 3. Allow Source Code
+# 3. Allow Source Code & Structure
 !core/
 !core/**
+
+# 4. Specific Exclusions (Blacklist within Whitelist)
 core/static/vendor/
-
-# 4. Allow Deployment Folder
-!deploy/
-!deploy/**
-
-# 5. Standard Python / OS exclusions
+core/config/
+**/*.db
+**/*.sqlite3
 **/__pycache__/
 **/*.py[cod]
 **/.DS_Store
 venv/
 .env
-../.env
+
+# 5. Allow Deployment Folder
+!deploy/
+!deploy/**
 
 # 6. Exclude User Data & Secrets (CRITICAL)
-app.db
-*.db
 config/
 certbot/
 markdown_docs/
@@ -40,6 +40,6 @@ markdown_docs/
 !markdown_docs/full_feature_test_en.md
 markdown_docs/Argument_Documentation.md
 
-# 7. Allow Internal Templates
+# 7. Internal Templates (already covered by core/**, but kept for clarity)
 !core/config_example/
 !core/config_example/**

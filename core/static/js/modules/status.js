@@ -96,17 +96,16 @@ export function initVisibilityToggle() {
         
         const isPublic = ui.visibilityCheckbox.checked;
         try {
-            const res = await fetch(API.FILE_VISIBILITY, {
+            const res = await fetch(`${API.FILE_VISIBILITY}?path=${encodeURIComponent(state.currentFilePath)}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    path: state.currentFilePath,
-                    is_public: isPublic
+                    public: isPublic
                 })
             });
 
             if (res.ok) {
-                toast.success(isPublic ? t('toast_made_public') : t('toast_made_private'));
+                toast.success(t('toast_visibility_updated'));
                 // Refresh tree to show new icon (eye/lock)
                 const tree = await import('./tree.js');
                 tree.loadFileTree();

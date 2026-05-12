@@ -18,11 +18,22 @@ class ToastManager {
         toast.className = `toast toast-${type} fade-in toast-${position}`;
         
         const icon = this.getIcon(type);
-        
+        let displayMessage = message;
+        if (typeof message !== 'string') {
+            if (Array.isArray(message)) {
+                // Handle FastAPI validation error lists
+                displayMessage = message.map(m => m.msg || JSON.stringify(m)).join(', ');
+            } else if (message && typeof message === 'object') {
+                displayMessage = message.detail || message.message || JSON.stringify(message);
+            } else {
+                displayMessage = String(message);
+            }
+        }
+
         toast.innerHTML = `
             <div class="toast-content">
                 <i class="toast-icon">${icon}</i>
-                <span class="toast-message">${message}</span>
+                <span class="toast-message">${displayMessage}</span>
             </div>
             <button class="toast-close">&times;</button>
         `;

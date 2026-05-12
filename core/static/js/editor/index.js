@@ -16,9 +16,7 @@ export const init = async () => {
     if (ui.btnSave) ui.btnSave.onclick = actions.saveContent;
     if (ui.btnCancel) ui.btnCancel.onclick = () => actions.exitEditMode(false, true);
     
-    if (ui.visibilityCheckbox) {
-        ui.visibilityCheckbox.onchange = (e) => actions.updateVisibility(e.target.checked);
-    }
+    // Status and visibility are handled by modules/status.js
     
     if (ui.statusDropdown) {
         const trigger = ui.statusDropdown.querySelector('.dropdown-trigger');
