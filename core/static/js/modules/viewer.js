@@ -66,15 +66,46 @@ export async function loadFileContent(path, pushState = true, hash = null) {
             ui.contentViewer.classList.remove('fade-out');
             ui.contentViewer.classList.add('fade-in');
 
-            // Standard processing
-            ui.contentViewer.querySelectorAll('pre code').forEach(b => {
-                if (!b.classList.contains('language-end')) hljs.highlightElement(b);
-            });
+            // Lazy Syntax Highlighting (Performance Guard for Large Docs)
+            if (window.hljs) {
+                const codeObserver = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const block = entry.target;
+                            if (!block.dataset.highlighted && !block.classList.contains('language-end')) {
+                                hljs.highlightElement(block);
+                                block.dataset.highlighted = "true";
+                                codeObserver.unobserve(block);
+                            }
+                        }
+                    });
+                }, { rootMargin: '100px' });
+                
+                ui.contentViewer.querySelectorAll('pre code').forEach(b => codeObserver.observe(b));
+            }
 
+            // Lazy KaTeX (Performance Guard)
             if (window.renderMathInElement) {
-                renderMathInElement(ui.contentViewer, {
-                    delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}],
-                    throwOnError: false, strict: false, trust: false
+                const mathObserver = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const el = entry.target;
+                            if (!el.dataset.mathRendered) {
+                                renderMathInElement(el, {
+                                    delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}],
+                                    throwOnError: false, strict: false, trust: false
+                                });
+                                el.dataset.mathRendered = "true";
+                                mathObserver.unobserve(el);
+                            }
+                        }
+                    });
+                }, { rootMargin: '150px' });
+                
+                // We observe the whole content area but use a more granular approach if needed.
+                // For now, observing the viewer is okay, but let's observe paragraphs/divs for better granularity.
+                ui.contentViewer.querySelectorAll('p, div, li, blockquote').forEach(el => {
+                    if (el.textContent.includes('$')) mathObserver.observe(el);
                 });
             }
 
@@ -86,10 +117,22 @@ export async function loadFileContent(path, pushState = true, hash = null) {
             updateBreadcrumbs(finalPath);
             
             if (window.mermaid) {
-                const nodes = ui.contentViewer.querySelectorAll('.mermaid');
-                if (nodes.length > 0) {
-                    nodes.forEach(n => { if (!n.dataset.code) n.dataset.code = n.textContent; });
-                    mermaid.run({ nodes: nodes, suppressErrors: true });
+                const mermaidNodes = ui.contentViewer.querySelectorAll('.mermaid');
+                if (mermaidNodes.length > 0) {
+                    const mermaidObserver = new IntersectionObserver((entries) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting) {
+                                const n = entry.target;
+                                if (!n.dataset.processed) {
+                                    if (!n.dataset.code) n.dataset.code = n.textContent;
+                                    mermaid.run({ nodes: [n], suppressErrors: true });
+                                    n.dataset.processed = "true";
+                                    mermaidObserver.unobserve(n);
+                                }
+                            }
+                        });
+                    }, { rootMargin: '200px' });
+                    mermaidNodes.forEach(n => mermaidObserver.observe(n));
                 }
             }
             if (window.lucide) lucide.createIcons({
@@ -112,7 +155,7 @@ export async function loadFileContent(path, pushState = true, hash = null) {
                 } else ui.topBar.classList.add('hidden');
             }
             tree.updateTreeHighlighting(finalPath);
-        }, 150);
+        }, 200); // Sync with fadeOut duration
         currentLoadTimeout = timeout;
 
     } catch (err) {
