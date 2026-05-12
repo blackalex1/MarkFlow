@@ -36,19 +36,57 @@ def search_fts(query_str: str, limit: int = 20):
         # SQLite FTS5 rank is lower for better matches (BM25)
         # snippet(table, column, start, end, ellipsis, tokens)
         cursor.execute('''
-            SELECT path, name, snippet(fts_docs, 2, '<mark>', '</mark>', '...', 15) as snippet, rank
+            SELECT 
+                path, 
+                name,
+                highlight(fts_docs, 0, '<mark>', '</mark>') as highlighted_path,
+                highlight(fts_docs, 1, '<mark>', '</mark>') as highlighted_name,
+                snippet(fts_docs, 2, '<mark>', '</mark>', '...', 50) as snippet, 
+                bm25(fts_docs, 1.0, 5.0, 10.0) as bm25_rank
             FROM fts_docs 
             WHERE fts_docs MATCH ? 
-            ORDER BY rank 
+            ORDER BY bm25_rank 
             LIMIT ?
         ''', (f'"{safe_query}"*', limit))
-        rows = cursor.fetchall()
+        rows = [dict(r) for r in cursor.fetchall()]
+        
+        # Clean up Markdown and Center the snippet around the first match
+        import re
+        for r in rows:
+            s = r['snippet']
+            # Basic MD cleaning
+            s = s.replace('```', '')
+            s = re.sub(r'(\*\*|__|[*_])', '', s)
+            s = re.sub(r'^#+\s*', '', s, flags=re.MULTILINE)
+            s = re.sub(r'\[([^\]]+)\]\([^\)]+\)', r'\1', s)
+            
+            # Find the first match
+            match_start = s.find('<mark>')
+            if match_start != -1:
+                # Target around 100-120 chars total
+                half_window = 60
+                
+                start = max(0, match_start - half_window)
+                end = match_start + half_window
+                
+                # Adjust start to not cut in middle of word if possible
+                if start > 0:
+                    space_idx = s.find(' ', start, match_start)
+                    if space_idx != -1:
+                        start = space_idx + 1
+                
+                new_s = s[start:end]
+                if start > 0: new_s = '...' + new_s
+                if end < len(s): new_s = new_s + '...'
+                s = new_s
+
+            r['snippet'] = s.strip()
+            
+        return rows
     except sqlite3.OperationalError:
-        # Fallback if query syntax is wrong or MATCH fails
         return []
     finally:
         conn.close()
-    return [dict(row) for row in rows]
 
 def reindex_all_docs(docs_dir: str):
     """Clears and rebuilds the entire search index and cleans up orphaned attachments."""
@@ -125,3 +163,35 @@ def is_image_referenced(image_ref_part: str) -> bool:
     exists = cursor.fetchone() is not None
     conn.close()
     return exists
+
+def reindex_incremental(docs_dir: str, changed_rel_paths: list, deleted_rel_paths: list):
+    """Updates only specific files in the FTS index."""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    # 1. Handle Deletions
+    if deleted_rel_paths:
+        cursor.executemany('DELETE FROM fts_docs WHERE path = ?', [(p,) for p in deleted_rel_paths])
+    
+    # 2. Handle Updates/Additions
+    for rel_path in changed_rel_paths:
+        if not rel_path.endswith('.md'):
+            continue
+            
+        full_path = os.path.join(docs_dir, rel_path)
+        if not os.path.exists(full_path):
+            continue
+            
+        name = os.path.basename(rel_path).replace('.md', '')
+        try:
+            with open(full_path, 'r', encoding='utf-8', errors='replace') as f:
+                content = f.read()
+            # FTS5 replace logic
+            cursor.execute('DELETE FROM fts_docs WHERE path = ?', (rel_path,))
+            cursor.execute('INSERT INTO fts_docs (path, name, content) VALUES (?, ?, ?)', (rel_path, name, content))
+        except Exception as e:
+            print(f"Failed to incrementally index {rel_path}: {e}")
+            
+    conn.commit()
+    conn.close()
+    print(f"Incremental indexing completed: {len(changed_rel_paths)} updated, {len(deleted_rel_paths)} deleted.")

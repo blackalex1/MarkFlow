@@ -17,7 +17,7 @@ from .db.repos import (
     set_active_repository
 )
 from .db.audit import init_table as init_audit, add_audit_log, get_audit_logs
-from .db.fts import init_table as init_fts, update_fts_index, delete_fts_index, search_fts, reindex_all_docs, is_image_referenced
+from .db.fts import init_table as init_fts, update_fts_index, delete_fts_index, search_fts, reindex_all_docs, is_image_referenced, reindex_incremental
 from .db.statuses import init_table as init_statuses, list_statuses, add_status, update_status, delete_status, get_status_by_slug
 from .metadata import is_public, set_public, set_public_recursive, get_file_status, set_file_status, rename_metadata
 from .db.crypto import encrypt_value
@@ -25,6 +25,7 @@ from .db.crypto import encrypt_value
 def init_db():
     conn = get_db()
     cursor = conn.cursor()
+    cursor.execute("PRAGMA journal_mode=WAL")
     
     # 1. Initialize all tables
     init_users(cursor)

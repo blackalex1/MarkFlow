@@ -3,7 +3,7 @@ import re
 import shlex
 from datetime import datetime
 from git import Repo, InvalidGitRepositoryError, GitCommandError
-from core.database import get_setting, set_setting, add_audit_log, reindex_all_docs, get_active_repository, get_db
+from core.database import get_setting, set_setting, add_audit_log, reindex_all_docs, get_active_repository, get_db, reindex_incremental
 from core.config import DOCS_DIR, BASE_DIR
 
 def get_repo(path=DOCS_DIR):
@@ -76,6 +76,13 @@ def _sync_repository_internal(active_repo: dict, username: str, force: bool = Fa
         url = active_repo['url']
         validate_git_url(url)
         branch_name = active_repo['branch'] or "master"
+        
+        # 0. Capture old commit for incremental indexing
+        old_commit = None
+        try:
+            old_commit = repo.head.commit
+        except:
+            pass
         
         # Auto-convert GitHub HTTPS to SSH
         if url and url.startswith('https://github.com/'):
@@ -250,7 +257,33 @@ def _sync_repository_internal(active_repo: dict, username: str, force: bool = Fa
         finally:
             if os.path.exists(tmp_path): os.remove(tmp_path)
         
-        reindex_all_docs(DOCS_DIR)
+        # Incremental indexing logic
+        try:
+            new_commit = repo.head.commit
+            if old_commit and old_commit != new_commit:
+                diffs = old_commit.diff(new_commit)
+                changed_paths = []
+                deleted_paths = []
+                for d in diffs:
+                    path = d.b_path if d.b_path else d.a_path
+                    rel_path = f"{repo_slug}/{path}".replace('\\', '/')
+                    if d.change_type in ['A', 'M', 'R']:
+                        changed_paths.append(rel_path)
+                    elif d.change_type == 'D':
+                        deleted_paths.append(rel_path)
+                
+                if changed_paths or deleted_paths:
+                    reindex_incremental(DOCS_DIR, changed_paths, deleted_paths)
+                else:
+                    # No actual file changes (maybe just commit message or something else)
+                    pass
+            else:
+                # If no old commit or force sync, do full reindex for safety
+                reindex_all_docs(DOCS_DIR)
+        except Exception as e:
+            print(f"Incremental indexing failed, falling back to full: {e}")
+            reindex_all_docs(DOCS_DIR)
+
         update_sync_status('success')
         return {"message": "Sync successful"}
     except Exception as e:

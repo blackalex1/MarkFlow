@@ -34,8 +34,8 @@ export function initSearch() {
 
     // Keyboard shortcuts
     document.addEventListener('keydown', (e) => {
-        // Cmd+K or Ctrl+K
-        if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        // Cmd+K or Ctrl+K (handle both English and Russian layouts)
+        if ((e.metaKey || e.ctrlKey) && (e.code === 'KeyK' || e.key.toLowerCase() === 'k' || e.key.toLowerCase() === 'к')) {
             e.preventDefault();
             toggleQuickSwitcher(true);
         }

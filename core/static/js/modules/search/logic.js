@@ -28,10 +28,20 @@ export async function performSearch(q, container) {
         if (results && results.length > 0) {
             container.innerHTML = results.map((r, idx) => {
                 let snippet = r.snippet;
-                // If backend didn't provide highlighting, do a simple fallback
-                if (!snippet.includes('<mark>')) {
-                    const regex = new RegExp(`(${q})`, 'gi');
-                    snippet = snippet.replace(regex, '<mark>$1</mark>');
+                
+                // Use highlighted name from backend if available, otherwise escape regular name
+                const title = r.highlighted_name ? r.highlighted_name : escapeHTML(r.name);
+                
+                // Show path if it has a match or if there's no match in title/snippet
+                const hasMatchInTitle = r.highlighted_name && r.highlighted_name.includes('<mark>');
+                const hasMatchInSnippet = snippet && snippet.includes('<mark>');
+                const hasMatchInPath = r.highlighted_path && r.highlighted_path.includes('<mark>');
+                
+                let pathInfo = '';
+                if (hasMatchInPath) {
+                    pathInfo = `<div class="search-item-path" style="font-size: 10px; color: var(--text-muted); opacity: 0.8; margin-bottom: 2px;">📁 ${r.highlighted_path}</div>`;
+                } else if (!hasMatchInTitle && !hasMatchInSnippet) {
+                    pathInfo = `<div class="search-item-path" style="font-size: 10px; color: var(--text-muted); opacity: 0.6; margin-bottom: 2px;">📂 ${escapeHTML(r.path)}</div>`;
                 }
 
                 return `
@@ -40,7 +50,8 @@ export async function performSearch(q, container) {
                         <i data-lucide="file-text"></i>
                     </div>
                     <div class="search-item-content">
-                        <div class="search-item-title">${escapeHTML(r.name)}</div>
+                        <div class="search-item-title">${DOMPurify.sanitize(title)}</div>
+                        ${pathInfo}
                         <div class="search-item-snippet">${DOMPurify.sanitize(snippet)}</div>
                     </div>
                 </div>

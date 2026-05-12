@@ -6,21 +6,31 @@ DOCS_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "markdown_do
 METADATA_PATH = os.path.join(DOCS_DIR, "metadata.json")
 
 metadata_lock = threading.Lock()
+_metadata_cache = None
 
 def get_metadata():
+    global _metadata_cache
     with metadata_lock:
+        if _metadata_cache is not None:
+            return _metadata_cache
+        
         if not os.path.exists(METADATA_PATH):
-            return {}
+            _metadata_cache = {}
+            return _metadata_cache
         try:
             with open(METADATA_PATH, 'r', encoding='utf-8') as f:
-                return json.load(f)
+                _metadata_cache = json.load(f)
+                return _metadata_cache
         except json.JSONDecodeError:
-            return {}
+            _metadata_cache = {}
+            return _metadata_cache
 
 def save_metadata(data):
+    global _metadata_cache
     with metadata_lock:
         with open(METADATA_PATH, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=4, ensure_ascii=False)
+        _metadata_cache = data
 
 def is_public(filepath: str) -> bool:
     """Returns True if file is public, False if private (admin-only)"""
