@@ -40,12 +40,10 @@ window.fetch = async (...args) => {
 import * as auth from './modules/auth.js';
 import * as tree from './modules/tree.js';
 import * as viewer from './modules/viewer.js';
-import * as editor from './editor/index.js';
 import { initTheme } from './modules/theme.js';
 import { initSearch } from './modules/search.js';
 import { initGlobalHandlers } from './modules/utils.js';
 import * as i18n from './modules/i18n.js';
-import { initDashboardListeners } from './modules/dashboard.js';
 import './modules/confirm.js';
 import './modules/prompt.js';
 import { loadStatuses, initVisibilityToggle } from './modules/status.js';
@@ -94,10 +92,19 @@ async function init() {
     initSearch();
     initGlobalHandlers();
     await auth.checkAuth();
-    initDashboardListeners();
+    
+    // Lazy-load Admin modules if needed
+    if (state.currentUser && ['developer', 'maintainer', 'owner'].includes(state.currentUser.role)) {
+        const [{ initDashboardListeners }, editor] = await Promise.all([
+            import('./modules/dashboard.js'),
+            import('./editor/index.js')
+        ]);
+        initDashboardListeners();
+        await editor.init();
+    }
+
     initVisibilityToggle();
     await loadStatuses();
-    await editor.init();
     await tree.loadFileTree();
     
     // Check URL on load

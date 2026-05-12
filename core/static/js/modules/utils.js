@@ -15,6 +15,12 @@ export function initGlobalHandlers() {
             const isMd = path && path.endsWith('.md');
             
             if (isLocal && isMd) {
+                // If it's just an anchor on the same page, don't reload everything
+                const currentPath = state.currentFilePath;
+                if (path === currentPath && url.hash) {
+                    return; // Let the default anchor behavior or specialized handlers work
+                }
+                
                 e.preventDefault();
                 viewer.loadFileContent(path, true, url.hash ? url.hash.substring(1) : null);
                 

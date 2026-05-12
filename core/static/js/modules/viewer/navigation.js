@@ -21,7 +21,7 @@ export function updateBreadcrumbs(path) {
 
     const homePath = state.homePagePath || "system/home.md";
     if (!path || path === homePath) {
-        if (window.lucide) lucide.createIcons();
+        if (window.lucide) lucide.createIcons({ container: ui.breadcrumb });
         return;
     }
 
@@ -60,7 +60,7 @@ export function updateBreadcrumbs(path) {
         ui.breadcrumb.appendChild(span);
     });
 
-    if (window.lucide) lucide.createIcons();
+    if (window.lucide) lucide.createIcons({ container: ui.breadcrumb });
 }
 
 export function updateNavigation(currentPath) {
@@ -89,5 +89,5 @@ export function updateNavigation(currentPath) {
         ui.navNext.addEventListener('click', () => window.dispatchEvent(new CustomEvent('load-file', { detail: { path: next.path } })), { once: true });
     } else ui.navNext.classList.add('hidden');
     
-    if (window.lucide) lucide.createIcons();
+    if (window.lucide) lucide.createIcons({ container: ui.pageNav });
 }

@@ -19,18 +19,21 @@
     <script nonce="{{ csp_nonce }}" src="/static/vendor/js/purify.min.js" integrity="{{ config.get_sri('vendor/js/purify.min.js') }}" crossorigin="anonymous"></script>
     <script nonce="{{ csp_nonce }}" src="/static/vendor/js/mermaid.min.js" integrity="{{ config.get_sri('vendor/js/mermaid.min.js') }}" crossorigin="anonymous"></script>
     
+    {% if user_role in ['developer', 'maintainer', 'owner'] %}
     <!-- Local Editor Assets (Bundled CodeMirror) -->
     <link rel="stylesheet" href="/static/vendor/css/easymde.min.css">
     <script nonce="{{ csp_nonce }}" src="/static/vendor/js/easymde.min.js" integrity="{{ config.get_sri('vendor/js/easymde.min.js') }}" crossorigin="anonymous"></script>
-    
+    <link rel="stylesheet" href="/static/css/editor/markflow-editor.css?v={{ app_version }}">
+    <link rel="stylesheet" href="/static/css/editor/main.css?v={{ app_version }}">
+    <link rel="stylesheet" href="/static/css/modules/color-picker.css?v={{ app_version }}">
+    {% endif %}
+
     <!-- KaTeX for Mathematics -->
     <link rel="stylesheet" href="/static/vendor/css/katex.min.css">
     <script nonce="{{ csp_nonce }}" src="/static/vendor/js/katex.min.js" integrity="{{ config.get_sri('vendor/js/katex.min.js') }}" crossorigin="anonymous"></script>
     <script nonce="{{ csp_nonce }}" src="/static/vendor/js/auto-render.min.js" integrity="{{ config.get_sri('vendor/js/auto-render.min.js') }}" crossorigin="anonymous"></script>
     <meta name="csrf-token" content="{{ csrf_token }}">
     <meta name="app-version" content="{{ app_version }}">
-    <link rel="stylesheet" href="/static/css/editor/markflow-editor.css?v={{ app_version }}">
-    <link rel="stylesheet" href="/static/css/modules/color-picker.css?v={{ app_version }}">
     
     <!-- Custom Accent Color -->
     <style id="custom-theme-vars" nonce="{{ csp_nonce }}">

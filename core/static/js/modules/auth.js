@@ -1,8 +1,6 @@
 import { ui, state } from './ui.js';
 import { toast } from './toasts.js';
-import { initAdmin } from './admin.js';
 import * as i18n from './i18n.js';
-import { update2FAStatusUI, updateCredsStatusUI, initDashboardListeners } from './dashboard.js';
 import { API } from './api.js';
 
 export async function checkAuth() {
@@ -15,11 +13,12 @@ export async function checkAuth() {
 export function initAuthListeners() {
     if (state.currentUser && ui.btnUserDashboard) {
         ui.btnUserDashboard.onclick = async () => {
+            const { update2FAStatusUI, updateCredsStatusUI } = await import('./dashboard.js');
             const roleKey = `role_${state.currentUser.role}`;
             ui.dashboardUsername.innerText = `${state.currentUser.username} (${i18n.t(roleKey)})`;
             ui.dashboardModal.classList.remove('hidden');
             update2FAStatusUI();
-            initAdmin();
+            import('./admin.js').then(m => m.initAdmin());
             i18n.updatePage();
             if (window.lucide) lucide.createIcons();
             try {
@@ -38,8 +37,9 @@ export function initAuthListeners() {
                 if (sshData.has_keys) { ui.sshPublicKey.placeholder = '********'; ui.sshPrivateKey.placeholder = '********'; }
             } catch (err) {}
         };
-        initDashboardListeners();
-    } else if (ui.btnLoginTrigger) {
+        import('./dashboard.js').then(m => m.initDashboardListeners());
+    }
+ else if (ui.btnLoginTrigger) {
         ui.btnLoginTrigger.onclick = () => ui.loginModal.classList.remove('hidden');
     }
 }

@@ -130,13 +130,19 @@ function renderFileTree(tree) {
 }
 
 export function updateTreeHighlighting(activePath) {
-    document.querySelectorAll('.file-item').forEach(el => {
-        if (el.dataset.path === activePath) {
-            el.classList.add('active');
-        } else {
-            el.classList.remove('active');
-        }
+    if (!ui.fileTree) return;
+    
+    // 1. Remove active class from previously active items
+    ui.fileTree.querySelectorAll('.file-item.active').forEach(el => {
+        el.classList.remove('active');
     });
+    
+    // 2. Add active class to the new item
+    // Use attribute selector which is faster than iterating all items
+    const newItem = ui.fileTree.querySelector(`.file-item[data-path="${activePath.replace(/"/g, '\\"')}"]`);
+    if (newItem) {
+        newItem.classList.add('active');
+    }
 }
 
 export function getAllFiles() {

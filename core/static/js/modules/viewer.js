@@ -23,8 +23,11 @@ if (window.mermaid) {
     });
 }
 
+let currentLoadTimeout = null;
 
 export async function loadFileContent(path, pushState = true, hash = null) {
+    if (currentLoadTimeout) clearTimeout(currentLoadTimeout);
+    
     if (document.body.classList.contains('is-editing') && ui.btnCancel) {
         ui.btnCancel.click();
     }
@@ -54,7 +57,7 @@ export async function loadFileContent(path, pushState = true, hash = null) {
         ui.contentViewer.classList.remove('fade-in');
         ui.contentViewer.classList.add('fade-out');
 
-        setTimeout(() => {
+        const timeout = setTimeout(() => {
             ui.viewModeContainer.classList.remove('hidden');
             ui.contentViewer.innerHTML = cleanHTML;
             ui.contentViewer.scrollTop = 0;
@@ -89,7 +92,10 @@ export async function loadFileContent(path, pushState = true, hash = null) {
                     mermaid.run({ nodes: nodes, suppressErrors: true });
                 }
             }
-            if (window.lucide) lucide.createIcons();
+            if (window.lucide) lucide.createIcons({
+                attrs: { class: 'icon-sm' },
+                container: ui.contentViewer
+            });
             
             if (hash) {
                 setTimeout(() => {
@@ -106,7 +112,8 @@ export async function loadFileContent(path, pushState = true, hash = null) {
                 } else ui.topBar.classList.add('hidden');
             }
             tree.updateTreeHighlighting(finalPath);
-        }, 150); // Short blank state
+        }, 150);
+        currentLoadTimeout = timeout;
 
     } catch (err) {
         console.error("Load failed:", err);
