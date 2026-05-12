@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 from git import GitCommandError
 
-from core.auth import get_maintainer_user
+from core.auth import get_maintainer_user, get_owner_user
 from core.db.base import get_db
 from core.db.settings import get_setting
 from core.db.repos import (
@@ -16,6 +16,10 @@ from core.db.audit import add_audit_log
 from core.db.crypto import decrypt_value, encrypt_value
 from core.config import limiter, SECURITY_LIMITS
 from core.services.git_service import sync_repository, get_remote_branches_list, GitConflictError
+from core.services.ssh_service import (
+    generate_ssh_key, save_ssh_key, 
+    generate_global_ssh_key, save_global_ssh_key
+)
 from core.utils import slugify
 
 router = APIRouter()
@@ -38,6 +42,7 @@ class RepoOutput(BaseModel):
     slug: str
     url: str
     branch: str
+    has_ssh_key: bool
     ssh_public_key: Optional[str] = None
     is_active: bool
     auto_sync_interval: int
@@ -86,8 +91,11 @@ def api_activate_repo(repo_id: int, user=Depends(get_maintainer_user)):
     return {"message": "Activated"}
 
 @router.delete("/repos/{repo_id}")
-def api_delete_repo(repo_id: int, user=Depends(get_maintainer_user)):
+def api_delete_repo(request: Request, repo_id: int, user=Depends(get_maintainer_user)):
+    repo = get_repository(repo_id)
+    repo_name = repo['name'] if repo else f"ID: {repo_id}"
     delete_repository(repo_id)
+    add_audit_log(user["username"], "git_repo_deleted", f"Repo: {repo_name}", ip_address=request.client.host)
     return {"message": "Deleted"}
 
 @router.put("/repos/{repo_id}")
@@ -108,6 +116,12 @@ def api_update_repo(request: Request, repo_id: int, data: RepoInput, user=Depend
         conn.close()
 
     update_repository(repo_id, data.name, safe_slug, data.url, data.branch, priv, pub, data.auto_sync_interval, data.sync_strategy, data.flatten_in_tree)
+    
+    log_msg = f"Slug: {safe_slug}"
+    if priv or pub:
+        log_msg += " (SSH keys updated)"
+    add_audit_log(user["username"], "git_repo_updated", log_msg, ip_address=request.client.host)
+    
     return {"message": "Updated"}
 
 @router.get("/ssh-status")
@@ -117,11 +131,12 @@ def get_ssh_status(user=Depends(get_maintainer_user)):
     return {"has_keys": bool(repo['ssh_private_key'] and repo['ssh_public_key'])}
 
 @router.get("/pubkey")
-def get_pubkey(user=Depends(get_maintainer_user)):
+def api_get_pubkey(request: Request, user=Depends(get_maintainer_user)):
+    add_audit_log(user["username"], "git_ssh_pubkey_viewed", details="Global SSH public key viewed", ip_address=request.client.host)
     return {"pubkey": get_setting('git_ssh_public_key')}
 
 @router.get("/repos/{repo_id}/pubkey")
-def get_repo_pubkey(repo_id: int, user=Depends(get_maintainer_user)):
+def api_get_repo_pubkey(request: Request, repo_id: int, user=Depends(get_maintainer_user)):
     repo = get_repository(repo_id)
     if not repo:
         raise HTTPException(status_code=404, detail="Repository not found")
@@ -130,14 +145,23 @@ def get_repo_pubkey(repo_id: int, user=Depends(get_maintainer_user)):
     if not pubkey:
         return {"pubkey": get_setting('git_ssh_public_key'), "type": "global"}
     
+    repo_name = repo['name'] if repo else f"ID: {repo_id}"
+    add_audit_log(user["username"], "git_repo_ssh_pubkey_viewed", details=f"Unique SSH public key viewed for repo: {repo_name}", ip_address=request.client.host)
     return {"pubkey": pubkey, "type": "unique"}
 
 @router.post("/generate-key")
 @limiter.limit(SECURITY_LIMITS["file_ops"])
 def api_generate_key(request: Request, user=Depends(get_maintainer_user)):
-    from core.services.ssh_service import generate_ssh_key
     try:
         return generate_ssh_key(user["username"], ip_address=request.client.host)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/generate-global-key")
+@limiter.limit(SECURITY_LIMITS["file_ops"])
+def api_generate_global_key(request: Request, user=Depends(get_maintainer_user)):
+    try:
+        return generate_global_ssh_key(user["username"], ip_address=request.client.host)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -148,9 +172,16 @@ class SSHKeyInput(BaseModel):
 @router.post("/set-ssh-key")
 @limiter.limit(SECURITY_LIMITS["file_ops"])
 def api_set_ssh_key(request: Request, data: SSHKeyInput, user=Depends(get_maintainer_user)):
-    from core.services.ssh_service import save_ssh_key
     try:
         return save_ssh_key(user["username"], data.private_key, data.public_key, ip_address=request.client.host)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/set-global-ssh-key")
+@limiter.limit(SECURITY_LIMITS["file_ops"])
+def api_set_global_ssh_key(request: Request, data: SSHKeyInput, user=Depends(get_maintainer_user)):
+    try:
+        return save_global_ssh_key(user["username"], data.private_key, data.public_key, ip_address=request.client.host)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -166,6 +197,7 @@ def api_gen_key_pair(request: Request, user=Depends(get_maintainer_user)):
     conn.execute("INSERT INTO temp_ssh_keys (id, private_key) VALUES (?, ?)", (key_id, encrypt_value(priv)))
     conn.commit()
     conn.close()
+    add_audit_log(user["username"], "git_ssh_temp_key_generated", details="Temporary unique SSH key pair generated", ip_address=request.client.host)
     return {"key_id": key_id, "public_key": pub}
 
 @router.get("/branches")

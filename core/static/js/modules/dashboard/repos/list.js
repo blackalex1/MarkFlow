@@ -1,4 +1,4 @@
-import { ui } from '../../ui.js';
+import { ui, state } from '../../ui.js';
 import { toast } from '../../toasts.js';
 import { t } from '../../i18n.js';
 import { escapeHTML } from '../../security.js';
@@ -17,6 +17,8 @@ export async function loadRepositories() {
         if (!res.ok) return;
         const repos = await res.json();
         if (!Array.isArray(repos)) return;
+        
+        state.repos = repos;
         
         const rows = repos.map(repo => {
             let syncInfo = `<span style="color: var(--text-muted); font-size: 11px;">${t('sync_never')}</span>`;

@@ -34,7 +34,6 @@ export function initDashboardListeners() {
         if (tabName === 'git') {
             loadRepositories();
             loadSyncConfig();
-            loadGlobalSSHKey();
         }
 
         // Ensure all new elements are translated

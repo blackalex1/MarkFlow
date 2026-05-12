@@ -12,6 +12,7 @@ export async function editRepo(id) {
         const repos = await res.json();
         if (!Array.isArray(repos)) return;
         const repo = repos.find(r => r.id == id);
+        console.log('[DEBUG] Repo from API:', repo);
         
         if (repo) {
             ui.repoEditorForm.classList.remove('hidden');
@@ -22,9 +23,8 @@ export async function editRepo(id) {
             ui.repoSlug.value = repo.slug;
             ui.repoSlugDisplay.innerText = repo.slug;
             ui.repoName.dataset.id = repo.id;
-            ui.repoName.dataset.currentPubKey = repo.ssh_public_key || '';
             
-            const hasUnique = repo.ssh_public_key && repo.ssh_public_key.length > 0;
+            const hasUnique = !!repo.has_ssh_key;
             ui.repoUseGlobalSSH.checked = !hasUnique;
             
             if (ui.repoKeyTypeSelection) ui.repoKeyTypeSelection.classList.toggle('hidden', hasUnique);
@@ -36,7 +36,15 @@ export async function editRepo(id) {
                 if (ui.repoKeyGenArea) ui.repoKeyGenArea.classList.add('hidden');
                 
                 if (ui.btnViewCurrentUniqueKey) {
-                    ui.btnViewCurrentUniqueKey.onclick = () => showKeyDrawer(repo.ssh_public_key, t('repo_view_key_title'), '');
+                    ui.btnViewCurrentUniqueKey.onclick = async () => {
+                        try {
+                            const res = await fetch(`/api/git/repos/${repo.id}/pubkey`);
+                            if (res.ok) {
+                                const data = await res.json();
+                                showKeyDrawer(data.pubkey, t('repo_view_key_title'), '');
+                            }
+                        } catch (e) { toast.error(t('error_network')); }
+                    };
                 }
                 if (ui.btnTriggerRegenKey) {
                     ui.btnTriggerRegenKey.onclick = () => {
@@ -107,21 +115,33 @@ export async function editRepo(id) {
 
 export async function saveRepo() {
     const id = ui.repoName.dataset.id;
+    const isGlobal = ui.repoUseGlobalSSH.checked;
     const data = {
         name: ui.repoName.value.trim(),
         slug: ui.repoSlug.value.trim(),
         url: ui.repoUrl.value.trim(),
         branch: ui.repoBranchSelect.value,
-        key_id: ui.repoUseGlobalSSH.checked ? null : tempKeyPair.keyId,
-        public_key: ui.repoUseGlobalSSH.checked ? 
-            '' : (tempKeyPair.public || ui.repoManualPublicKey.value.trim() || ui.repoName.dataset.currentPubKey),
-        private_key: ui.repoUseGlobalSSH.checked ?
-            '' : ui.repoManualPrivateKey.value.trim(),
         auto_sync_interval: ui.repoAutoSyncToggle.checked ? 
             ((parseInt(ui.repoAutoSyncInterval.value) || 30) * parseInt(ui.repoAutoSyncUnit.value)) : 0,
         sync_strategy: ui.repoSyncStrategy.value,
         flatten_in_tree: ui.repoFlattenToggle ? ui.repoFlattenToggle.checked : false
     };
+
+    if (isGlobal) {
+        data.key_id = null;
+        data.public_key = '';
+        data.private_key = '';
+    } else {
+        // Only send if NEW keys are provided
+        if (tempKeyPair.keyId) data.key_id = tempKeyPair.keyId;
+        if (tempKeyPair.public) data.public_key = tempKeyPair.public;
+        
+        const manualPriv = ui.repoManualPrivateKey.value.trim();
+        const manualPub = ui.repoManualPublicKey.value.trim();
+        
+        if (manualPriv) data.private_key = manualPriv;
+        if (manualPub) data.public_key = manualPub;
+    }
 
     if (!data.name || !data.slug || !data.url) return toast.warn(t('warn_fill_required'));
     

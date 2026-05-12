@@ -61,11 +61,10 @@ def list_repositories(include_secrets: bool = False):
         repos = []
         for row in rows:
             r = dict(row)
-            if r.get("ssh_private_key"):
-                if include_secrets:
-                    r["ssh_private_key"] = decrypt_value(r["ssh_private_key"])
-                else:
-                    r["ssh_private_key"] = None # Exclude from list
+            # Security: Don't send keys in list
+            r["has_ssh_key"] = bool(r.get("ssh_public_key"))
+            r["ssh_private_key"] = None 
+            r["ssh_public_key"] = None
             repos.append(r)
         return repos
 
@@ -112,26 +111,30 @@ def update_repository(repo_id: int, name: str, slug: str, url: str, branch: str,
     with db_session() as conn:
         cursor = conn.cursor()
         
-        # If pub is explicitly empty/None, we clear both keys
-        if pub is None or pub == "":
+        # Base update for non-SSH fields
+        cursor.execute('''
+            UPDATE git_repositories 
+            SET name = ?, slug = ?, url = ?, branch = ?, 
+                auto_sync_interval = ?, sync_strategy = ?, flatten_in_tree = ?
+            WHERE id = ?
+        ''', (name, slug, url, branch, interval, strategy, 1 if flatten else 0, repo_id))
+        
+        # Handle SSH keys separately based on 'pub' value
+        if pub == "":
+            # Explicitly empty string means clear keys (switch to global)
             cursor.execute('''
                 UPDATE git_repositories 
-                SET name = ?, slug = ?, url = ?, branch = ?, 
-                    ssh_private_key = NULL, ssh_public_key = NULL,
-                    auto_sync_interval = ?, sync_strategy = ?, flatten_in_tree = ?
+                SET ssh_private_key = NULL, ssh_public_key = NULL
                 WHERE id = ?
-            ''', (name, slug, url, branch, interval, strategy, 1 if flatten else 0, repo_id))
-        else:
-            # If we have a new public key, we update both (if priv is provided) or just public
-            # However, usually they come in pairs. If priv is None, keep old priv.
+            ''', (repo_id,))
+        elif pub is not None:
+            # New keys provided
             cursor.execute('''
                 UPDATE git_repositories 
-                SET name = ?, slug = ?, url = ?, branch = ?, 
-                    ssh_private_key = COALESCE(?, ssh_private_key), 
-                    ssh_public_key = ?, 
-                    auto_sync_interval = ?, sync_strategy = ?, flatten_in_tree = ?
+                SET ssh_private_key = COALESCE(?, ssh_private_key), 
+                    ssh_public_key = ?
                 WHERE id = ?
-            ''', (name, slug, url, branch, encrypt_value(priv) if priv else None, pub, interval, strategy, 1 if flatten else 0, repo_id))
+            ''', (encrypt_value(priv) if priv else None, pub, repo_id))
 
 def delete_repository(repo_id: int):
     with db_session() as conn:

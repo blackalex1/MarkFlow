@@ -1,6 +1,7 @@
 import { ui } from '../../ui.js';
 import { toast } from '../../toasts.js';
 import { API } from '../../api.js';
+import { t } from '../../i18n.js';
 import { convertToSsh } from './utils.js';
 
 export let tempKeyPair = { keyId: null, public: null };
@@ -37,7 +38,7 @@ export function showKeyDrawer(key, title, desc) {
     if (copyBtn) {
         copyBtn.onclick = () => {
             navigator.clipboard.writeText(key);
-            toast.success('Key copied to clipboard!');
+            toast.success(t('toast_pubkey_copied'));
         };
     }
 }
@@ -46,8 +47,6 @@ export function showKeyDrawer(key, title, desc) {
  * Generates a new SSH key pair via API
  */
 export async function createKeyPair() {
-    const i18n = window.i18n || {};
-    const t = (key, fallback) => (i18n.t ? i18n.t(key) : fallback);
 
     if (ui.btnRepoGenUniqueKey) {
         ui.btnRepoGenUniqueKey.disabled = true;
@@ -72,14 +71,14 @@ export async function createKeyPair() {
             const sshUrl = convertToSsh(currentUrl);
             if (sshUrl !== currentUrl) {
                 ui.repoUrl.value = sshUrl;
-                toast.info('URL converted to SSH format');
+                toast.info(t('toast_url_to_ssh'));
             }
         }
 
-        showKeyDrawer(pair.public_key, t('git_unique_key_title', 'Unique Key Generated'), t('git_unique_key_desc', 'Copy this unique key to your Git provider settings.'));
-        toast.success('Unique key pair generated.');
+        showKeyDrawer(pair.public_key, t('git_unique_key_title'), t('git_unique_key_desc'));
+        toast.success(t('toast_unique_key_generated'));
     } catch (e) {
-        toast.error('Failed to generate key pair');
+        toast.error(t('toast_key_gen_failed'));
         if (ui.btnRepoGenUniqueKey) {
             ui.btnRepoGenUniqueKey.innerText = t('git_repo_gen_unique', 'Generate Unique Key');
             ui.btnRepoGenUniqueKey.disabled = false;
@@ -95,11 +94,12 @@ export async function viewRepoKey(id) {
         const res = await fetch(`/api/git/repos/${id}/pubkey`);
         const data = await res.json();
         if (data.pubkey) {
-            showKeyDrawer(data.pubkey, `Public Key (${data.type})`, `Copy this ${data.type} key to your Git provider settings.`);
+            const titleKey = data.type === 'unique' ? 'repo_key_title_unique' : 'repo_key_title_global';
+            showKeyDrawer(data.pubkey, t(titleKey), t('git_provider_desc'));
         } else {
-            toast.error('No key found');
+            toast.error(t('toast_key_not_found'));
         }
     } catch (err) {
-        toast.error('Error fetching key');
+        toast.error(t('toast_key_fetch_error'));
     }
 }

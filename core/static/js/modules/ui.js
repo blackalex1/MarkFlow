@@ -79,6 +79,7 @@ export const ui = {
     sshPrivateKey: document.getElementById('ssh-private-key'),
     btnGenerateSSHKey: document.getElementById('btn-generate-ssh-key'),
     btnSaveSSHKeys: document.getElementById('btn-save-ssh-keys'),
+    btnLoadSSHKey: document.getElementById('btn-load-ssh-key'),
     btnCopySSHKey: document.getElementById('btn-copy-ssh-key'),
     btnToggle2FA: document.getElementById('btn-toggle-2fa'),
     status2FA: document.getElementById('2fa-status-tag'),
@@ -136,6 +137,7 @@ export const ui = {
 
 export const state = {
     currentUser: null,
+    repos: [],
     currentFilePath: null,
     setupTotpSecret: null,
     openFolders: new Set(),

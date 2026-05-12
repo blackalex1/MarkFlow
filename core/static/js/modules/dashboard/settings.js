@@ -23,7 +23,7 @@ export function updateCredsStatusUI(isValid) {
 }
 
 export async function loadGlobalSSHKey() {
-    if (state.currentUser?.role !== 'owner') return;
+    if (state.currentUser?.role !== 'owner' && state.currentUser?.role !== 'maintainer') return;
     try {
         const res = await fetch(API.GIT_PUBKEY);
         const data = await res.json();
@@ -32,14 +32,20 @@ export async function loadGlobalSSHKey() {
 }
 
 export function initSettings() {
-    if (state.currentUser?.role !== 'owner') return;
+    if (state.currentUser?.role !== 'owner' && state.currentUser?.role !== 'maintainer') return;
+    if (ui.sshPublicKey) ui.sshPublicKey.value = '';
 
     if (ui.btnCopySSHKey) {
         ui.btnCopySSHKey.onclick = () => {
+            if (!ui.sshPublicKey.value) return toast.warn(i18n.t('warn_load_key_first'));
             ui.sshPublicKey.select();
             document.execCommand('copy');
-            toast.success('Public key copied to clipboard');
+            toast.success(i18n.t('toast_pubkey_copied'));
         };
+    }
+
+    if (ui.btnLoadSSHKey) {
+        ui.btnLoadSSHKey.onclick = () => loadGlobalSSHKey();
     }
 
     const btnShowPriv = document.getElementById('btn-show-privkey-input');
@@ -64,12 +70,12 @@ export function initSettings() {
             );
             
             if (confirmed) {
-                const res = await fetch(API.GIT_GENERATE_KEY, { method: 'POST' });
+                const res = await fetch(API.GIT_GENERATE_GLOBAL_KEY, { method: 'POST' });
                 const data = await res.json();
                 if (res.ok) { 
                     ui.sshPublicKey.value = data.pubkey; 
                     updateCredsStatusUI(true); 
-                    toast.success('Generated & Saved on server!'); 
+                    toast.success(i18n.t('toast_generated_saved')); 
                 }
             }
         };
@@ -80,9 +86,9 @@ export function initSettings() {
         btnSaveSSH.onclick = async () => {
             const private_key = ui.sshPrivateKey.value, public_key = ui.sshPublicKey.value;
             if (!private_key || !public_key) return toast.warn('Fill both keys');
-            const res = await fetch(API.GIT_SET_SSH_KEY, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ private_key, public_key }) });
+            const res = await fetch(API.GIT_SET_GLOBAL_SSH_KEY, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ private_key, public_key }) });
             if (res.ok) { 
-                toast.success('Saved'); 
+                toast.success(i18n.t('toast_ssh_saved')); 
                 ui.sshPrivateKey.value = '';
                 const privCont = document.getElementById('privkey-input-container');
                 if (privCont) privCont.classList.add('hidden');

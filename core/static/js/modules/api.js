@@ -35,8 +35,10 @@ export const API = {
     SSH_STATUS: d('L2FwaS9naXQvc3NoLXN0YXR1cw=='), // /api/git/ssh-status
     GIT_PUBKEY: d('L2FwaS9naXQvcHVia2V5'),        // /api/git/pubkey
     GIT_GENERATE_KEY: d('L2FwaS9naXQvZ2VuZXJhdGUtS2V5'), // /api/git/generate-key
+    GIT_GENERATE_GLOBAL_KEY: d('L2FwaS9naXQvZ2VuZXJhdGUtZ2xvYmFsLWtleQ=='), // /api/git/generate-global-key
     GIT_SAVE_KEYS: d('L2FwaS9naXQvc2F2ZS1rZXlz'), // /api/git/save-keys
     GIT_SET_SSH_KEY: d('L2FwaS9naXQvc2V0LXNzaC1rZXk='), // /api/git/set-ssh-key
+    GIT_SET_GLOBAL_SSH_KEY: d('L2FwaS9naXQvc2V0LWdsb2JhbC1zc2gta2V5'), // /api/git/set-global-ssh-key
     GIT_GEN_KEY_PAIR: d('L2FwaS9naXQvZ2VuLWtleS1wYWly'), // /api/git/gen-key-pair
     GIT_REPO_BY_ID: (id) => `${d('L2FwaS9naXQvcmVwb3M=')}/${id}`, // /api/git/repos/${id}
 

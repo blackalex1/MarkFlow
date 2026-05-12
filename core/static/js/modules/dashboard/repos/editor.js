@@ -115,6 +115,11 @@ export function initRepos() {
     // Manual Key input toggle
     if (ui.btnRepoManualKey) {
         ui.btnRepoManualKey.onclick = () => {
+            // Auto-switch from global to unique
+            if (ui.repoUseGlobalSSH) {
+                ui.repoUseGlobalSSH.checked = false;
+                ui.repoUseGlobalSSH.onchange(); // Trigger UI updates
+            }
             if (ui.repoManualKeyInput) ui.repoManualKeyInput.classList.toggle('hidden');
             if (ui.repoUniqueKeyDisplay) ui.repoUniqueKeyDisplay.classList.add('hidden');
             ui.btnRepoGenUniqueKey.classList.remove('hidden');
@@ -125,7 +130,13 @@ export function initRepos() {
 
     // Generate Unique Key
     if (ui.btnRepoGenUniqueKey) {
-        ui.btnRepoGenUniqueKey.onclick = createKeyPair;
+        ui.btnRepoGenUniqueKey.onclick = () => {
+            if (ui.repoUseGlobalSSH) {
+                ui.repoUseGlobalSSH.checked = false;
+                ui.repoUseGlobalSSH.onchange();
+            }
+            createKeyPair();
+        };
     }
 
     // Copy generated key
