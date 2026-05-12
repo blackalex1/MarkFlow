@@ -1,138 +1,80 @@
 import { ui, state } from './ui.js';
 import * as viewer from './viewer.js';
+import { initMarkdownComponentHandlers } from './viewer/handlers.js';
 
 export function initGlobalHandlers() {
-    window.onclick = (e) => {
-        // 1. Tabs
-        const btn = e.target.closest('.tab-btn');
-        if (btn) {
-            const paneId = btn.dataset.target || btn.dataset.tabId;
-            const wrapper = btn.closest('.custom-tabs-wrapper') || btn.closest('.tabs-container');
-            if (wrapper && paneId) {
-                e.preventDefault();
-                wrapper.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                wrapper.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-                btn.classList.add('active');
-                const target = document.getElementById(paneId) || wrapper.querySelector(`[id="${paneId}"]`);
-                if (target) {
-                    target.classList.add('active');
-                    if (typeof hljs !== 'undefined') {
-                        target.querySelectorAll('pre code').forEach(b => {
-                            if (!b.dataset.highlighted && !b.classList.contains('language-end') && !b.classList.contains('language-END')) {
-                                hljs.highlightElement(b);
-                                b.dataset.highlighted = "true";
-                            }
-                        });
-                    }
-                    if (window.mermaid) {
-                        setTimeout(() => {
-                            try {
-                                const nodes = target.querySelectorAll('.mermaid');
-                                nodes.forEach(n => {
-                                    if (n.dataset.code) {
-                                        n.textContent = n.dataset.code;
-                                        n.removeAttribute('data-processed');
-                                    }
-                                });
-                                mermaid.run({
-                                    nodes: nodes,
-                                    suppressErrors: false
-                                });
-                            } catch (e) {
-                                console.error('Mermaid tab render error:', e);
-                            }
-                        }, 300);
-                    }
-                }
-                return;
-            }
-        }
-        
-        // 1.1 Dropdowns (Accordions)
-        const ddHeader = e.target.closest('.dropdown-header');
-        if (ddHeader) {
-            const container = ddHeader.closest('.dropdown-container');
-            if (container) {
-                container.classList.toggle('expanded');
-                if (container.classList.contains('expanded')) {
-                    if (typeof hljs !== 'undefined') {
-                        container.querySelectorAll('pre code').forEach(b => {
-                            if (!b.dataset.highlighted && !b.classList.contains('language-end')) {
-                                hljs.highlightElement(b);
-                                b.dataset.highlighted = "true";
-                            }
-                        });
-                    }
-                    if (window.mermaid) {
-                        setTimeout(() => {
-                            try {
-                                const nodes = container.querySelectorAll('.mermaid');
-                                nodes.forEach(n => {
-                                    if (n.dataset.code) {
-                                        n.textContent = n.dataset.code;
-                                        n.removeAttribute('data-processed');
-                                    }
-                                });
-                                mermaid.run({
-                                    nodes: nodes,
-                                    suppressErrors: false
-                                });
-                            } catch (e) {
-                                console.error('Mermaid dropdown render error:', e);
-                            }
-                        }, 300);
-                    }
-                }
-            }
-        }
+    initMarkdownComponentHandlers();
 
-        // 2. Links
+    window.addEventListener('click', (e) => {
+        // Intercept all clicks on .md links
         const link = e.target.closest('a');
-        if (link) {
-            const href = link.getAttribute('href');
-            if (href && !href.startsWith('http') && !href.startsWith('mailto')) {
-                if (href.startsWith('#')) {
-                    e.preventDefault();
-                    const target = document.getElementById(decodeURIComponent(href.substring(1)));
-                    if (target) target.scrollIntoView({ behavior: 'smooth' });
-                    return;
-                }
-                if (href.toLowerCase().includes('.md')) {
-                    e.preventDefault();
-                    const [relPath, encodedHash] = href.split('#');
-                    const absolutePath = viewer.resolveRelativePath(state.currentFilePath, relPath);
-                    viewer.loadFileContent(absolutePath, true, encodedHash);
-                }
-            }
-        }
-    };
-
-    // Handle browser back/forward
-    window.onpopstate = (e) => {
-        if (e.state && e.state.path) {
-            viewer.loadFileContent(e.state.path, false);
-        }
-    };
-
-    // Keyboard Shortcuts
-    window.addEventListener('keydown', (e) => {
-
-        
-        // Ctrl + K or /: Search
-        if (((e.ctrlKey || e.metaKey) && e.key === 'k') || (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA')) {
-            const searchInput = document.getElementById('search-input');
-            if (searchInput) {
-                e.preventDefault();
-                searchInput.focus();
-            }
-        }
-
-        // Esc: Close search results or modals
-        if (e.key === 'Escape') {
-            const searchResults = document.getElementById('search-results');
-            if (searchResults) searchResults.classList.add('hidden');
+        if (link && link.href) {
+            const url = new URL(link.href);
+            const path = url.searchParams.get('p');
+            const isLocal = url.origin === window.location.origin;
+            const isMd = path && path.endsWith('.md');
             
-            document.querySelectorAll('.modal').forEach(modal => modal.classList.add('hidden'));
+            if (isLocal && isMd) {
+                e.preventDefault();
+                viewer.loadFileContent(path, true, url.hash ? url.hash.substring(1) : null);
+                
+                // On mobile, close sidebar after clicking a link
+                if (window.innerWidth <= 1024) {
+                    toggleSidebar(false);
+                }
+            }
+        }
+    });
+
+    // Go Home handler
+    window.addEventListener('go-home', () => {
+        viewer.renderWelcomePage();
+    });
+
+    // Load file handler
+    window.addEventListener('load-file', (e) => {
+        const { path, hash } = e.detail;
+        viewer.loadFileContent(path, true, hash);
+    });
+}
+
+export function toggleSidebar(force) {
+    const active = typeof force === 'boolean' ? force : !state.isSidebarActive;
+    state.isSidebarActive = active;
+    
+    if (ui.sidebar) {
+        ui.sidebar.classList.toggle('active', active);
+    }
+    
+    if (ui.mobileToggle) {
+        const icon = ui.mobileToggle.querySelector('i');
+        if (icon) {
+            icon.setAttribute('data-lucide', active ? 'x' : 'menu');
+            if (window.lucide) lucide.createIcons();
+        }
+    }
+}
+
+export function initSidebar() {
+    if (ui.sidebarTitle) {
+        ui.sidebarTitle.onclick = () => window.dispatchEvent(new CustomEvent('go-home'));
+    }
+}
+
+export function initMobileToggle() {
+    if (ui.mobileToggle) {
+        ui.mobileToggle.onclick = (e) => {
+            e.stopPropagation();
+            toggleSidebar();
+        };
+    }
+
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', (e) => {
+        if (state.isSidebarActive && window.innerWidth <= 1024) {
+            if (ui.sidebar && !ui.sidebar.contains(e.target) && !ui.mobileToggle.contains(e.target)) {
+                toggleSidebar(false);
+            }
         }
     });
 }

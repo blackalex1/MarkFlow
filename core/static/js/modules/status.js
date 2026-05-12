@@ -81,6 +81,44 @@ export function updateStatusDisplay(slug) {
     const statusText = document.getElementById('current-status-text');
     if (statusText) {
         statusText.textContent = getStatusName(slug);
-        statusText.removeAttribute('data-t'); // Prevent i18n from overwriting custom name
+        statusText.removeAttribute('data-t'); 
     }
+}
+
+/**
+ * Initializes the visibility toggle (Guest access)
+ */
+export function initVisibilityToggle() {
+    if (!ui.visibilityCheckbox) return;
+
+    ui.visibilityCheckbox.onchange = async () => {
+        if (!state.currentFilePath) return;
+        
+        const isPublic = ui.visibilityCheckbox.checked;
+        try {
+            const res = await fetch(API.FILE_VISIBILITY, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    path: state.currentFilePath,
+                    is_public: isPublic
+                })
+            });
+
+            if (res.ok) {
+                toast.success(isPublic ? t('toast_made_public') : t('toast_made_private'));
+                // Refresh tree to show new icon (eye/lock)
+                const tree = await import('./tree.js');
+                tree.loadFileTree();
+            } else {
+                const err = await res.json();
+                toast.error(err.detail || 'Error');
+                // Revert UI on error
+                ui.visibilityCheckbox.checked = !isPublic;
+            }
+        } catch (err) {
+            console.error('Visibility toggle failed:', err);
+            ui.visibilityCheckbox.checked = !isPublic;
+        }
+    };
 }

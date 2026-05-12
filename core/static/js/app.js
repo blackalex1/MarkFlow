@@ -48,7 +48,7 @@ import * as i18n from './modules/i18n.js';
 import { initDashboardListeners } from './modules/dashboard.js';
 import './modules/confirm.js';
 import './modules/prompt.js';
-import { loadStatuses } from './modules/status.js';
+import { loadStatuses, initVisibilityToggle } from './modules/status.js';
 
 // --- Trusted Types Policy ---
 if (window.trustedTypes && window.trustedTypes.createPolicy) {
@@ -95,6 +95,7 @@ async function init() {
     initGlobalHandlers();
     await auth.checkAuth();
     initDashboardListeners();
+    initVisibilityToggle();
     await loadStatuses();
     await editor.init();
     await tree.loadFileTree();

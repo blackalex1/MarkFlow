@@ -184,14 +184,6 @@ async function saveSystemSettings() {
 
     const maxRequestSize = document.getElementById('sys-max-request-size').value;
 
-    const data = {
-        app_name: appName,
-        primary_color: primaryColor,
-        use_logo: useLogo,
-        security_limits: limits,
-        max_request_size_mb: parseInt(maxRequestSize)
-    };
-
     const originalText = btn.innerText;
     const { t } = i18n;
     btn.disabled = true;
@@ -237,7 +229,6 @@ async function saveSystemSettings() {
             bg_glow_enabled: document.getElementById('sys-bg-glow-enabled').checked,
             bg_glow_opacity_light: parseFloat(document.getElementById('sys-bg-glow-opacity-light').value),
             bg_glow_opacity_dark: parseFloat(document.getElementById('sys-bg-glow-opacity-dark').value),
-            home_page_path: document.getElementById('sys-home-page').value,
             security_limits: limits,
             max_request_size_mb: parseInt(maxRequestSize)
         };
