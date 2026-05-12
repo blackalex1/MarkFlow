@@ -1,6 +1,8 @@
 # 🌊 MarkFlow
 
-**MarkFlow** — это современная, легковесная и безопасная платформа для ведения документации в стиле Notion. Она спроектирована для команд, которым важна эстетика, гибкость Markdown и надежность синхронизации через Git.
+**MarkFlow** — a modern, lightweight, and secure documentation platform inspired by Notion. Designed for teams that value aesthetics, Markdown flexibility, and reliable Git synchronization.
+
+**MarkFlow** — это современная, легковесная и безопасная платформа для ведения документации в стиле Notion. Спроектирована для команд, которым важна эстетика, гибкость Markdown и надежность синхронизации через Git.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.9+-green.svg)
@@ -8,52 +10,61 @@
 
 ---
 
-## ✨ Основные возможности
+## ✨ Key Features / Основные возможности
 
-*   **🧱 Модульная архитектура**: Чистый и поддерживаемый код на ES6 модулях и раздельных CSS-компонентах.
-*   **🔐 Безопасность (RBAC)**: Продвинутая система ролей (Guest, Reporter, Developer, Maintainer, Owner).
-*   **📱 2FA Аутентификация**: Поддержка Google Authenticator (TOTP) для защиты административного доступа.
-*   **🔄 Git-синхронизация**: Автоматический Pull/Push вашей документации в удаленный репозиторий.
-*   **📝 Markdown+**: Поддержка расширений, таких как `@tabs` для удобной организации контента.
-*   **🎨 Премиальный дизайн**: Темная и светлая темы с использованием Glassmorphism и плавных анимаций.
-*   **🔎 Быстрый поиск**: Мгновенный поиск по всей базе знаний с предпросмотром фрагментов.
+*   **🔎 Ultra-Fast Search / Сверхбыстрый поиск**: Powered by SQLite FTS5 with smart snippet centering and Markdown cleaning. Matches highlighted in titles, paths, and content.
+*   **⚡ High Performance / Высокая производительность**: In-memory metadata caching and SQLite WAL mode ensure sub-millisecond response times even during heavy background tasks.
+*   **🔄 Smart Git Sync / Умная синхронизация**: Incremental reindexing via Git delta changes. No full scans — only modified files are updated.
+*   **📝 Markdown+**: Native support for Mermaid diagrams, KaTeX formulas, Tabs, Dropdowns, and GitHub-style Callouts (Alerts).
+*   **🎨 Premium Design / Премиальный дизайн**: Responsive layout with Glassmorphism, smooth animations, and optimized Light/Dark themes.
+*   **🔐 Enterprise Security / Безопасность**: Advanced RBAC (Roles), Session security (SSRF/CSP protected), and 2FA via Google Authenticator (TOTP).
 
-## 🚀 Технологический стек
+---
 
-*   **Backend**: FastAPI (Python), SQLite, ItsDangerous (сессии).
+## 🛠 Tech Stack / Технологический стек
+
+*   **Backend**: FastAPI (Python), SQLite (FTS5), GitPython.
 *   **Frontend**: Vanilla JS (ES6 Modules), CSS3 (Variables, Grid, Flexbox).
-*   **Библиотеки**: 
-    *   `Lucide` — современные иконки.
-    *   `Marked` + `DOMPurify` — безопасный рендеринг Markdown.
-    *   `Highlight.js` — подсветка синтаксиса.
-    *   `EasyMDE` — удобный редактор.
+*   **Rendering**: 
+    *   `Marked` + `DOMPurify` — Secure & fast MD parsing.
+    *   `KaTeX` — Scientific math rendering.
+    *   `Mermaid` — Beautiful diagrams.
+    *   `Highlight.js` — Professional syntax highlighting.
 
-## 📦 Быстрый старт
+---
 
-1.  **Клонируйте репозиторий:**
+## 📦 Quick Start / Быстрый старт
+
+1.  **Clone the repo / Клонируйте репозиторий:**
     ```bash
     git clone https://github.com/blackalex1/MarkFlow.git
     cd MarkFlow
     ```
 
-2.  **Настройте окружение:**
+2.  **Setup environment / Настройте окружение:**
     ```bash
     python -m venv venv
-    source venv/bin/activate  # Или venv\Scripts\activate для Windows
+    source venv/bin/activate  # Or venv\Scripts\activate for Windows
     pip install -r requirements.txt
     ```
 
-3.  **Запустите сервер:**
+3.  **Run the server / Запустите сервер:**
     ```bash
     uvicorn core.main:app --reload
     ```
 
-4.  **Вход в админ-панель:**
-    По умолчанию: `admin` / `admin` (не забудьте сменить пароль при первом входе!).
+4.  **Access Admin Panel / Вход в админ-панель:**
+    Default credentials: `admin` / `admin`.
 
-## 🛠 Структура проекта
+---
 
-*   `core/` — Основной код приложения (Python, JS, CSS, Templates).
-*   `markdown_docs/` — Папка, где хранится ваша документация в формате `.md`.
-*   `.gitignore` — Настроен на экспорт только ядра приложения.
+## 📂 Project Structure / Структура проекта
 
+*   `core/` — Application logic (FastAPI, JS Modules, CSS Components).
+*   `markdown_docs/` — Your knowledge base (Git-tracked .md files).
+*   `core/static/` — Assets & Frontend architecture.
+
+---
+
+**MarkFlow** — created for those who value aesthetics and functionality.
+Создано для тех, кто ценит эстетику и функциональность.
