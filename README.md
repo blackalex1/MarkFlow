@@ -1,54 +1,38 @@
 # 🌊 MarkFlow
 
-**MarkFlow** — a high-performance, secure, and beautiful documentation engine. It combines the flexibility of Markdown with Git-based synchronization and a premium Notion-like interface.
+**MarkFlow** is a self-hosted Markdown editor designed for building personal or team knowledge bases with native Git synchronization.
 
-**MarkFlow** — это высокопроизводительный, безопасный и красивый движок для документации. Сочетает в себе гибкость Markdown, синхронизацию через Git и премиальный интерфейс в стиле Notion.
+![MarkFlow Interface](assets/image_en.png)
 
----
+## ✨ Key Features
 
-## 📸 Screenshots
+*   **📝 Markdown Editor**: Modern Notion-like interface for comfortable writing.
+*   **🔄 Git Sync**: Native support for synchronizing your knowledge base with remote Git repositories.
+*   **🔎 Smart Search**: Instant full-text search across all your documents.
+*   **🔐 Secure**: Built-in 2FA (TOTP) and on-demand SSH key management.
 
-*(Screenshots coming soon...)*
+## 🐳 Deployment (Docker)
 
----
+MarkFlow includes a professional deployment suite with Nginx reverse proxy and automated SSL (Certbot).
 
-## ✨ Features / Возможности
-
-*   **🔎 Smart Search**: Instant search with snippet centering and Markdown cleaning.
-*   **⚡ Performance**: Built-in metadata caching and SQLite WAL mode for maximum speed.
-*   **🔄 Git Sync**: Automatic incremental synchronization with remote repositories.
-*   **📝 Markdown+**: Support for Mermaid diagrams, KaTeX formulas, and custom callouts.
-*   **🔐 Security**: RBAC roles, 2FA (TOTP), and SSRF/CSP protection.
-
----
-
-## 🐳 Deployment (Docker) / Развертывание
-
-The easiest way to start MarkFlow is using Docker Compose.
-
-Самый простой способ запустить MarkFlow — использовать Docker Compose.
-
+### 1. Quick Setup
+Run the automated setup script from the root directory:
 ```bash
-# Clone the repository
 git clone https://github.com/blackalex1/MarkFlow.git
 cd MarkFlow
-
-# Start using Docker Compose
-docker-compose -f deploy/docker-compose.yml up -d
+bash deploy/setup.sh
 ```
+The script will guide you through:
+- Configuring ports (HTTP/HTTPS).
+- Setting up your domain name.
+- Initializing SSL certificates via Let's Encrypt.
 
-The application will be available at `http://localhost:8000`.
-Приложение будет доступно по адресу `http://localhost:8000`.
+### 2. Maintenance
+- **Update**: `bash deploy/update.sh`
+- **Rebuild**: `bash deploy/rebuild.sh`
+
+Default access: `http://your-domain` (Login: `admin` / See random password in logs on first run).
 
 ---
 
-## 📦 Manual Setup / Ручная установка
-
-1.  **Install dependencies:** `pip install -r requirements.txt`
-2.  **Run the server:** `uvicorn core.main:app --reload`
-3.  **Login:** `admin` / `admin`
-
----
-
-**MarkFlow** — built for those who value aesthetics and functionality.
-Создано для тех, кто ценит эстетику и функциональность.
+[Русская версия (Russian Version)](README_RU.md)

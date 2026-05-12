@@ -7,6 +7,9 @@
 # 2. Allow Essential Project Files
 !.gitignore
 !README.md
+!README_RU.md
+!assets/
+!assets/**
 !requirements.txt
 !.env_example
 
