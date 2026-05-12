@@ -21,15 +21,52 @@
 
 ---
 
+## 🚀 Live Feature Demo / Демонстрация возможностей
+
+### 1. Headings
+# Heading 1
+## Heading 2
+### Heading 3
+
+### 2. Code & Diagrams
+```python
+def hello_markflow():
+    print("Welcome to the premium documentation engine!")
+```
+
+```mermaid
+graph TD
+    A[Idea] --> B{Does it work?}
+    B -- Yes --> C[Joy]
+    B -- No --> D[Debug]
+    D --> B
+```
+
+### 3. Math & Formulas
+Inline: $E = mc^2$
+Block:
+$$
+\phi = \frac{1+\sqrt{5}}{2} \approx 1.618
+$$
+
+### 4. Interactive Elements
+@tabs
+@tab 🐍 Python
+```python
+print("Hello from Python")
+```
+@tab 📜 JS
+```javascript
+console.log("Hello from JS");
+```
+@endtabs
+
+---
+
 ## 🛠 Tech Stack / Технологический стек
 
 *   **Backend**: FastAPI (Python), SQLite (FTS5), GitPython.
 *   **Frontend**: Vanilla JS (ES6 Modules), CSS3 (Variables, Grid, Flexbox).
-*   **Rendering**: 
-    *   `Marked` + `DOMPurify` — Secure & fast MD parsing.
-    *   `KaTeX` — Scientific math rendering.
-    *   `Mermaid` — Beautiful diagrams.
-    *   `Highlight.js` — Professional syntax highlighting.
 
 ---
 
@@ -52,17 +89,6 @@
     ```bash
     uvicorn core.main:app --reload
     ```
-
-4.  **Access Admin Panel / Вход в админ-панель:**
-    Default credentials: `admin` / `admin`.
-
----
-
-## 📂 Project Structure / Структура проекта
-
-*   `core/` — Application logic (FastAPI, JS Modules, CSS Components).
-*   `markdown_docs/` — Your knowledge base (Git-tracked .md files).
-*   `core/static/` — Assets & Frontend architecture.
 
 ---
 
