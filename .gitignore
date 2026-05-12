@@ -16,6 +16,7 @@
 # 3. Allow Source Code
 !core/
 !core/**
+core/static/vendor/
 
 # 4. Allow Deployment Folder
 !deploy/
