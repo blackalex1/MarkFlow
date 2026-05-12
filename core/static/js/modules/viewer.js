@@ -50,7 +50,13 @@ export async function loadFileContent(path, pushState = true, hash = null) {
             RETURN_TRUSTED_TYPE: true
         });
 
-        if (data.path) state.currentFilePath = data.path;
+        if (data.path) {
+            state.currentFilePath = data.path;
+            // Update URL to the real resolved path if it changed (fixes duplicate segments in URL)
+            if (data.path !== path) {
+                updateURL(data.path, false, hash);
+            }
+        }
         const finalPath = data.path || path;
 
         // 2. Start the transition only when data is ready
@@ -177,6 +183,11 @@ export async function loadFolderContent(path, pushState = true) {
                 const data = await res.json();
                 const realPath = data.path || path;
                 state.currentFilePath = realPath;
+                
+                // Update URL to the real resolved path if it changed
+                if (realPath !== path) {
+                    updateURL(realPath, false);
+                }
                 
                 const { renderFolderGrid, updateBreadcrumbs } = await import('./viewer_ui.js');
                 

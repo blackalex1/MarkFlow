@@ -142,5 +142,6 @@ export const state = {
     isSidebarActive: false,
     statuses: {}, // Map: slug -> {name, color, id}
     flattenedSlugs: (window.MARKFLOW_CONFIG && window.MARKFLOW_CONFIG.flattenedSlugs) || [],
+    repoMapping: (window.MARKFLOW_CONFIG && window.MARKFLOW_CONFIG.repoMapping) || {},
     homePagePath: (window.MARKFLOW_CONFIG && window.MARKFLOW_CONFIG.homePagePath) || ""
 };

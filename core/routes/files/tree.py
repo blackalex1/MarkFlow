@@ -18,7 +18,9 @@ def get_file_tree(request: Request):
     if not os.path.exists(DOCS_DIR):
         os.makedirs(DOCS_DIR)
         
-    flattened_slugs = [r['slug'] for r in list_repositories() if r.get('flatten_in_tree')]
+    all_repos = list_repositories()
+    slug_to_name = {r['slug']: r['name'] for r in all_repos}
+    flattened_slugs = [r['slug'] for r in all_repos if r.get('flatten_in_tree')]
         
     def has_markdown(path):
         for root, dirs, files in os.walk(path):
@@ -53,8 +55,18 @@ def get_file_tree(request: Request):
 
                 if not has_markdown(full_path): continue
                 children = build_tree(full_path)
+                
+                # Display project name instead of slug at the root level
+                display_name = item
+                if is_root:
+                    item_lower = item.lower()
+                    for slug, name in slug_to_name.items():
+                        if slug.lower() == item_lower:
+                            display_name = name
+                            break
+
                 nodes.append({
-                    "name": item,
+                    "name": display_name,
                     "type": "folder",
                     "path": rel_path,
                     "children": children
@@ -131,5 +143,12 @@ def get_folder_content(path: str, request: Request):
                     "status": status
                 })
     
+    all_repos = list_repositories()
+    slug_to_name = {r['slug']: r['name'] for r in all_repos}
+    
+    display_name = os.path.basename(path) or "Root"
+    if path in slug_to_name:
+        display_name = slug_to_name[path]
+
     actual_rel_path = os.path.relpath(full_path, DOCS_DIR).replace('\\', '/')
-    return {"name": os.path.basename(path) or "Root", "path": actual_rel_path, "items": nodes}
+    return {"name": display_name, "path": actual_rel_path, "items": nodes}

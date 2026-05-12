@@ -8,7 +8,7 @@ export function resolveRelativePath(currentPath, href) {
 
     const currentDir = currentPath.split('/').filter(p => p);
     currentDir.pop(); // Remove filename
-    
+
     const hrefParts = href.split('/').filter(p => p);
 
     for (const part of hrefParts) {
@@ -27,14 +27,14 @@ export function initMarked() {
     if (markedInitialized) return;
     const renderer = new marked.Renderer();
 
-    renderer.heading = function(arg1, arg2) {
+    renderer.heading = function (arg1, arg2) {
         let text = typeof arg1 === 'object' ? arg1.text : arg1;
         let level = typeof arg1 === 'object' ? arg1.depth : arg2;
         const id = text.toLowerCase().replace(/[^\wа-яё]+/gi, '-').replace(/^-|-$/g, '');
         return `<h${level} id="${id}">${text}</h${level}>`;
     };
 
-    renderer.blockquote = function(arg1) {
+    renderer.blockquote = function (arg1) {
 
         let quote = (typeof arg1 === 'object' ? arg1.text : arg1) || '';
         const match = quote.match(/\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/i);
@@ -42,23 +42,23 @@ export function initMarked() {
         return `<blockquote>${marked.parseInline(quote)}</blockquote>`;
     };
 
-    renderer.code = function(arg1, arg2) {
+    renderer.code = function (arg1, arg2) {
         let code = typeof arg1 === 'object' ? arg1.text : arg1;
         let lang = typeof arg1 === 'object' ? arg1.lang : arg2;
         if (lang === 'mermaid') return `<div class="mermaid">${code}</div>`;
         return `<pre><code class="language-${lang || ''}">${code}</code></pre>`;
     };
 
-    renderer.link = function(arg1, arg2, arg3) {
+    renderer.link = function (arg1, arg2, arg3) {
         let href = typeof arg1 === 'object' ? arg1.href : arg1;
         let title = typeof arg1 === 'object' ? arg1.title : arg2;
         let text = typeof arg1 === 'object' ? arg1.text : arg3;
-        
+
         const resolved = resolveRelativePath(state.currentFilePath, href);
         return `<a href="${resolved}" title="${title || ''}">${text}</a>`;
     };
 
-    marked.use({ 
+    marked.use({
         renderer,
         extensions: [blockMathExtension, inlineMathExtension, tabsExtension, dropdownExtension]
     });

@@ -16,6 +16,7 @@ from slowapi import _rate_limit_exceeded_handler
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from core.database import init_db, update_fts_index, delete_fts_index, reindex_all_docs
+from core.db.repos import list_repositories
 from core.auth import router as auth_router, get_current_user
 from core.routes.git import router as git_router
 from core.routes.files import router as files_router
@@ -153,7 +154,9 @@ def read_root(request: Request):
     user = get_current_user(request)
     return templates.TemplateResponse(request, "index.html", {
         "user_role": user.get("role", "guest") if user else "guest",
-        "is_authenticated": user is not None
+        "is_authenticated": user is not None,
+        "repo_mapping": {r['slug']: r['name'] for r in list_repositories()},
+        "flattened_slugs": [r['slug'] for r in list_repositories() if r.get('flatten_in_tree')]
     })
 
 @app.get("/{rest_of_path:path}")
@@ -164,7 +167,9 @@ async def catch_all(request: Request, rest_of_path: str):
     user = get_current_user(request)
     return templates.TemplateResponse(request, "index.html", {
         "user_role": user.get("role", "guest") if user else "guest",
-        "is_authenticated": user is not None
+        "is_authenticated": user is not None,
+        "repo_mapping": {r['slug']: r['name'] for r in list_repositories()},
+        "flattened_slugs": [r['slug'] for r in list_repositories() if r.get('flatten_in_tree')]
     })
 
 if __name__ == "__main__":

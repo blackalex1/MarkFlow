@@ -22,7 +22,7 @@ def get_flattened_path_map(base_dir: str):
     Builds a map of {root_item_name: repo_slug} for all flattened repositories.
     This allows O(1) resolution of flattened paths.
     """
-    from core.database import list_repositories
+    from core.db.repos import list_repositories
     path_map = {}
     repos = [r for r in list_repositories() if r.get('flatten_in_tree')]
     
@@ -40,13 +40,16 @@ def get_flattened_path_map(base_dir: str):
 
 def resolve_flattened_path(base_dir: str, path: str, request: Request = None):
     """
-    Efficiently resolves a path that might be missing a slug due to flattening.
-    Uses Referer header to handle collisions between repositories.
+    Smartly resolves a path by trying several heuristics:
+    1. Prepending the slug of the referring document.
+    2. Finding a suffix of the path that exists in the referring repo (fixes duplicated paths).
+    3. Finding a suffix of the path that exists globally (cross-repo links).
+    4. Fallback to flattened map for O(1) lookup.
     """
     if not path:
         return None
     
-    # 1. Try to get context from Referer (Best way to handle collisions)
+    ref_slug = None
     if request:
         referer = request.headers.get("Referer")
         if referer:
@@ -54,25 +57,43 @@ def resolve_flattened_path(base_dir: str, path: str, request: Request = None):
             try:
                 parsed = urlparse(referer)
                 qs = parse_qs(parsed.query)
-                # The 'p' parameter contains the path to the current document
                 p_val = qs.get('p', [None])[0]
                 if p_val:
-                    # Extract the first part which is the slug
                     ref_slug = p_val.split('/')[0]
-                    # Try this slug first
-                    alt_path = get_safe_path(base_dir, os.path.join(ref_slug, path))
-                    if os.path.exists(alt_path):
-                        return alt_path
-            except Exception:
-                pass
-
-    # 2. Fallback to Map-based lookup (O(1))
-    first_part = path.split('/')[0]
-    path_map = get_flattened_path_map(base_dir)
+            except Exception: pass
     
+    # Fallback: if we can't get slug from referer, try the first segment of the path itself
+    if not ref_slug and path:
+        ref_slug = path.split('/')[0]
+
+    # 1. Try prepending ref_slug (if not already there)
+    if ref_slug and not path.startswith(ref_slug + '/'):
+        alt_path = get_safe_path(base_dir, os.path.join(ref_slug, path))
+        if os.path.exists(alt_path):
+            return alt_path
+
+    # 2. Suffix matching (Fixes "folder/folder/file.md" issues)
+    parts = path.split('/')
+    for i in range(len(parts)):
+        sub_path = '/'.join(parts[i:])
+        if not sub_path: continue
+        
+        # Try relative to ref_slug
+        if ref_slug:
+            candidate = os.path.join(base_dir, ref_slug, sub_path)
+            if os.path.exists(candidate):
+                return get_safe_path(base_dir, os.path.join(ref_slug, sub_path))
+        
+        # Try relative to root (Global cross-repo search)
+        candidate = os.path.join(base_dir, sub_path)
+        if os.path.exists(candidate):
+            return get_safe_path(base_dir, sub_path)
+
+    # 3. Fallback to Map-based lookup for flattened items
+    first_part = parts[0]
+    path_map = get_flattened_path_map(base_dir)
     if first_part in path_map:
         slug = path_map[first_part]
-        # Prepend slug and return the full safe path
         return get_safe_path(base_dir, os.path.join(slug, path))
     
     return None

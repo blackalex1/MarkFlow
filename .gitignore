@@ -32,8 +32,8 @@ app.db
 config/
 certbot/
 markdown_docs/
-core/static/vendor/
-core/scratch/
+!markdown_docs/full_feature_test.md
+!markdown_docs/full_feature_test_en.md
 markdown_docs/Argument_Documentation.md
 
 # 7. Allow Internal Templates

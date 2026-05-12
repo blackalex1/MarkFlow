@@ -25,9 +25,12 @@ export function updateBreadcrumbs(path) {
         return;
     }
 
+    console.log('[Breadcrumbs] Path:', path, 'Mapping:', state.repoMapping);
     const parts = path.split('/');
 
     let currentPath = '';
+    let foundRepo = false;
+
     parts.forEach((part, index) => {
         if (!part) return;
         
@@ -45,12 +48,21 @@ export function updateBreadcrumbs(path) {
         const span = document.createElement('span');
         const isLast = index === parts.length - 1;
         span.className = isLast ? 'breadcrumb-current' : 'breadcrumb-folder';
-        span.textContent = part.replace('.md', '');
+        
+        let displayName = part.replace('.md', '');
+        
+        // Map the first non-empty segment (repo slug) to project name
+        if (!foundRepo && state.repoMapping[part]) {
+            displayName = state.repoMapping[part];
+            foundRepo = true;
+        }
+
+        span.textContent = displayName;
         
         if (!isLast) {
             span.addEventListener('click', () => {
+                console.log('[Breadcrumbs] Clicking segment:', displayName, 'Target path:', thisPath);
                 window.dispatchEvent(new CustomEvent('load-file', { detail: { path: thisPath } }));
-                // Also ensure the folder is expanded in the tree if it's a folder
                 if (!part.endsWith('.md')) {
                     state.openFolders.add(thisPath);
                     tree.loadFileTree();
