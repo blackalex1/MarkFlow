@@ -60,7 +60,7 @@ export function initMarked() {
 
     marked.use({ 
         renderer,
-        extensions: [tabsExtension, dropdownExtension, inlineMathExtension, blockMathExtension]
+        extensions: [blockMathExtension, inlineMathExtension, tabsExtension, dropdownExtension]
     });
     markedInitialized = true;
 }

@@ -63,44 +63,48 @@ export const dropdownExtension = {
 };
 
 export const inlineMathExtension = {
-    name: 'inlineMath',
+    name: 'mathInline',
     level: 'inline',
-    start(src) { return src.match(/\$/)?.index; },
+    start(src) { 
+        const index = src.indexOf('$');
+        if (index === -1) return -1;
+        // Optimization: Ensure it's not a escaped \$
+        if (index > 0 && src[index - 1] === '\\') return -1;
+        return index;
+    },
     tokenizer(src) {
-        const rule = /^\$([^\$\n]+)\$/;
+        const rule = /^\$((?:[^\$]|\\\$)+)\$/;
         const match = rule.exec(src);
         if (match) {
-            return { type: 'inlineMath', raw: match[0], text: match[1].trim() };
+            return {
+                type: 'mathInline',
+                raw: match[0],
+                text: match[1].trim()
+            };
         }
     },
     renderer(token) {
-        if (window.katex) {
-            try {
-                return window.katex.renderToString(token.text, { displayMode: false, throwOnError: false });
-            } catch (e) { return token.raw; }
-        }
-        return token.raw;
+        return `<span class="math-tex-inline" data-math="${escapeHtml(token.text)}"></span>`;
     }
 };
 
 export const blockMathExtension = {
-    name: 'blockMath',
+    name: 'mathBlock',
     level: 'inline',
-    start(src) { return src.match(/\$\$/)?.index; },
+    start(src) { return src.indexOf('$$'); },
     tokenizer(src) {
-        const rule = /^\$\$\r?\n?([\s\S]*?)\r?\n?\$\$/;
+        const rule = /^\$\$([\s\S]*?)\$\$/;
         const match = rule.exec(src);
         if (match) {
-            return { type: 'blockMath', raw: match[0], text: match[1].trim() };
+            return {
+                type: 'mathBlock',
+                raw: match[0],
+                text: match[1].trim()
+            };
         }
     },
     renderer(token) {
-        if (window.katex) {
-            try {
-                return `<div class="math-block">${window.katex.renderToString(token.text, { displayMode: true, throwOnError: false })}</div>`;
-            } catch (e) { return `<pre>${token.raw}</pre>`; }
-        }
-        return `<pre>${token.raw}</pre>`;
+        return `<div class="math-tex-block" data-math="${escapeHtml(token.text)}"></div>`;
     }
 };
 

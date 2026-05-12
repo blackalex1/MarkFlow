@@ -40,6 +40,19 @@ export function initMarkdownComponentHandlers() {
                             }
                         }, 300);
                     }
+                    if (window.katex) {
+                        target.querySelectorAll('.math-tex-inline, .math-tex-block').forEach(el => {
+                            if (!el.dataset.mathRendered) {
+                                try {
+                                    katex.render(el.dataset.math, el, {
+                                        displayMode: el.classList.contains('math-tex-block'),
+                                        throwOnError: false
+                                    });
+                                    el.dataset.mathRendered = "true";
+                                } catch (e) { console.error('KaTeX tab error:', e); }
+                            }
+                        });
+                    }
                 }
                 return;
             }
@@ -78,6 +91,19 @@ export function initMarkdownComponentHandlers() {
                                 console.error('Mermaid dropdown render error:', e);
                             }
                         }, 300);
+                    }
+                    if (window.katex) {
+                        container.querySelectorAll('.math-tex-inline, .math-tex-block').forEach(el => {
+                            if (!el.dataset.mathRendered) {
+                                try {
+                                    katex.render(el.dataset.math, el, {
+                                        displayMode: el.classList.contains('math-tex-block'),
+                                        throwOnError: false
+                                    });
+                                    el.dataset.mathRendered = "true";
+                                } catch (e) { console.error('KaTeX dropdown error:', e); }
+                            }
+                        });
                     }
                 }
             }

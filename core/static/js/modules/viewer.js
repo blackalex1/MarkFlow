@@ -45,7 +45,7 @@ export async function loadFileContent(path, pushState = true, hash = null) {
         
         const cleanHTML = DOMPurify.sanitize(marked.parse(data.content), {
             ADD_TAGS: ['mark'],
-            ADD_ATTR: ['target', 'data-target', 'data-tab-id', 'data-lucide', 'id', 'class', 'data-code'],
+            ADD_ATTR: ['target', 'data-target', 'data-tab-id', 'data-lucide', 'id', 'class', 'data-code', 'style', 'aria-hidden', 'data-math'],
             USE_PROFILES: { html: true, mathMl: true, svg: true },
             RETURN_TRUSTED_TYPE: true
         });
@@ -84,28 +84,29 @@ export async function loadFileContent(path, pushState = true, hash = null) {
                 ui.contentViewer.querySelectorAll('pre code').forEach(b => codeObserver.observe(b));
             }
 
-            // Lazy KaTeX (Performance Guard)
-            if (window.renderMathInElement) {
+            // Lazy KaTeX (Targeted Performance Guard)
+            if (window.katex) {
                 const mathObserver = new IntersectionObserver((entries) => {
                     entries.forEach(entry => {
                         if (entry.isIntersecting) {
                             const el = entry.target;
                             if (!el.dataset.mathRendered) {
-                                renderMathInElement(el, {
-                                    delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}],
-                                    throwOnError: false, strict: false, trust: false
-                                });
+                                try {
+                                    const isBlock = el.classList.contains('math-tex-block');
+                                    katex.render(el.dataset.math, el, {
+                                        displayMode: isBlock,
+                                        throwOnError: false
+                                    });
+                                } catch (e) { console.error('KaTeX error:', e); }
                                 el.dataset.mathRendered = "true";
                                 mathObserver.unobserve(el);
                             }
                         }
                     });
-                }, { rootMargin: '150px' });
+                }, { rootMargin: '200px' });
                 
-                // We observe the whole content area but use a more granular approach if needed.
-                // For now, observing the viewer is okay, but let's observe paragraphs/divs for better granularity.
-                ui.contentViewer.querySelectorAll('p, div, li, blockquote').forEach(el => {
-                    if (el.textContent.includes('$')) mathObserver.observe(el);
+                ui.contentViewer.querySelectorAll('.math-tex-inline, .math-tex-block').forEach(el => {
+                    mathObserver.observe(el);
                 });
             }
 

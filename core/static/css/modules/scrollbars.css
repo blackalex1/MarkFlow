@@ -1,3 +1,10 @@
+/* Standard Scrollbar (Firefox & Modern) */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border-color) transparent;
+}
+
+/* Webkit Scrollbar (Chrome/Safari/Edge) */
 ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
