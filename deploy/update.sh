@@ -14,8 +14,9 @@ fi
 
 # Go to project root to pull changes
 cd ..
-echo "### Pulling latest changes from Git..."
-git pull
+echo "### Syncing with origin/main..."
+git fetch origin
+git reset --hard origin/main
 
 # Go back to deploy folder
 cd deploy
