@@ -18,9 +18,9 @@ LIBRARIES = [
     ("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/sql.min.js", "js/languages/sql.min.js", None),
     ("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js", "js/languages/java.min.js", None),
     ("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/r.min.js", "js/languages/r.min.js", None),
-    ("https://cdn.jsdelivr.net/npm/marked/marked.min.js", "js/marked.min.js", "sha384-948ahk4ZmxYVYOc+rxN1H2gM1EJ2Duhp7uHtZ4WSLkV4Vtx5MUqnV+l7u9B+jFv+"),
+    ("https://cdn.jsdelivr.net/npm/marked@15.0.0/marked.min.js", "js/marked.min.js", "sha384-S30PtRsvwCj1u+Vq6RYeMymVW+X6ev6iAAhBk+weJRhymGroaVjGU44tPpFrrVPE"),
     ("https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js", "js/purify.min.js", "sha384-rneZSW/1QE+3/U5/u+/7eRNi/tRc+SzS+yXy36fltr1tDN9EHaVo1Bwz2Z8o8DA4"),
-    ("https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js", "js/mermaid.min.js", "sha384-enVdc7lTHDGtpROV85t9+VqPC2EyyB0hsRD0MrvQnHUsHmTHIz2D8SPP4EnBkstH"),
+    ("https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js", "js/mermaid.min.js", "sha384-qX9VvWkP79m/O121ZE6sOYp0nf/pldQgtvWDbkpzi+3mUo4Wn4Ix4cFzNPay3VaB"),
 
     ("https://unpkg.com/easymde@2.18.0/dist/easymde.min.js", "js/easymde.min.js", "sha384-KtB38COewxfrhJxoN2d+olxJAeT08LF8cVZ6DQ8Poqu89zIptqO6zAXoIxpGNWYE"),
     ("https://unpkg.com/easymde@2.18.0/dist/easymde.min.css", "css/easymde.min.css", "sha384-uqD/OYCNfagd1EgXMgl5QedTD5K+B3e9b8GYo/41t7+Serf7CBxvl+tU1gHd+qd1"),
