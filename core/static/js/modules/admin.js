@@ -17,35 +17,24 @@ export function initAdmin() {
         const roleInput = document.getElementById('admin-new-role');
 
         if (roleTrigger && roleMenu) {
-            roleTrigger.onclick = (e) => {
-                e.stopPropagation();
-                roleMenu.classList.toggle('hidden');
-                roleDropdown.classList.toggle('is-open');
-            };
+            import('./components/dropdown.js').then(module => {
+                module.initDropdown('admin-new-role-dropdown', {
+                    onChange: (val, display) => {
+                        roleInput.value = val;
+                        roleText.innerText = display;
+                    }
+                });
 
-            roleMenu.querySelectorAll('.dropdown-item').forEach(item => {
-                const val = item.dataset.value;
                 // Translate initial items
-                item.innerText = t(`role_${val}`) || val;
-
-                item.onclick = (e) => {
-                    e.stopPropagation();
-                    const value = item.dataset.value;
-                    roleInput.value = value;
-                    roleText.innerText = item.innerText;
-                    roleMenu.classList.add('hidden');
-                    roleDropdown.classList.remove('is-open');
-                };
+                roleMenu.querySelectorAll('.dropdown-item').forEach(item => {
+                    const val = item.dataset.value;
+                    item.innerText = t(`role_${val}`) || val;
+                    if (val === roleInput.value) item.classList.add('active');
+                });
+                
+                // Set initial translated text
+                roleText.innerText = t(`role_${roleInput.value}`) || roleInput.value;
             });
-
-            // Close on click outside
-            document.addEventListener('click', () => {
-                roleMenu.classList.add('hidden');
-                roleDropdown.classList.remove('is-open');
-            });
-            
-            // Set initial translated text
-            roleText.innerText = t(`role_${roleInput.value}`) || roleInput.value;
         }
 
         ui.btnAdminCreateUser.onclick = createUser;

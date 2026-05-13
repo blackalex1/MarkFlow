@@ -16,35 +16,13 @@ export async function renderStats() {
 
     // Add listeners once
     if (dropdown && !dropdown.dataset.listener) {
-        trigger.addEventListener('click', (e) => {
-            e.stopPropagation();
-            menu.classList.toggle('hidden');
-            dropdown.classList.toggle('is-open');
-        });
-
-        dropdown.querySelectorAll('.dropdown-item').forEach(item => {
-            item.addEventListener('click', () => {
-                const val = item.getAttribute('data-value');
-                limitText.textContent = item.textContent;
-                
-                dropdown.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('active'));
-                item.classList.add('active');
-                
-                menu.classList.add('hidden');
-                dropdown.classList.remove('is-open');
-                
-                renderStats(); // Re-fetch with new limit
+        import('../components/dropdown.js').then(module => {
+            module.initDropdown('stats-limit-dropdown', {
+                onChange: () => {
+                    renderStats(); // Re-fetch with new limit
+                }
             });
         });
-
-        // Global click to close
-        document.addEventListener('click', (e) => {
-            if (!dropdown.contains(e.target)) {
-                menu.classList.add('hidden');
-                dropdown.classList.remove('is-open');
-            }
-        });
-
         dropdown.dataset.listener = 'true';
     }
 

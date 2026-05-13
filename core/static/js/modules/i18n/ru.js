@@ -170,6 +170,9 @@ export const ru = {
     tab_search_maintenance: "Поисковый индекс",
     reindex_desc: "Полная пересборка индекса поиска с нуля",
     unit_mins: "мин.",
+    unit_minute: "минута",
+    unit_hour: "час",
+    unit_day: "день",
     
     // Statuses
     status_label: "Статус",
@@ -361,4 +364,9 @@ export const ru = {
     stats_th_last_view: "Последний просмотр",
     stats_visits: "визитов",
     stats_views: "просмотров",
+    stats_top_5: "ТОП 5",
+    stats_top_10: "ТОП 10",
+    stats_top_50: "ТОП 50",
+    stats_top_100: "ТОП 100",
+    stats_limit_all: "ВСЕ",
 };

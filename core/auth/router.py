@@ -213,8 +213,11 @@ def api_update_role(request: Request, username: str, data: RoleUpdate, user=Depe
     if data.role not in allowed_roles:
         raise HTTPException(status_code=400, detail=f"Invalid role. Allowed: {', '.join(allowed_roles)}")
         
+    old_user = get_user_by_username(username)
+    old_role = old_user.get('role', 'guest') if old_user else 'unknown'
+    
     update_user_role(username, data.role)
-    add_audit_log(user["username"], "user_role_updated", f"User: {username}, New Role: {data.role}", ip_address=request.client.host)
+    add_audit_log(user["username"], "user_role_updated", f"User: {username}, Old Role: {old_role}, New Role: {data.role}", ip_address=request.client.host)
     return {"message": "Role updated"}
 
 @router.get("/audit-logs")

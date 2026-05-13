@@ -69,7 +69,7 @@ async def add_security_headers(request: Request, call_next):
     # Tightened CSP with Nonce and Strict-Dynamic
     csp = (
         "default-src 'self'; "
-        f"script-src 'nonce-{nonce}' 'strict-dynamic' https: http:; " 
+        f"script-src 'nonce-{nonce}' 'strict-dynamic'; " 
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; "
         "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; "
         "img-src 'self' data: blob: https:; " 

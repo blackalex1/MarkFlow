@@ -82,6 +82,18 @@ def check_and_download_vendor_libs():
                     print(f" Integrity verified for {rel_path}")
 
                 with open(target_path, "wb") as f:
+                    # Optional: Cleanup legacy CSS prefixes that cause browser warnings
+                    if rel_path.endswith(".css"):
+                        content_str = content.decode('utf-8', errors='ignore')
+                        # Remove -moz-border-radius and other legacy prefixes
+                        legacy_prefixes = [
+                            "-moz-border-radius", "-webkit-border-radius", 
+                            "-moz-box-shadow", "-webkit-box-shadow",
+                            "-moz-column-count", "-webkit-column-count"
+                        ]
+                        for prefix in legacy_prefixes:
+                            content_str = content_str.replace(prefix, prefix.replace("-moz-", "").replace("-webkit-", ""))
+                        content = content_str.encode('utf-8')
                     f.write(content)
             except Exception as e:
                 print(f"Failed to download {rel_path}: {e}")

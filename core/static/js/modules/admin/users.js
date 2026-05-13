@@ -48,13 +48,13 @@ export async function loadUsers() {
                         <tr>
                             <td>${safeUsername}</td>
                             <td style="white-space: nowrap;">
-                                <div class="role-dropdown" data-user="${safeUsername}">
-                                    <div class="role-trigger ${isProtected ? 'disabled' : ''}" id="role-trigger-${safeUsername}">
+                                <div class="custom-dropdown role-dropdown" data-user="${safeUsername}" style="min-width: 130px;">
+                                    <div class="dropdown-trigger ${isProtected ? 'disabled' : ''}" id="role-trigger-${safeUsername}">
                                         <span>${t('role_' + u.role) || u.role}</span>
-                                        <svg class="dropdown-arrow" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                                        ${!isProtected ? '<i data-lucide="chevron-down" class="select-arrow"></i>' : ''}
                                     </div>
                                     ${!isProtected ? `
-                                    <div class="role-menu" id="role-menu-${safeUsername}">
+                                    <div class="dropdown-menu" id="role-menu-${safeUsername}">
                                         ${roles.map(r => `
                                             <div class="dropdown-item ${u.role === r ? 'active' : ''}" data-role="${r}">${t('role_' + r) || r}</div>
                                         `).join('')}
@@ -63,7 +63,7 @@ export async function loadUsers() {
                                 </div>
                             </td>
                             <td style="white-space: nowrap; text-align: right;">
-                                ${u.username !== 'admin' && u.username !== state.currentUser.username ? 
+                                ${u.username !== 'admin' && u.username !== (state.currentUser ? state.currentUser.username : '') ? 
                                     `<button class="btn-text delete-user-btn" data-user="${safeUsername}" style="color: var(--danger-color);">${t('btn_delete')}</button>` : 
                                     `<span style="color: var(--text-muted); font-size: 11px;">(${t('status_protected')})</span>`}
                             </td>
@@ -76,31 +76,28 @@ export async function loadUsers() {
         // Handle dropdown logic
         container.querySelectorAll('.role-dropdown').forEach(dropdown => {
             const username = dropdown.dataset.user;
-            const trigger = dropdown.querySelector('.role-trigger');
-            const menu = dropdown.querySelector('.role-menu');
+            const trigger = dropdown.querySelector('.dropdown-trigger');
+            const menu = dropdown.querySelector('.dropdown-menu');
             
-            if (!menu) return; // Protected user
+            if (!menu || !trigger) return; // Protected user or missing elements
 
             trigger.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const isShowing = menu.classList.contains('show');
+                const isShowing = dropdown.classList.contains('is-open');
                 
                 // Close all other dropdowns
-                document.querySelectorAll('.role-menu.show').forEach(m => m.classList.remove('show'));
-                document.querySelectorAll('.role-trigger.active').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.role-dropdown.active').forEach(d => d.classList.remove('active'));
+                document.querySelectorAll('.custom-dropdown.is-open').forEach(d => d.classList.remove('is-open'));
                 
                 if (!isShowing) {
                     const rect = trigger.getBoundingClientRect();
                     menu.style.position = 'fixed';
-                    menu.style.top = `${rect.bottom + 5}px`;
+                    menu.style.top = `${rect.bottom + 8}px`;
                     menu.style.left = `${rect.left}px`;
                     menu.style.width = `${rect.width}px`;
                     menu.style.minWidth = '140px';
                     
-                    menu.classList.add('show');
-                    trigger.classList.add('active');
-                    dropdown.classList.add('active');
+                    dropdown.classList.add('is-open');
+                    if (window.lucide) lucide.createIcons();
                 }
             });
 
@@ -109,9 +106,12 @@ export async function loadUsers() {
                     e.stopPropagation();
                     const newRole = item.dataset.role;
                     trigger.querySelector('span').textContent = t('role_' + newRole) || newRole;
-                    menu.classList.remove('show');
-                    trigger.classList.remove('active');
-                    dropdown.classList.remove('active');
+                    
+                    // Update active class in menu
+                    menu.querySelectorAll('.dropdown-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+
+                    dropdown.classList.remove('is-open');
                     
                     try {
                         const res = await fetch(`/api/auth/users/${username}/role`, {
@@ -120,6 +120,10 @@ export async function loadUsers() {
                             body: JSON.stringify({ role: newRole })
                         });
                         if (!res.ok) throw new Error('Failed to update role');
+                        
+                        import('../toasts.js').then(m => {
+                            m.toast.success(t('toast_role_updated') || 'Role updated successfully');
+                        });
                     } catch (err) {
                         console.error(err);
                         loadUsers(); // Revert on error
@@ -134,9 +138,14 @@ export async function loadUsers() {
                 const username = btn.dataset.user;
                 if (!confirm(`${t('confirm_delete_user')} ${username}?`)) return;
                 const res = await fetch(`/api/auth/users/${username}`, { method: 'DELETE' });
-                if (res.ok) loadUsers();
+                if (res.ok) {
+                    import('../toasts.js').then(m => m.toast.success(t('toast_user_deleted') || 'User deleted'));
+                    loadUsers();
+                }
             });
         });
+
+        if (window.lucide) window.lucide.createIcons();
     } catch (err) { console.error(err); }
 }
 
@@ -155,6 +164,7 @@ export async function createUser() {
         if (res.ok) {
             ui.adminNewUsername.value = '';
             ui.adminNewPassword.value = '';
+            import('../toasts.js').then(m => m.toast.success(t('toast_user_created') || 'User created'));
             loadUsers();
         } else {
             const data = await res.json();

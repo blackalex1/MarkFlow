@@ -304,6 +304,12 @@ input:checked + .slider:before {
     background: rgba(255, 255, 255, 0.05);
 }
 
+.role-menu .dropdown-item.active {
+    background: rgba(var(--primary-rgb), 0.15);
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
 @keyframes dropdownFadeIn {
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }

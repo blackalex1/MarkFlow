@@ -169,6 +169,13 @@ export function initSystemSettings() {
         });
         faviconTrigger.dataset.listener = "true";
     }
+
+    // Security Limits Selects
+    import('../components/dropdown.js').then(module => {
+        ['login', '2fa-verify', 'change-password', 'file-ops', 'search', 'create-user'].forEach(key => {
+            module.transformSelect(`sys-limit-${key}-period`);
+        });
+    });
 }
 
 async function saveSystemSettings() {

@@ -101,11 +101,18 @@ export async function editRepo(id) {
             
             if (ui.repoSyncStrategy) {
                 ui.repoSyncStrategy.value = repo.sync_strategy || 'rebase';
-                ui.repoSyncStrategy.onchange();
+                ui.repoSyncStrategy.dispatchEvent(new Event('change'));
             }
             
             if (ui.repoFlattenToggle) ui.repoFlattenToggle.checked = !!repo.flatten_in_tree;
             
+            // Refresh all selects to match new values visually
+            import('../../components/dropdown.js').then(module => {
+                ['repo-sync-strategy', 'repo-auto-sync-unit', 'repo-branch-select'].forEach(id => {
+                    module.transformSelect(id);
+                });
+            });
+
             if (window.i18n && window.i18n.updatePage) window.i18n.updatePage();
         }
     } catch (err) {

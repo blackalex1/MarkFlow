@@ -11,26 +11,38 @@ import { editRepo, saveRepo } from './form_actions.js';
  * Initializes listeners for the repository editor form
  */
 export function initRepos() {
-    if (ui.repoSyncStrategy) {
-        ui.repoSyncStrategy.onchange = () => {
-            const val = ui.repoSyncStrategy.value;
-            if (ui.strategyDescription && ui.strategyInfoBox) {
-                ui.strategyDescription.textContent = t(`strategy_help_${val}`);
-                
-                const isForce = val === 'force';
-                // Dynamic styling for danger
-                ui.strategyInfoBox.style.background = isForce ? 'rgba(239, 68, 68, 0.05)' : 'rgba(99, 102, 241, 0.05)';
-                ui.strategyInfoBox.style.borderColor = isForce ? 'rgba(239, 68, 68, 0.1)' : 'rgba(99, 102, 241, 0.1)';
-                
-                const icon = ui.strategyInfoBox.querySelector('i');
-                if (icon) {
-                    icon.style.color = isForce ? '#ef4444' : 'var(--primary-color)';
-                    icon.setAttribute('data-lucide', isForce ? 'alert-triangle' : 'info');
-                    if (window.lucide) lucide.createIcons();
+    import('../../components/dropdown.js').then(module => {
+        if (ui.repoSyncStrategy) {
+            module.transformSelect('repo-sync-strategy', {
+                onChange: (val) => {
+                    if (ui.strategyDescription && ui.strategyInfoBox) {
+                        ui.strategyDescription.textContent = t(`strategy_help_${val}`);
+                        
+                        const isForce = val === 'force';
+                        ui.strategyInfoBox.style.background = isForce ? 'rgba(239, 68, 68, 0.05)' : 'rgba(99, 102, 241, 0.05)';
+                        ui.strategyInfoBox.style.borderColor = isForce ? 'rgba(239, 68, 68, 0.1)' : 'rgba(99, 102, 241, 0.1)';
+                        
+                        const icon = ui.strategyInfoBox.querySelector('i');
+                        if (icon) {
+                            icon.style.color = isForce ? '#ef4444' : 'var(--primary-color)';
+                            icon.setAttribute('data-lucide', isForce ? 'alert-triangle' : 'info');
+                            if (window.lucide) lucide.createIcons();
+                        }
+                    }
                 }
-            }
-        };
-    }
+            });
+        }
+        
+        if (ui.repoAutoSyncUnit) {
+            module.transformSelect('repo-auto-sync-unit');
+        }
+
+        if (ui.repoBranchSelect) {
+            // This one is dynamic, we'll need to re-transform it when branches are loaded
+            // For now just initial transform
+            module.transformSelect('repo-branch-select');
+        }
+    });
 
     // Initialize toggle listener for auto-sync
     if (ui.repoAutoSyncToggle && !ui.repoAutoSyncToggle.dataset.init) {
@@ -92,6 +104,17 @@ export function initRepos() {
                         option.textContent = b;
                         ui.repoBranchSelect.appendChild(option);
                     });
+                    
+                    // Re-transform to custom dropdown
+                    const existingCustom = document.getElementById('custom-repo-branch-select');
+                    if (existingCustom) existingCustom.remove();
+                    ui.repoBranchSelect.classList.remove('hidden');
+                    ui.repoBranchSelect.style.display = 'block';
+                    
+                    import('../../components/dropdown.js').then(module => {
+                        module.transformSelect('repo-branch-select');
+                    });
+
                     toast.success(t('toast_branches_loaded'));
                 } else {
                     toast.error(data.detail || t('error_fetch_branches'));
@@ -118,7 +141,7 @@ export function initRepos() {
             // Auto-switch from global to unique
             if (ui.repoUseGlobalSSH) {
                 ui.repoUseGlobalSSH.checked = false;
-                ui.repoUseGlobalSSH.onchange(); // Trigger UI updates
+                ui.repoUseGlobalSSH.dispatchEvent(new Event('change')); // Trigger UI updates
             }
             if (ui.repoManualKeyInput) ui.repoManualKeyInput.classList.toggle('hidden');
             if (ui.repoUniqueKeyDisplay) ui.repoUniqueKeyDisplay.classList.add('hidden');
@@ -133,7 +156,7 @@ export function initRepos() {
         ui.btnRepoGenUniqueKey.onclick = () => {
             if (ui.repoUseGlobalSSH) {
                 ui.repoUseGlobalSSH.checked = false;
-                ui.repoUseGlobalSSH.onchange();
+                ui.repoUseGlobalSSH.dispatchEvent(new Event('change'));
             }
             createKeyPair();
         };
@@ -184,7 +207,7 @@ export function initRepos() {
             
             if (ui.repoSyncStrategy) {
                 ui.repoSyncStrategy.value = 'rebase';
-                ui.repoSyncStrategy.onchange();
+                ui.repoSyncStrategy.dispatchEvent(new Event('change'));
             }
             
             if (ui.repoFlattenToggle) ui.repoFlattenToggle.checked = false;
