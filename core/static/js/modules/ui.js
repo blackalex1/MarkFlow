@@ -132,6 +132,7 @@ export const ui = {
     sidebar: document.getElementById('sidebar'),
     sidebarHeader: document.querySelector('.sidebar-header'),
     mobileToggle: document.getElementById('mobile-toggle'),
+    sidebarOverlay: document.getElementById('sidebar-overlay'),
     sidebarTitle: document.querySelector('.app-branding, #sidebar-app-name-simple')
 };
 

@@ -164,6 +164,7 @@ if (ui.mobileToggle) {
     ui.mobileToggle.addEventListener('click', () => {
         state.isSidebarActive = !state.isSidebarActive;
         ui.sidebar.classList.toggle('active', state.isSidebarActive);
+        if (ui.sidebarOverlay) ui.sidebarOverlay.classList.toggle('active', state.isSidebarActive);
         
         // Change icon based on state
         const icon = ui.mobileToggle.querySelector('i');
@@ -174,11 +175,27 @@ if (ui.mobileToggle) {
     });
 }
 
+if (ui.sidebarOverlay) {
+    ui.sidebarOverlay.addEventListener('click', () => {
+        if (state.isSidebarActive) {
+            state.isSidebarActive = false;
+            ui.sidebar.classList.remove('active');
+            ui.sidebarOverlay.classList.remove('active');
+            const icon = ui.mobileToggle.querySelector('i');
+            if (icon) {
+                icon.setAttribute('data-lucide', 'menu');
+                if (window.lucide) lucide.createIcons();
+            }
+        }
+    });
+}
+
 // Close sidebar on file load (mobile)
 window.addEventListener('load-file', () => {
     if (state.isSidebarActive) {
         state.isSidebarActive = false;
         ui.sidebar.classList.remove('active');
+        if (ui.sidebarOverlay) ui.sidebarOverlay.classList.remove('active');
         const icon = ui.mobileToggle.querySelector('i');
         if (icon) {
             icon.setAttribute('data-lucide', 'menu');
