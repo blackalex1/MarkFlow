@@ -93,6 +93,9 @@ async function init() {
     initGlobalHandlers();
     await auth.checkAuth();
     
+    initVisibilityToggle();
+    await loadStatuses();
+    
     // Lazy-load Admin modules if needed
     if (state.currentUser && ['developer', 'maintainer', 'owner'].includes(state.currentUser.role)) {
         const [{ initDashboardListeners }, editor] = await Promise.all([
@@ -102,9 +105,6 @@ async function init() {
         initDashboardListeners();
         await editor.init();
     }
-
-    initVisibilityToggle();
-    await loadStatuses();
     await tree.loadFileTree();
     
     // Check URL on load

@@ -76,11 +76,11 @@
 
 
     <script nonce="{{ csp_nonce }}">
-        window.MARKFLOW_CONFIG = {
-            homePagePath: "{{ config.home_page_path if config.home_page_path else '' }}",
-            flattenedSlugs: {{ flattened_slugs | tojson if flattened_slugs is defined else '[]' }},
-            repoMapping: {{ repo_mapping | tojson if repo_mapping is defined else '{}' }}
-        };
+        {{ 'window.MARKFLOW_CONFIG = {' ~
+           'homePagePath: ' ~ (config.home_page_path or "") | tojson ~ ',' ~
+           'flattenedSlugs: ' ~ (flattened_slugs or []) | tojson ~ ',' ~
+           'repoMapping: ' ~ (repo_mapping or {}) | tojson ~
+        '};' | safe }}
     </script>
     <script nonce="{{ csp_nonce }}" type="module" src="/static/js/app.js?v={{ app_version }}"></script>
 </body>

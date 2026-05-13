@@ -120,7 +120,7 @@
 }
 
 .tab-item:hover {
-    color: #fff;
+    color: var(--text-main);
 }
 
 .tab-item.active {

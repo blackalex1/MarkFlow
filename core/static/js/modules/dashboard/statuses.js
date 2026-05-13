@@ -10,8 +10,9 @@ import { renderStatusesTable, createStatus } from './statuses/logic.js';
 
 export function initStatuses() {
     const btnCreate = document.getElementById('btn-admin-create-status');
-    if (btnCreate) {
-        btnCreate.onclick = createStatus;
+    if (btnCreate && !btnCreate.dataset.listener) {
+        btnCreate.addEventListener('click', createStatus);
+        btnCreate.dataset.listener = "true";
     }
 
     // Custom Color Picker logic
@@ -33,27 +34,28 @@ export function initStatuses() {
         });
     };
 
-    if (colorTrigger) {
-        colorTrigger.onclick = (e) => {
+    if (colorTrigger && colorDropdown && !colorTrigger.dataset.listener) {
+        colorTrigger.addEventListener('click', (e) => {
             e.stopPropagation();
-            colorDropdown.classList.toggle('active');
-        };
+            const isActive = colorDropdown.classList.toggle('active');
+            // Force display for consistency with system
+            colorDropdown.style.display = isActive ? 'block' : 'none';
+        });
+        colorTrigger.dataset.listener = "true";
     }
 
-    document.addEventListener('click', (e) => {
-        if (colorDropdown && !colorDropdown.contains(e.target) && !colorTrigger.contains(e.target)) {
-            colorDropdown.classList.remove('active');
-        }
-    });
-
     swatches.forEach(swatch => {
-        swatch.onclick = () => {
-            const color = swatch.dataset.color;
-            if (color) {
-                updateColorPreview(color);
-                colorDropdown.classList.remove('active');
-            }
-        };
+        if (!swatch.dataset.listener) {
+            swatch.addEventListener('click', () => {
+                const color = swatch.dataset.color;
+                if (color) {
+                    updateColorPreview(color);
+                    colorDropdown.classList.remove('active');
+                    colorDropdown.style.display = 'none';
+                }
+            });
+            swatch.dataset.listener = "true";
+        }
     });
 
     // Custom Spectrum Picker logic
@@ -78,6 +80,9 @@ export function initStatuses() {
     }
 
     if (window.lucide) window.lucide.createIcons();
+    
+    // Populate the table and dropdowns on init
+    renderStatusesTable();
 }
 
 export { renderStatusesTable };

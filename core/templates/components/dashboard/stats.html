@@ -1,0 +1,50 @@
+<div id="tab-stats" class="tab-content hidden">
+    <div class="settings-plate">
+        <div class="plate-header">
+            <i data-lucide="bar-chart-2"></i>
+            <span data-t="stats_site_overview">Site Overview</span>
+        </div>
+        <div class="plate-body">
+            <div id="stats-daily-chart">
+                <!-- Bars injected by stats.js -->
+            </div>
+            <div class="stats-summary-grid">
+                <div class="stat-card">
+                    <div class="stat-label" data-t="stats_total_visits">Total Visits</div>
+                    <div id="stats-total-visits" class="stat-value primary">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label" data-t="stats_total_views">Total Views</div>
+                    <div id="stats-total-views" class="stat-value success">0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-plate" style="margin-top: 25px;">
+        <div class="plate-header" style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <i data-lucide="trending-up"></i>
+                <span data-t="stats_top_documents">Top Documents</span>
+            </div>
+            <div class="custom-dropdown" id="stats-limit-dropdown">
+                <div class="dropdown-trigger" id="stats-limit-trigger">
+                    <span id="stats-limit-text">TOP 10</span>
+                    <i data-lucide="chevron-down" class="select-arrow icon-sm"></i>
+                </div>
+                <div class="dropdown-menu hidden" id="stats-limit-menu" style="right: 0; min-width: 100px;">
+                    <div class="dropdown-item" data-value="5">TOP 5</div>
+                    <div class="dropdown-item active" data-value="10">TOP 10</div>
+                    <div class="dropdown-item" data-value="50">TOP 50</div>
+                    <div class="dropdown-item" data-value="100">TOP 100</div>
+                    <div class="dropdown-item" data-value="1000">ALL</div>
+                </div>
+            </div>
+        </div>
+        <div class="plate-body" style="padding: 0;">
+            <div id="stats-top-docs-table-container">
+                <!-- Table injected by stats.js -->
+            </div>
+        </div>
+    </div>
+</div>

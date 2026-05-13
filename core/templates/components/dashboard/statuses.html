@@ -1,0 +1,67 @@
+<div id="tab-statuses" class="tab-content hidden">
+    <div class="settings-plate">
+        <div class="plate-header">
+            <i data-lucide="tag"></i>
+            <span data-t="statuses_title">Document Statuses</span>
+        </div>
+        <div class="plate-body">
+            <p class="hint-text" style="margin-bottom: 15px;" data-t="statuses_hint">Manage statuses and their bullet colors across the system.</p>
+            <div style="display: flex; gap: 10px; margin-bottom: 5px;">
+                <input type="text" id="status-new-name" data-t="status_name_placeholder" placeholder="Status Name" style="flex: 1;" />
+                <div class="custom-color-picker" id="status-color-picker" style="width: 180px;">
+                    <div class="color-trigger" id="status-color-trigger" style="height: 38px;">
+                        <div class="color-preview-circle" id="status-color-preview-circle" style="background-color: #6366f1; width: 18px; height: 18px;"></div>
+                        <span class="color-trigger-text" id="status-color-value" style="font-size: 12px;">#6366f1</span>
+                        <i data-lucide="chevron-down" style="width: 14px; height: 14px; opacity: 0.5;"></i>
+                    </div>
+
+                    <div class="color-dropdown" id="status-color-dropdown">
+                        <div class="color-grid">
+                            <div class="color-swatch" style="background-color: #6366f1;" data-color="#6366f1"></div>
+                            <div class="color-swatch" style="background-color: #3b82f6;" data-color="#3b82f6"></div>
+                            <div class="color-swatch" style="background-color: #0ea5e9;" data-color="#0ea5e9"></div>
+                            <div class="color-swatch" style="background-color: #10b981;" data-color="#10b981"></div>
+                            <div class="color-swatch" style="background-color: #22c55e;" data-color="#22c55e"></div>
+                            <div class="color-swatch" style="background-color: #f59e0b;" data-color="#f59e0b"></div>
+                            <div class="color-swatch" style="background-color: #f97316;" data-color="#f97316"></div>
+                            <div class="color-swatch" style="background-color: #f43f5e;" data-color="#f43f5e"></div>
+                            <div class="color-swatch" style="background-color: #ec4899;" data-color="#ec4899"></div>
+                            <div class="color-swatch" style="background-color: #8b5cf6;" data-color="#8b5cf6"></div>
+                            <div class="color-swatch" style="background-color: #a855f7;" data-color="#a855f7"></div>
+                            <div class="color-swatch" style="background-color: #64748b;" data-color="#64748b"></div>
+                            <div class="color-swatch rainbow-swatch" id="status-spectrum-trigger" title="Spectrum Picker">
+                                <i data-lucide="palette"></i>
+                            </div>
+                        </div>
+
+                        <div class="spectrum-container" id="status-spectrum-container">
+                            <div class="canvas-wrapper">
+                                <canvas class="spectrum-canvas" id="status-spectrum-canvas" width="200" height="120"></canvas>
+                                <div class="spectrum-cursor" id="status-spectrum-cursor"></div>
+                            </div>
+                            <div class="hue-slider-container">
+                                <div class="hue-slider-track"></div>
+                                <input type="range" class="hue-slider" id="status-hue-slider" min="0" max="360" value="0" />
+                            </div>
+                        </div>
+
+                        <div class="custom-hex-input">
+                            <label data-t="sys_custom_hex">Custom Hex</label>
+                            <div class="hex-field-wrapper">
+                                <input type="text" id="status-new-color" value="#6366f1" maxlength="7" placeholder="#6366f1" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="btn-admin-create-status" class="btn btn-primary" data-t="pages_btn_create">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="settings-plate" style="margin-top: 20px;">
+        <div class="plate-body" style="padding: 0;" id="statuses-table-container">
+            <!-- Populated by statuses.js -->
+        </div>
+    </div>
+</div>

@@ -18,7 +18,7 @@ export const init = async () => {
     
     // Status and visibility are handled by modules/status.js
     
-    if (ui.statusDropdown) {
+    if (ui.statusDropdown && !ui.statusDropdown.dataset.listener) {
         const trigger = ui.statusDropdown.querySelector('.dropdown-trigger');
         const menu = document.getElementById('status-dropdown-menu');
         
@@ -42,6 +42,8 @@ export const init = async () => {
             ui.statusDropdown.classList.remove('is-open');
             menu.classList.add('hidden');
         });
+
+        ui.statusDropdown.dataset.listener = "true";
     }
 };
 

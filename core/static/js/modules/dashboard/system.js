@@ -4,15 +4,19 @@ import { toast } from '../toasts.js';
 import * as i18n from '../i18n.js';
 import { initSpectrumPicker } from '../color-picker-logic.js';
 
+
 export function initSystemSettings() {
     const btnSave = document.getElementById('btn-save-system-settings');
-    if (btnSave) {
+    if (btnSave && !btnSave.dataset.listener) {
         btnSave.addEventListener('click', saveSystemSettings);
+        btnSave.dataset.listener = "true";
     }
 
     // Custom Color Picker logic
     const colorTrigger = document.getElementById('sys-color-trigger');
     const colorDropdown = document.getElementById('sys-color-dropdown');
+    
+
     const colorPreviewCircle = document.getElementById('sys-color-preview-circle');
     const colorValueDisplay = document.getElementById('sys-color-value');
     const colorInput = document.getElementById('sys-primary-color');
@@ -30,7 +34,6 @@ export function initSystemSettings() {
             }
         });
         
-        // Update document theme colors immediately for preview
         document.documentElement.style.setProperty('--primary-color', color);
         const rgb = hexToRgb(color);
         if (rgb) {
@@ -38,28 +41,41 @@ export function initSystemSettings() {
         }
     };
 
-    if (colorTrigger) {
+    if (colorTrigger && colorDropdown && !colorTrigger.dataset.listener) {
         colorTrigger.addEventListener('click', (e) => {
             e.stopPropagation();
-            colorDropdown.classList.toggle('active');
+            const pickerContainer = document.getElementById('accent-color-picker');
+            const isActive = colorDropdown.classList.toggle('active');
+            
+            // Force display to be sure
+            colorDropdown.style.display = isActive ? 'block' : 'none';
+            
+            if (pickerContainer) {
+                pickerContainer.style.zIndex = isActive ? "1000" : "100";
+            }
         });
+        colorTrigger.dataset.listener = "true";
     }
 
-    document.addEventListener('click', (e) => {
-        if (colorDropdown && !colorDropdown.contains(e.target) && !colorTrigger.contains(e.target)) {
-            colorDropdown.classList.remove('active');
-        }
-    });
+    if (colorDropdown && !colorDropdown.dataset.listener) {
+        colorDropdown.addEventListener('click', (e) => {
+        });
+        colorDropdown.dataset.listener = "true";
+    }
 
     // Swatches
     swatches.forEach(swatch => {
-        swatch.addEventListener('click', (e) => {
-            const color = swatch.dataset.color;
-            if (color) {
+        if (!swatch.dataset.listener) {
+            swatch.addEventListener('click', () => {
+                const color = swatch.getAttribute('data-color');
                 updateColorPreview(color);
                 colorDropdown.classList.remove('active');
-            }
-        });
+                colorDropdown.style.display = 'none';
+                const pickerContainer = document.getElementById('accent-color-picker');
+                if (pickerContainer) pickerContainer.style.zIndex = "100";
+            });
+            swatch.dataset.listener = "true";
+        }
     });
 
     // Custom Spectrum Picker logic
@@ -74,66 +90,52 @@ export function initSystemSettings() {
         }
     });
 
-    // Ambient Glow Preview (Dual Theme)
+    // Ambient Glow Preview
     const glowToggle = document.getElementById('sys-bg-glow-enabled');
     const glowOpacityLight = document.getElementById('sys-bg-glow-opacity-light');
     const glowOpacityDark = document.getElementById('sys-bg-glow-opacity-dark');
-    const glowBadgeLight = document.getElementById('sys-glow-opacity-light-badge');
-    const glowBadgeDark = document.getElementById('sys-glow-opacity-dark-badge');
     const bgGlowEl = document.querySelector('.bg-glow');
 
-    if (glowToggle && bgGlowEl) {
+    if (glowToggle && bgGlowEl && !glowToggle.dataset.listener) {
         const updateGlow = () => {
             const enabled = glowToggle.checked;
             const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
-            const opacityLight = glowOpacityLight.value;
-            const opacityDark = glowOpacityDark.value;
-            
             bgGlowEl.style.display = enabled ? 'block' : 'none';
-            
-            // Apply only to current theme for preview
-            const targetOpacity = currentTheme === 'light' ? opacityLight : opacityDark;
-            document.documentElement.style.setProperty('--bg-glow-opacity', targetOpacity);
-            
-            if (glowBadgeLight) glowBadgeLight.innerText = `${Math.round(opacityLight * 100)}%`;
-            if (glowBadgeDark) glowBadgeDark.innerText = `${Math.round(opacityDark * 100)}%`;
+            const opacity = currentTheme === 'light' ? glowOpacityLight.value : glowOpacityDark.value;
+            document.documentElement.style.setProperty('--bg-glow-opacity', opacity);
         };
-
         glowToggle.addEventListener('change', updateGlow);
         if (glowOpacityLight) glowOpacityLight.addEventListener('input', updateGlow);
         if (glowOpacityDark) glowOpacityDark.addEventListener('input', updateGlow);
+        glowToggle.dataset.listener = "true";
     }
 
-    // Force translations and icons for new elements
+    // Force translations and icons
     setTimeout(() => {
         i18n.updatePage();
         if (window.lucide) window.lucide.createIcons();
     }, 100);
 
-    const hexToRgb = (hex) => {
+    function hexToRgb(hex) {
         const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
         return result ? {
             r: parseInt(result[1], 16),
             g: parseInt(result[2], 16),
             b: parseInt(result[3], 16)
         } : null;
-    };
+    }
 
-    // File Upload Handlers (Uses variables defined above)
-    let pendingLogo = null;
-    let pendingFavicon = null;
-
+    // File Upload Handlers
     const logoUpload = document.getElementById('sys-logo-upload');
     const logoTrigger = document.getElementById('btn-sys-logo-trigger');
     const logoPreview = document.getElementById('sys-logo-preview');
     const logoPlaceholder = document.getElementById('logo-placeholder');
 
-    if (logoTrigger && logoUpload) {
+    if (logoTrigger && logoUpload && !logoTrigger.dataset.listener) {
         logoTrigger.addEventListener('click', () => logoUpload.click());
         logoUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
-                pendingLogo = file;
                 const reader = new FileReader();
                 reader.onload = (re) => {
                     logoPreview.src = re.target.result;
@@ -143,6 +145,7 @@ export function initSystemSettings() {
                 reader.readAsDataURL(file);
             }
         });
+        logoTrigger.dataset.listener = "true";
     }
 
     const faviconUpload = document.getElementById('sys-favicon-upload');
@@ -150,12 +153,11 @@ export function initSystemSettings() {
     const faviconPreview = document.getElementById('sys-favicon-preview');
     const faviconPlaceholder = document.getElementById('favicon-placeholder');
 
-    if (faviconTrigger && faviconUpload) {
+    if (faviconTrigger && faviconUpload && !faviconTrigger.dataset.listener) {
         faviconTrigger.addEventListener('click', () => faviconUpload.click());
         faviconUpload.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) {
-                pendingFavicon = file;
                 const reader = new FileReader();
                 reader.onload = (re) => {
                     faviconPreview.src = re.target.result;
@@ -165,24 +167,13 @@ export function initSystemSettings() {
                 reader.readAsDataURL(file);
             }
         });
+        faviconTrigger.dataset.listener = "true";
     }
 }
 
 async function saveSystemSettings() {
     const btn = document.getElementById('btn-save-system-settings');
-    const appName = document.getElementById('sys-app-name').value;
-    const primaryColor = document.getElementById('sys-primary-color').value;
-    const useLogo = document.getElementById('sys-use-logo').checked;
-    
-    // Limits
-    const limits = {};
-    ['login', '2fa-verify', 'change-password', 'file-ops', 'search', 'create-user'].forEach(key => {
-        const num = document.getElementById(`sys-limit-${key}-num`).value;
-        const period = document.getElementById(`sys-limit-${key}-period`).value;
-        limits[key.replace(/-/g, '_')] = `${num}/${period}`;
-    });
-
-    const maxRequestSize = document.getElementById('sys-max-request-size').value;
+    if (!btn || btn.disabled) return;
 
     const originalText = btn.innerText;
     const { t } = i18n;
@@ -190,6 +181,22 @@ async function saveSystemSettings() {
     btn.innerText = t('sys_saving', 'Saving...');
 
     try {
+        const appName = document.getElementById('sys-app-name').value;
+        const primaryColor = document.getElementById('sys-primary-color').value;
+        const useLogo = document.getElementById('sys-use-logo').checked;
+        
+        // Limits
+        const limits = {};
+        ['login', '2fa-verify', 'change-password', 'file-ops', 'search', 'create-user'].forEach(key => {
+            const numEl = document.getElementById(`sys-limit-${key}-num`);
+            const periodEl = document.getElementById(`sys-limit-${key}-period`);
+            if (numEl && periodEl) {
+                limits[key.replace(/-/g, '_')] = `${numEl.value}/${periodEl.value}`;
+            }
+        });
+
+        const maxRequestSize = document.getElementById('sys-max-request-size').value;
+
         // 1. Handle file uploads first if any
         let logoPath = document.getElementById('sys-logo-preview')?.src || '';
         if (logoPath.startsWith('data:')) {

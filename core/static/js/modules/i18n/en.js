@@ -38,6 +38,7 @@ export const en = {
     tab_logs: "Audit Logs",
     tab_statuses: "Statuses",
     tab_system: "System",
+    tab_stats: "Statistics",
     logout_btn: "Logout",
     logout_all_btn: "Logout from all devices",
 
@@ -74,9 +75,14 @@ export const en = {
     sys_limit_search: "Search",
     sys_limit_users: "User Creation",
     sys_limit_hint: "Select the maximum number of requests allowed per period.",
-    unit_minute: "per minute",
-    unit_hour: "per hour",
-    unit_day: "per day",
+    sys_visual_effects: "Visual Effects",
+    sys_bg_glow_enabled: "Ambient Background Glow",
+    sys_bg_glow_opacity_light: "Glow Opacity (Light Theme)",
+    sys_bg_glow_opacity_dark: "Glow Opacity (Dark Theme)",
+    period_second: "per sec",
+    period_minute: "per min",
+    period_hour: "per hour",
+    period_day: "per day",
 
     // Editor
     btn_edit: "Edit",
@@ -335,4 +341,16 @@ export const en = {
     status_col_name: "Name",
     status_col_color: "Color",
     status_col_actions: "Actions",
+
+    // Statistics
+    stats_site_overview: "Site Traffic Overview",
+    stats_total_visits: "Total Visits",
+    stats_total_views: "Total Views",
+    stats_top_documents: "Top Documents",
+    document_views: "Views",
+    stats_th_path: "File Path",
+    stats_th_views: "Views",
+    stats_th_last_view: "Last View",
+    stats_visits: "visits",
+    stats_views: "views",
 };

@@ -1,0 +1,32 @@
+<div id="tab-users" class="tab-content hidden">
+    <div class="settings-plate">
+        <div class="plate-header"><span data-t="users_add_title">Add New User</span></div>
+        <div class="plate-body" style="display: flex; gap: 10px; align-items: flex-start;">
+            <input type="text" id="admin-new-username" data-t="users_login_placeholder" placeholder="Login"
+                style="flex: 1;">
+            <input type="password" id="admin-new-password" data-t="users_pass_placeholder"
+                placeholder="Password" style="flex: 1;">
+            <div class="custom-dropdown" id="admin-new-role-dropdown" style="flex: 1;">
+                <div class="dropdown-trigger" id="admin-new-role-trigger">
+                    <span id="admin-new-role-text">Guest</span>
+                    <i data-lucide="chevron-down" class="select-arrow"></i>
+                </div>
+                <div class="dropdown-menu hidden" id="admin-new-role-menu">
+                    <div class="dropdown-item" data-value="guest">Guest</div>
+                    <div class="dropdown-item" data-value="reporter">Reporter</div>
+                    <div class="dropdown-item" data-value="developer">Developer</div>
+                    <div class="dropdown-item" data-value="maintainer">Maintainer</div>
+                    <div class="dropdown-item" data-value="owner">Owner</div>
+                </div>
+                <input type="hidden" id="admin-new-role" value="guest">
+            </div>
+
+            <button id="btn-admin-create-user" class="btn btn-primary" data-t="pages_btn_create">Create</button>
+        </div>
+    </div>
+    <div class="settings-plate" style="margin-top: 20px;">
+        <div class="plate-body" style="padding: 0;" id="users-table-container">
+            <!-- Populated by admin.js -->
+        </div>
+    </div>
+</div>

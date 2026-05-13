@@ -1,0 +1,39 @@
+<div id="tab-account" class="tab-content">
+    <div class="settings-list">
+        <div class="settings-plate">
+            <div class="plate-header">
+                <i data-lucide="shield-check"></i>
+                <span data-t="sec_2fa">Security (2FA)</span>
+                <div id="2fa-status-tag" class="tag tag-off">OFF</div>
+            </div>
+            <div class="plate-body" style="display: flex; justify-content: space-between; align-items: center;">
+                <span id="2fa-description" style="font-size: 12px; color: var(--text-muted);">2-Step
+                    Verification</span>
+                <button id="btn-toggle-2fa" class="btn btn-sm btn-outline">Setup</button>
+            </div>
+        </div>
+
+        <div class="settings-plate">
+            <div class="plate-header">
+                <i data-lucide="key"></i>
+                <span data-t="sec_password">Change Password</span>
+            </div>
+            <div class="plate-body" style="display: flex; flex-direction: column; gap: 12px;">
+                <label for="old-password" class="sr-only">Old Password</label>
+                <input type="password" id="old-password" name="old-password" autocomplete="current-password"
+                    data-t="old_password" placeholder="Old Password">
+                <label for="new-password" class="sr-only">New Password</label>
+                <input type="password" id="new-password" name="new-password" autocomplete="new-password"
+                    data-t="new_password" placeholder="New Password">
+                <button id="btn-change-password" class="btn btn-sm btn-primary" style="width: fit-content;"
+                    data-t="sec_password">Change Password</button>
+            </div>
+        </div>
+    </div>
+
+    <button id="btn-logout" class="btn btn-outline" style="width: 100%; margin-top: 20px;"
+        data-t="logout_btn">Logout</button>
+    <button id="btn-logout-all" class="btn btn-text btn-sm"
+        style="width: 100%; margin-top: 10px; text-align: center;" data-t="logout_all_btn">Logout from all
+        devices</button>
+</div>

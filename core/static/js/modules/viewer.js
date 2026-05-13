@@ -121,7 +121,7 @@ export async function loadFileContent(path, pushState = true, hash = null) {
             generateTOC();
             initTOCObserver();
             addCopyButtons();
-            updateBreadcrumbs(finalPath);
+            updateBreadcrumbs(finalPath, data.views);
             
             if (window.mermaid) {
                 const mermaidNodes = ui.contentViewer.querySelectorAll('.mermaid');

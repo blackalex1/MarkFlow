@@ -4,16 +4,17 @@ import re
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
 from pydantic import BaseModel, constr, validator, Field
 from core.config import APP_CONFIG, limiter, SECURITY_LIMITS, BASE_DIR
-from core.auth import get_owner_user
+from core.auth import get_owner_user, get_developer_user
 from core.db.audit import add_audit_log
 from core.db.statuses import list_statuses, add_status, update_status, delete_status, get_status_by_slug
 from core.db.settings import set_setting
 from core.services.image_service import sanitize_and_save_image, cleanup_old_assets
+from core.db.stats import get_site_stats, get_top_documents
 
 router = APIRouter()
 
 class StatusUpdate(BaseModel):
-    name: constr(min_length=1, max_length=30)
+    name: str = Field(..., min_length=1, max_length=30)
     color: str
     slug: str = None
 
@@ -39,7 +40,7 @@ class SecurityLimits(BaseModel):
         return v
 
 class SystemSettings(BaseModel):
-    app_name: constr(min_length=1, max_length=50) 
+    app_name: str = Field(..., min_length=1, max_length=50) 
     primary_color: str
     use_logo: bool
     logo_path: str
@@ -149,3 +150,11 @@ def remove_status(status_id: int, request: Request, user=Depends(get_owner_user)
     delete_status(status_id)
     add_audit_log(user["username"], "status_deleted", f"ID: {status_id}", ip_address=request.client.host)
     return {"message": "Deleted"}
+
+@router.get("/stats")
+def get_system_stats(days: int = 30, top: int = 10, user=Depends(get_developer_user)):
+    """Returns site statistics (developers and above)."""
+    return {
+        "daily": get_site_stats(days),
+        "top_docs": get_top_documents(limit=top)
+    }

@@ -60,3 +60,13 @@
 [data-theme="light"] .tab-headers {
     background: #f8fafc;
 }
+
+[data-theme="light"] .tab-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--text-main);
+}
+
+[data-theme="light"] .tab-btn.active {
+    color: #ffffff;
+    background: var(--primary-color);
+}

@@ -21,6 +21,7 @@ from core.auth import router as auth_router, get_current_user
 from core.routes.git import router as git_router
 from core.routes.files import router as files_router
 from core.routes.search import router as search_router
+from core.db.stats import log_visit
 from core.routes.system import router as system_router
 from core.config import APP_CONFIG, DOCS_DIR, BASE_DIR, limiter
 from core.middleware import add_security_headers
@@ -152,6 +153,8 @@ templates.context_processors.append(lambda request: {
 @app.get("/")
 def read_root(request: Request):
     user = get_current_user(request)
+    tracking_id = request.cookies.get("session") or request.client.host
+    log_visit(tracking_id)
     return templates.TemplateResponse(request, "index.html", {
         "user_role": user.get("role", "guest") if user else "guest",
         "is_authenticated": user is not None,
@@ -165,6 +168,8 @@ async def catch_all(request: Request, rest_of_path: str):
         raise HTTPException(status_code=404)
     
     user = get_current_user(request)
+    tracking_id = request.cookies.get("session") or request.client.host
+    log_visit(tracking_id)
     return templates.TemplateResponse(request, "index.html", {
         "user_role": user.get("role", "guest") if user else "guest",
         "is_authenticated": user is not None,

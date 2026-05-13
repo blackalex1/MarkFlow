@@ -1,0 +1,205 @@
+<div id="tab-system" class="tab-content hidden">
+    <div class="settings-list">
+        <!-- General Settings Plate -->
+        <div class="settings-plate">
+            <div class="plate-header">
+                <i data-lucide="settings"></i>
+                <span data-t="sys_general_settings">General Settings</span>
+            </div>
+            <div class="plate-body">
+                <div class="input-group-vertical">
+                    <label data-t="sys_accent_color">Accent Color</label>
+                    <div class="custom-color-picker" id="accent-color-picker" style="position: relative; z-index: 100;">
+                        <div class="color-trigger" id="sys-color-trigger">
+                            <div class="color-preview-circle" id="sys-color-preview-circle"
+                                style="--preview-bg: {{ config.primary_color or '#6366f1' }}; background-color: var(--preview-bg); pointer-events: none;">
+                            </div>
+                            <span class="color-trigger-text" id="sys-color-value" style="pointer-events: none;">{{ config.primary_color or '#6366f1' }}</span>
+                            <i data-lucide="chevron-down" style="width: 16px; height: 16px; opacity: 0.5; pointer-events: none;"></i>
+                        </div>
+
+                        <div class="color-dropdown" id="sys-color-dropdown" style="z-index: 1000;">
+                            <div class="color-grid">
+                                <div class="color-swatch" style="background-color: #6366f1;" data-color="#6366f1"></div>
+                                <div class="color-swatch" style="background-color: #3b82f6;" data-color="#3b82f6"></div>
+                                <div class="color-swatch" style="background-color: #0ea5e9;" data-color="#0ea5e9"></div>
+                                <div class="color-swatch" style="background-color: #10b981;" data-color="#10b981"></div>
+                                <div class="color-swatch" style="background-color: #22c55e;" data-color="#22c55e"></div>
+                                <div class="color-swatch" style="background-color: #f59e0b;" data-color="#f59e0b"></div>
+                                <div class="color-swatch" style="background-color: #f97316;" data-color="#f97316"></div>
+                                <div class="color-swatch" style="background-color: #f43f5e;" data-color="#f43f5e"></div>
+                                <div class="color-swatch" style="background-color: #ec4899;" data-color="#ec4899"></div>
+                                <div class="color-swatch" style="background-color: #8b5cf6;" data-color="#8b5cf6"></div>
+                                <div class="color-swatch" style="background-color: #a855f7;" data-color="#a855f7"></div>
+                                <div class="color-swatch" style="background-color: #64748b;" data-color="#64748b"></div>
+                                <div class="color-swatch rainbow-swatch" id="sys-spectrum-trigger" title="Spectrum Picker">
+                                    <i data-lucide="palette"></i>
+                                </div>
+                            </div>
+
+                            <div class="spectrum-container" id="sys-spectrum-container">
+                                <div class="canvas-wrapper">
+                                    <canvas class="spectrum-canvas" id="sys-spectrum-canvas" width="200" height="120"></canvas>
+                                    <div class="spectrum-cursor" id="sys-spectrum-cursor"></div>
+                                </div>
+                                <div class="hue-slider-container">
+                                    <div class="hue-slider-track"></div>
+                                    <input type="range" class="hue-slider" id="sys-hue-slider" min="0" max="360" value="0" />
+                                </div>
+                            </div>
+
+                            <div class="custom-hex-input">
+                                <label data-t="sys_custom_hex">Custom Hex</label>
+                                <div class="hex-field-wrapper">
+                                    <input type="text" id="sys-primary-color" value="{{ config.primary_color or '#6366f1' }}" maxlength="7" placeholder="#6366f1" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Branding Plate -->
+        <div class="settings-plate">
+            <div class="plate-header">
+                <i data-lucide="image"></i>
+                <span data-t="sys_branding">Branding & Assets</span>
+            </div>
+            <div class="plate-body">
+                <div class="input-group-vertical" style="margin-bottom: 25px;">
+                    <label data-t="sys_app_name">Name</label>
+                    <input type="text" id="sys-app-name" value="{{ config.app_name }}" placeholder="MarkFlow" />
+                </div>
+
+                <div class="asset-group" style="padding: 15px; border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 25px;">
+                    <div class="input-group-horizontal" style="margin-bottom: 15px;">
+                        <label for="sys-use-logo" style="font-weight: 600;" data-t="sys_use_logo">Use Logo</label>
+                        <label class="switch">
+                            <input type="checkbox" id="sys-use-logo" {% if config.use_logo %}checked{% endif %} {% if user_role != 'owner' %}disabled{% endif %} />
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <label data-t="sys_logo_path" style="display: block; margin-bottom: 10px; font-size: 12px; opacity: 0.8;">Logo Image</label>
+                    <div class="asset-preview-box" id="logo-preview-box" style="margin-bottom: 15px;">
+                        <img id="sys-logo-preview" src="{{ config.logo_path or '' }}?v={{ app_version }}" alt="Logo Preview" {% if not config.logo_path %}style="display: none;"{% endif %} />
+                        {% if not config.logo_path %}
+                        <div class="preview-placeholder" id="logo-placeholder">
+                            <i data-lucide="image"></i>
+                            <span data-t="sys_no_logo">No Logo</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="upload-group">
+                        <input type="hidden" id="sys-logo-path" value="{{ config.logo_path }}" data-current-path="{{ config.logo_path }}" />
+                        <input type="file" id="sys-logo-upload" class="hidden" accept=".png,.jpg,.jpeg" />
+                        <button type="button" id="btn-sys-logo-trigger" class="btn btn-sm btn-outline" style="width: 100%;">
+                            <i data-lucide="upload"></i>
+                            <span data-t="btn_upload">Upload Logo</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="asset-group" style="padding: 15px; border: 1px solid var(--border-color); border-radius: 12px; margin-bottom: 25px;">
+                    <label data-t="sys_favicon_path" style="display: block; margin-bottom: 10px; font-weight: 600;">Favicon</label>
+                    <div class="asset-preview-box" id="favicon-preview-box" style="margin-bottom: 15px;">
+                        <img id="sys-favicon-preview" src="{{ config.favicon_path or '' }}?v={{ app_version }}" alt="Favicon Preview" {% if not config.favicon_path %}style="display: none;"{% endif %} />
+                        {% if not config.favicon_path %}
+                        <div class="preview-placeholder" id="favicon-placeholder">
+                            <i data-lucide="image"></i>
+                            <span data-t="sys_no_favicon">No Favicon</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="upload-group">
+                        <input type="hidden" id="sys-favicon-path" value="{{ config.favicon_path }}" data-current-path="{{ config.favicon_path }}" />
+                        <input type="file" id="sys-favicon-upload" class="hidden" accept=".ico,.png" />
+                        <button type="button" id="btn-sys-favicon-trigger" class="btn btn-sm btn-outline" style="width: 100%;">
+                            <i data-lucide="upload"></i>
+                            <span data-t="btn_upload">Upload Favicon</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Appearance Plate -->
+        <div class="settings-plate">
+            <div class="plate-header">
+                <i data-lucide="sparkles"></i>
+                <span data-t="sys_visual_effects">Visual Effects</span>
+            </div>
+            <div class="plate-body">
+                <div class="input-group-horizontal" style="margin-bottom: 15px;">
+                    <label for="sys-bg-glow-enabled" style="font-weight: 600;" data-t="sys_bg_glow_enabled">Background Glow</label>
+                    <label class="switch">
+                        <input type="checkbox" id="sys-bg-glow-enabled" {% if config.bg_glow_enabled %}checked{% endif %} {% if user_role != 'owner' %}disabled{% endif %} />
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="input-group-vertical" style="margin-bottom: 15px;">
+                    <label data-t="sys_bg_glow_opacity_light">Light Theme Opacity</label>
+                    <input type="range" id="sys-bg-glow-opacity-light" min="0" max="1" step="0.05" value="{{ config.bg_glow_opacity_light }}" {% if user_role != 'owner' %}disabled{% endif %} />
+                </div>
+                <div class="input-group-vertical">
+                    <label data-t="sys_bg_glow_opacity_dark">Dark Theme Opacity</label>
+                    <input type="range" id="sys-bg-glow-opacity-dark" min="0" max="1" step="0.05" value="{{ config.bg_glow_opacity_dark }}" {% if user_role != 'owner' %}disabled{% endif %} />
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Limits Plate -->
+        <div class="settings-plate" style="margin-top: 25px;">
+            <div class="plate-header">
+                <i data-lucide="shield"></i>
+                <span data-t="sys_security_limits">Security & Rate Limits</span>
+            </div>
+            <div class="plate-body">
+                <p class="hint-text" style="margin-bottom: 20px;" data-t="sys_limit_hint">Select the maximum number of requests allowed per period.</p>
+                
+                <div class="limits-grid">
+                    {% for key, label_t in [
+                        ('login', 'sys_limit_login'),
+                        ('2fa-verify', 'sys_limit_2fa'),
+                        ('change-password', 'sys_limit_password'),
+                        ('file-ops', 'sys_limit_files'),
+                        ('search', 'sys_limit_search'),
+                        ('create-user', 'sys_limit_users')
+                    ] %}
+                    {% set limit_val = config.security_limits[key.replace('-', '_')] or '5/minute' %}
+                    {% set parts = limit_val.split('/') %}
+                    <div class="input-group-vertical">
+                        <label data-t="{{ label_t }}">{{ key.replace('-', ' ').title() }}</label>
+                        <div class="limit-input-group">
+                            <input type="number" id="sys-limit-{{ key }}-num" value="{{ parts[0] }}" min="1" />
+                            <select id="sys-limit-{{ key }}-period">
+                                <option value="second" {% if parts[1] == 'second' %}selected{% endif %} data-t="period_second">/sec</option>
+                                <option value="minute" {% if parts[1] == 'minute' %}selected{% endif %} data-t="period_minute">/min</option>
+                                <option value="hour" {% if parts[1] == 'hour' %}selected{% endif %} data-t="period_hour">/hour</option>
+                                <option value="day" {% if parts[1] == 'day' %}selected{% endif %} data-t="period_day">/day</option>
+                            </select>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <div class="input-group-vertical" style="margin-top: 20px;">
+                    <label data-t="sys_max_request_size">Max Request Size (MB)</label>
+                    <input type="number" id="sys-max-request-size" value="{{ config.max_request_size_mb }}" min="1" max="500" />
+                    <p style="font-size: 11px; color: var(--text-muted); margin-top: 5px;" data-t="sys_max_size_hint">
+                        Prevents Denial of Service (DoS) by rejecting oversized payloads. Default is 10MB.<br />
+                        Note: This does NOT limit background Git sync operations.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Footer -->
+        <div class="tab-footer" style="margin-top: 25px;">
+            <button id="btn-save-system-settings" class="btn btn-primary btn-lg" style="width: 100%;"
+                {% if user_role != 'owner' %}disabled title="Owner access required"{% endif %}
+                data-t="sys_save_btn">Save System Settings</button>
+        </div>
+    </div>
+</div>

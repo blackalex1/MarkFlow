@@ -38,6 +38,7 @@ export const ru = {
     tab_logs: "Логи аудита",
     tab_statuses: "Статусы",
     tab_system: "Система",
+    tab_stats: "Статистика",
     logout_btn: "Выйти из системы",
     logout_all_btn: "Выйти на всех устройствах",
 
@@ -73,6 +74,7 @@ export const ru = {
     sys_bg_glow_enabled: "Фоновое свечение",
     sys_bg_glow_opacity_light: "Светлая тема: свечение",
     sys_bg_glow_opacity_dark: "Темная тема: свечение",
+    sys_visual_effects: "Визуальные эффекты",
     sys_limit_login: "Вход в систему",
     sys_limit_2fa: "Проверка 2FA",
     sys_limit_password: "Смена пароля",
@@ -80,9 +82,10 @@ export const ru = {
     sys_limit_search: "Поиск",
     sys_limit_users: "Создание пользователей",
     sys_limit_hint: "Выберите максимальное количество запросов, разрешенных за указанный период.",
-    unit_minute: "мин.",
-    unit_hour: "час.",
-    unit_day: "дн.",
+    period_second: "в сек.",
+    period_minute: "в мин.",
+    period_hour: "в час",
+    period_day: "в день",
     
     // Editor
     btn_edit: "Редактировать",
@@ -346,4 +349,16 @@ export const ru = {
     status_col_name: "Название",
     status_col_color: "Цвет",
     status_col_actions: "Действия",
+
+    // Statistics
+    stats_site_overview: "Обзор посещаемости",
+    stats_total_visits: "Всего посещений",
+    stats_total_views: "Всего просмотров",
+    stats_top_documents: "Популярные документы",
+    document_views: "Просмотров",
+    stats_th_path: "Путь к файлу",
+    stats_th_views: "Просмотры",
+    stats_th_last_view: "Последний просмотр",
+    stats_visits: "визитов",
+    stats_views: "просмотров",
 };

@@ -19,6 +19,7 @@ from .db.repos import (
 from .db.audit import init_table as init_audit, add_audit_log, get_audit_logs
 from .db.fts import init_table as init_fts, update_fts_index, delete_fts_index, search_fts, reindex_all_docs, is_image_referenced, reindex_incremental
 from .db.statuses import init_table as init_statuses, list_statuses, add_status, update_status, delete_status, get_status_by_slug
+from .db.stats import init_table as init_stats, log_visit, log_view, get_site_stats, get_top_documents
 from .metadata import is_public, set_public, set_public_recursive, get_file_status, set_file_status, rename_metadata
 from .db.crypto import encrypt_value
 
@@ -35,6 +36,7 @@ def init_db():
     init_repos(cursor)
     init_statuses(cursor)
     init_fts(cursor)
+    init_stats(cursor)
     
     # 2. Seed default statuses
     cursor.execute("SELECT COUNT(*) FROM document_statuses")

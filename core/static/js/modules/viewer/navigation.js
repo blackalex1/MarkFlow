@@ -2,7 +2,7 @@ import { ui, state } from '../ui.js';
 import * as tree from '../tree.js';
 import { t } from '../i18n.js';
 
-export function updateBreadcrumbs(path) {
+export function updateBreadcrumbs(path, views = null) {
     if (!ui.breadcrumb) return;
     ui.breadcrumb.innerHTML = '';
     
@@ -25,7 +25,6 @@ export function updateBreadcrumbs(path) {
         return;
     }
 
-    console.log('[Breadcrumbs] Path:', path, 'Mapping:', state.repoMapping);
     const parts = path.split('/');
 
     let currentPath = '';
@@ -61,7 +60,6 @@ export function updateBreadcrumbs(path) {
         
         if (!isLast) {
             span.addEventListener('click', () => {
-                console.log('[Breadcrumbs] Clicking segment:', displayName, 'Target path:', thisPath);
                 window.dispatchEvent(new CustomEvent('load-file', { detail: { path: thisPath } }));
                 if (!part.endsWith('.md')) {
                     state.openFolders.add(thisPath);
@@ -71,6 +69,25 @@ export function updateBreadcrumbs(path) {
         }
         ui.breadcrumb.appendChild(span);
     });
+    
+    // Add views badge (only for developers and above)
+    const canSeeStats = state.currentUser && ['developer', 'maintainer', 'owner'].includes(state.currentUser.role);
+    if (views !== null && canSeeStats) {
+        const sep = document.createElement('span');
+        sep.className = 'breadcrumb-separator';
+        sep.textContent = '·';
+        ui.breadcrumb.appendChild(sep);
+
+        const badge = document.createElement('span');
+        badge.className = 'breadcrumb-views-badge';
+        badge.innerHTML = `<i data-lucide="eye" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;"></i>${views}`;
+        badge.title = t('document_views') || 'Views';
+        badge.style.opacity = '0.7';
+        badge.style.fontSize = '0.85em';
+        badge.style.display = 'inline-flex';
+        badge.style.alignItems = 'center';
+        ui.breadcrumb.appendChild(badge);
+    }
 
     if (window.lucide) lucide.createIcons({ container: ui.breadcrumb });
 }
