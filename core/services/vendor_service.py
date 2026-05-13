@@ -11,6 +11,7 @@ VENDOR_DIR = os.path.join(BASE_DIR, "static", "vendor")
 # We use SHA-384 hashes for consistency with SRI
 LIBRARIES = [
     ("https://unpkg.com/lucide@0.475.0/dist/umd/lucide.min.js", "js/lucide.min.js", "sha384-prOTt12iGU6/k2uoXJ3az4BWS2qoxykgxJb6pjfmRK7MYOMnMe7bWWBMPZqxwVks"),
+    ("https://unpkg.com/lucide@0.475.0/dist/umd/lucide.min.js.map", "js/lucide.min.js.map", None),
     ("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js", "js/highlight.min.js", "sha384-F/bZzf7p3Joyp5psL90p/p89AZJsndkSoGwRpXcZhleCWhd8SnRuoYo4d0yirjJp"),
     ("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css", "css/github-dark.min.css", "sha384-wH75j6z1lH97ZOpMOInqhgKzFkAInZPPSPlZpYKYTOqsaizPvhQZmAtLcPKXpLyH"),
     ("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css", "css/github.min.css", "sha384-eFTL69TLRZTkNfYZOLM+G04821K1qZao/4QLJbet1pP4tcF+fdXq/9CdqAbWRl/L"),
@@ -20,6 +21,7 @@ LIBRARIES = [
     ("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/r.min.js", "js/languages/r.min.js", None),
     ("https://cdn.jsdelivr.net/npm/marked@15.0.0/marked.min.js", "js/marked.min.js", "sha384-5S+6C4bM5PFDRwie5G8wVUoq/5EzdFEaE2bg7xLLhNiz4fjj7fsecAfOl8VzZ/co"),
     ("https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js", "js/purify.min.js", "sha384-rneZSW/1QE+3/U5/u+/7eRNi/tRc+SzS+yXy36fltr1tDN9EHaVo1Bwz2Z8o8DA4"),
+    ("https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js.map", "js/purify.min.js.map", None),
     ("https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js", "js/mermaid.min.js", "sha384-WmdflGW9aGfoBdHc4rRyWzYuAjEmDwMdGdiPNacbwfGKxBW/SO6guzuQ76qjnSlr"),
 
     ("https://unpkg.com/easymde@2.18.0/dist/easymde.min.js", "js/easymde.min.js", "sha384-KtB38COewxfrhJxoN2d+olxJAeT08LF8cVZ6DQ8Poqu89zIptqO6zAXoIxpGNWYE"),
