@@ -12,7 +12,6 @@ export async function editRepo(id) {
         const repos = await res.json();
         if (!Array.isArray(repos)) return;
         const repo = repos.find(r => r.id == id);
-        console.log('[DEBUG] Repo from API:', repo);
         
         if (repo) {
             ui.repoEditorForm.classList.remove('hidden');
