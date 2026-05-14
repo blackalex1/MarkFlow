@@ -1,4 +1,4 @@
-import { initMarked } from '../modules/markdown.js';
+import { initMarked, parseMarkdown } from '../modules/markdown.js';
 import { SlashMenu } from './slash-menu.js';
 import { state } from '../modules/ui.js';
 
@@ -274,7 +274,7 @@ export class MarkFlowEditor {
         if (!window.marked) return;
 
         // 1. Parse and Sanitize
-        let html = window.marked.parse(content);
+        let html = parseMarkdown(content);
         if (window.DOMPurify) {
             html = window.DOMPurify.sanitize(html, {
                 ADD_TAGS: ['video', 'source'],

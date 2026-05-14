@@ -22,6 +22,10 @@ export function resolveRelativePath(currentPath, href) {
     return currentDir.join('/');
 }
 
+import { getSlug, parseMarkdown } from './markdown/parser.js';
+
+export { parseMarkdown };
+
 let markedInitialized = false;
 export function initMarked() {
     if (markedInitialized) return;
@@ -30,12 +34,11 @@ export function initMarked() {
     renderer.heading = function (arg1, arg2) {
         let text = typeof arg1 === 'object' ? arg1.text : arg1;
         let level = typeof arg1 === 'object' ? arg1.depth : arg2;
-        const id = text.toLowerCase().replace(/[^\wа-яё]+/gi, '-').replace(/^-|-$/g, '');
+        const id = getSlug(text);
         return `<h${level} id="${id}">${text}</h${level}>`;
     };
 
     renderer.blockquote = function (arg1) {
-
         let quote = (typeof arg1 === 'object' ? arg1.text : arg1) || '';
         const match = quote.match(/\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/i);
         if (match && quote.trim().startsWith(`[!${match[1]}]`)) return renderCallout(match[1], quote);

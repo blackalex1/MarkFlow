@@ -1,4 +1,5 @@
 import { t } from '../i18n.js';
+import { parseMarkdown } from './parser.js';
 
 function escapeHtml(text) {
     const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
@@ -27,7 +28,7 @@ export const tabsExtension = {
         token.tabs.forEach((tab, index) => {
             const active = index === 0 ? 'active' : '', tabId = `${id}-${index}`;
             headers += `<button class="tab-btn ${active}" data-tab-id="${tabId}">${escapeHtml(tab.name)}</button>`;
-            contents += `<div id="${tabId}" class="tab-pane ${active}">${marked.parse(tab.content)}</div>`;
+            contents += `<div id="${tabId}" class="tab-pane ${active}">${parseMarkdown(tab.content)}</div>`;
         });
         return `<div class="tabs-container">${headers}</div>${contents}</div></div>`;
     }
@@ -56,7 +57,7 @@ export const dropdownExtension = {
                         <i data-lucide="chevron-down" class="dropdown-chevron"></i>
                     </div>
                     <div class="dropdown-content">
-                        ${marked.parse(token.content)}
+                        ${parseMarkdown(token.content)}
                     </div>
                 </div>`;
     }
@@ -123,6 +124,6 @@ export function renderCallout(type, content) {
     
     return `<div class="callout callout-${cfg.class}">
                 <div class="callout-header"><i data-lucide="${cfg.icon}"></i>${translatedHeader}</div>
-                <div class="callout-content">${marked.parse(cleanContent)}</div>
+                <div class="callout-content">${parseMarkdown(cleanContent)}</div>
             </div>`;
 }

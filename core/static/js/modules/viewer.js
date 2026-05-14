@@ -2,7 +2,7 @@ import { ui, state } from './ui.js';
 import { toast } from './toasts.js';
 import * as tree from './tree.js';
 import { t } from './i18n.js';
-import { initMarked, resolveRelativePath } from './markdown.js';
+import { initMarked, resolveRelativePath, parseMarkdown } from './markdown.js';
 import { generateTOC, updateBreadcrumbs, addCopyButtons, updateNavigation, wrapTables } from './viewer_ui.js';
 import { API } from './api.js';
 import { updateStatusDisplay } from './status.js';
@@ -43,7 +43,7 @@ export async function loadFileContent(path, pushState = true, hash = null) {
         const data = await res.json();
         if (data.is_folder) return loadFolderContent(path, false);
         
-        const cleanHTML = DOMPurify.sanitize(marked.parse(data.content), {
+        const cleanHTML = DOMPurify.sanitize(parseMarkdown(data.content), {
             ADD_TAGS: ['mark'],
             ADD_ATTR: ['target', 'data-target', 'data-tab-id', 'data-lucide', 'id', 'class', 'data-code', 'style', 'aria-hidden', 'data-math'],
             USE_PROFILES: { html: true, mathMl: true, svg: true },
