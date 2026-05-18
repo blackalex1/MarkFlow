@@ -8,7 +8,7 @@ import { showContextMenu } from './tree/menu.js';
 
 export async function loadFileTree() {
     // 1. Fetch File Tree (Available to guests)
-    const treeRes = await fetch(API.FILE_TREE);
+    const treeRes = await fetch(`${API.FILE_TREE}?hide_empty=true`);
     const treeData = await treeRes.json();
     state.flattenedSlugs = treeData.flattened_slugs || [];
     

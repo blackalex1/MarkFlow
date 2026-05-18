@@ -9,7 +9,7 @@ router = APIRouter()
 
 @router.get("/tree")
 @limiter.limit(SECURITY_LIMITS["file_ops"])
-def get_file_tree(request: Request):
+def get_file_tree(request: Request, hide_empty: bool = False):
     user = get_current_user(request)
     user_role = user.get("role", "guest") if user else "guest"
     can_see_private = ROLES.get(user_role, 0) >= ROLES.get("reporter", 0)
@@ -28,6 +28,17 @@ def get_file_tree(request: Request):
         for root, dirs, files in os.walk(path):
             for file in files:
                 if file.endswith('.md'):
+                    rel_path = os.path.relpath(os.path.join(root, file), DOCS_DIR).replace('\\', '/')
+                    if is_public(rel_path):
+                        return True
+        return False
+
+    def has_visible_markdown(path):
+        for root, dirs, files in os.walk(path):
+            for file in files:
+                if file.endswith('.md'):
+                    if can_see_private:
+                        return True
                     rel_path = os.path.relpath(os.path.join(root, file), DOCS_DIR).replace('\\', '/')
                     if is_public(rel_path):
                         return True
@@ -55,7 +66,12 @@ def get_file_tree(request: Request):
                     nodes.extend(build_tree(full_path))
                     continue
 
-                if not has_markdown(full_path): continue
+                if hide_empty:
+                    if not has_visible_markdown(full_path):
+                        continue
+                else:
+                    if not has_markdown(full_path):
+                        continue
                 children = build_tree(full_path)
                 
                 # Display project name instead of slug at the root level
