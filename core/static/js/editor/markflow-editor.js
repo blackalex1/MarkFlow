@@ -1,4 +1,4 @@
-import { initMarked, parseMarkdown } from '../modules/markdown.js';
+import { initMarked, parseMarkdown, resolveHtmlSources } from '../modules/markdown.js';
 import { SlashMenu } from './slash-menu.js';
 import { state } from '../modules/ui.js';
 
@@ -279,11 +279,14 @@ export class MarkFlowEditor {
             html = window.DOMPurify.sanitize(html, {
                 ADD_TAGS: ['video', 'source'],
                 ADD_ATTR: ['target', 'data-target', 'data-tab-id', 'data-lucide', 'id', 'class', 'src', 'controls'],
-                USE_PROFILES: { html: true, mathMl: true, svg: true }
+                USE_PROFILES: { html: true, mathMl: true, svg: true },
+                ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel|data|blob):|[^&#:\/?]*(?:[\/?#]|$))/i,
+                RETURN_TRUSTED_TYPE: true
             });
         }
         
         this.previewContent.innerHTML = html;
+        resolveHtmlSources(this.previewContent, this.currentPath || state.currentFilePath);
 
         // 2. Post-processing
         

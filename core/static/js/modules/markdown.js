@@ -58,7 +58,21 @@ export function initMarked() {
         let text = typeof arg1 === 'object' ? arg1.text : arg3;
 
         const resolved = resolveRelativePath(state.currentFilePath, href);
-        return `<a href="${resolved}" title="${title || ''}">${text}</a>`;
+        const prefix = resolved.startsWith('/') || resolved.startsWith('http') || resolved.startsWith('mailto:') || resolved.startsWith('tel:') ? '' : '/';
+        return `<a href="${prefix}${resolved}" title="${title || ''}">${text}</a>`;
+    };
+
+    renderer.image = function (arg1, arg2, arg3) {
+        let href = typeof arg1 === 'object' ? arg1.href : arg1;
+        let title = typeof arg1 === 'object' ? arg1.title : arg2;
+        let text = typeof arg1 === 'object' ? arg1.text : arg3;
+
+        const resolved = resolveRelativePath(state.currentFilePath, href);
+        let src = resolved;
+        if (resolved && !resolved.startsWith('http') && !resolved.startsWith('/') && !resolved.startsWith('data:') && !resolved.startsWith('blob:')) {
+            src = `/api/files/content?path=${encodeURIComponent(resolved)}`;
+        }
+        return `<img src="${src}" title="${title || ''}" alt="${text || ''}">`;
     };
 
     marked.use({
@@ -66,4 +80,16 @@ export function initMarked() {
         extensions: [blockMathExtension, inlineMathExtension, tabsExtension, dropdownExtension]
     });
     markedInitialized = true;
+}
+
+export function resolveHtmlSources(container, currentPath) {
+    if (!container || !currentPath) return;
+    const elements = container.querySelectorAll('img, video, source');
+    elements.forEach(el => {
+        const src = el.getAttribute('src');
+        if (src && !src.startsWith('http') && !src.startsWith('/') && !src.startsWith('data:') && !src.startsWith('blob:')) {
+            const resolved = resolveRelativePath(currentPath, src);
+            el.setAttribute('src', `/api/files/content?path=${encodeURIComponent(resolved)}`);
+        }
+    });
 }

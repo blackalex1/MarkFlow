@@ -10,8 +10,11 @@ export function initGlobalHandlers() {
         const link = e.target.closest('a');
         if (link && link.href) {
             const url = new URL(link.href);
-            const path = url.searchParams.get('p');
+            let path = url.searchParams.get('p');
             const isLocal = url.origin === window.location.origin;
+            if (!path && isLocal && url.pathname.endsWith('.md')) {
+                path = decodeURIComponent(url.pathname.substring(1));
+            }
             const isMd = path && path.endsWith('.md');
             
             if (isLocal && isMd) {

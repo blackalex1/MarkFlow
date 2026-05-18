@@ -2,7 +2,7 @@ import { ui, state } from './ui.js';
 import { toast } from './toasts.js';
 import * as tree from './tree.js';
 import { t } from './i18n.js';
-import { initMarked, resolveRelativePath, parseMarkdown } from './markdown.js';
+import { initMarked, resolveRelativePath, parseMarkdown, resolveHtmlSources } from './markdown.js';
 import { generateTOC, updateBreadcrumbs, addCopyButtons, updateNavigation, wrapTables } from './viewer_ui.js';
 import { API } from './api.js';
 import { updateStatusDisplay } from './status.js';
@@ -47,7 +47,8 @@ export async function loadFileContent(path, pushState = true, hash = null) {
             ADD_TAGS: ['mark'],
             ADD_ATTR: ['target', 'data-target', 'data-tab-id', 'data-lucide', 'id', 'class', 'data-code', 'style', 'aria-hidden', 'data-math'],
             USE_PROFILES: { html: true, mathMl: true, svg: true },
-            RETURN_TRUSTED_TYPE: true
+            RETURN_TRUSTED_TYPE: true,
+            ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel|data|blob):|[^&#:\/?]*(?:[\/?#]|$))/i
         });
 
         if (data.path) {
@@ -66,6 +67,7 @@ export async function loadFileContent(path, pushState = true, hash = null) {
         const timeout = setTimeout(() => {
             ui.viewModeContainer.classList.remove('hidden');
             ui.contentViewer.innerHTML = cleanHTML;
+            resolveHtmlSources(ui.contentViewer, finalPath);
             ui.contentViewer.scrollTop = 0;
             window.scrollTo(0, 0);
 

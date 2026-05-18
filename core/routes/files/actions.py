@@ -118,6 +118,42 @@ def delete_file(request: Request, path: str, user=Depends(get_maintainer_user)):
     
     add_audit_log(user["username"], "file_deleted", f"Path: {path}", ip_address=request.client.host)
     
+    # Collect potential orphaned attachments and files to remove from search index
+    orphan_resolutions = [] # list of (att_path, doc_dir)
+    deleted_paths = []
+    
+    if os.path.isdir(full_path):
+        attachment_regex = r'(?:!\[.*?\]\(|src=["\'])([^"\s\)]*?attachments/[^"\s\)]+)'
+        import re
+        for root, dirs, files in os.walk(full_path):
+            for file in files:
+                if file.endswith('.md'):
+                    md_full_path = os.path.join(root, file)
+                    rel_md_path = os.path.relpath(md_full_path, DOCS_DIR).replace('\\', '/')
+                    deleted_paths.append(rel_md_path)
+                    doc_dir = os.path.dirname(rel_md_path)
+                    try:
+                        with open(md_full_path, "r", encoding="utf-8") as f:
+                            content = f.read()
+                        matches = set(re.findall(attachment_regex, content))
+                        for match in matches:
+                            orphan_resolutions.append((match, doc_dir))
+                    except Exception:
+                        pass
+    elif os.path.isfile(full_path):
+        deleted_paths.append(path)
+        doc_dir = os.path.dirname(path)
+        try:
+            with open(full_path, "r", encoding="utf-8") as f:
+                content = f.read()
+            attachment_regex = r'(?:!\[.*?\]\(|src=["\'])([^"\s\)]*?attachments/[^"\s\)]+)'
+            import re
+            matches = set(re.findall(attachment_regex, content))
+            for match in matches:
+                orphan_resolutions.append((match, doc_dir))
+        except Exception:
+            pass
+
     def on_rm_error(func, path, exc_info):
         # path is the file that failed to be deleted
         import stat
@@ -129,8 +165,23 @@ def delete_file(request: Request, path: str, user=Depends(get_maintainer_user)):
 
     if os.path.isdir(full_path):
         shutil.rmtree(full_path, onerror=on_rm_error)
+        for p in deleted_paths:
+            delete_fts_index(p)
     else:
         os.remove(full_path)
         delete_fts_index(path)
+        
+    # Clean up orphaned attachments that were in the deleted files
+    if orphan_resolutions:
+        from core.routes.files.content import cleanup_orphaned_attachments
+        # Group attachments by doc_dir and run cleanup
+        grouped_orphans = {}
+        for att_path, doc_dir in orphan_resolutions:
+            if doc_dir not in grouped_orphans:
+                grouped_orphans[doc_dir] = []
+            grouped_orphans[doc_dir].append(att_path)
+            
+        for doc_dir, atts in grouped_orphans.items():
+            cleanup_orphaned_attachments(atts, doc_dir, user["username"])
         
     return {"message": "File deleted"}
