@@ -26,8 +26,12 @@ export function setLang(lang) {
     updatePage();
 }
 
-export function t(key) {
-    return translations[currentLang][key] || key;
+export function t(key, placeholders = {}) {
+    let text = translations[currentLang][key] || key;
+    for (const [k, v] of Object.entries(placeholders)) {
+        text = text.replace(`{${k}}`, v);
+    }
+    return text;
 }
 
 export function updatePage(root = document) {

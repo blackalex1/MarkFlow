@@ -25,10 +25,9 @@ export function showContextMenu(e, node) {
             ]
         });
         
-        // Flattened repos creation groups
-        const flattened = state.repos.filter(r => r.flatten_in_tree);
-        if (flattened.length > 0) {
-            flattened.forEach(repo => {
+        // Repos creation groups
+        if (state.repos && state.repos.length > 0) {
+            state.repos.forEach(repo => {
                 items.push({ 
                     icon: 'git-branch', 
                     label: repo.name, 

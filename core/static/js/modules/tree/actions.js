@@ -20,7 +20,7 @@ export async function handleMenuCommand(cmd, node, contextPath = '') {
             window.dispatchEvent(new CustomEvent('load-file', { detail: { path: fullPath + (fullPath.endsWith('.md') ? '' : '.md') } }));
         } else {
             const err = await res.json();
-            toast.error(err.detail || "Failed to create file");
+            toast.error(t(err.detail) || "Failed to create file");
         }
     } else if (cmd === 'new-folder') {
         const name = await window.promptAction(t('menu_new_folder'), t('pages_name_placeholder') || "Enter folder name:", '', t('pages_btn_create') || 'OK', t('btn_cancel'));
@@ -32,7 +32,7 @@ export async function handleMenuCommand(cmd, node, contextPath = '') {
             loadFileTree();
         } else {
             const err = await res.json();
-            toast.error(err.detail || "Failed to create folder");
+            toast.error(t(err.detail) || "Failed to create folder");
         }
     } else if (cmd === 'delete') {
         const typeStr = node.type === 'folder' ? (t('type_folder') || 'folder') : (t('type_file') || 'file');
@@ -55,9 +55,23 @@ export async function handleMenuCommand(cmd, node, contextPath = '') {
                 toast.error(t('toast_delete_failed') || "Failed to delete");
             }
         }
-    } else if (cmd === 'rename' || cmd === 'move') {
-        const newPath = await window.promptAction(t('menu_rename') || 'Rename', `Enter new path for ${node.name}:`, node.path, t('btn_save'), t('btn_cancel'));
-        if (!newPath || newPath === node.path) return;
+    } else if (cmd === 'rename') {
+        const newName = await window.promptAction(t('menu_rename') || 'Rename', t('prompt_rename_name', { name: node.name }), node.name, t('btn_save'), t('btn_cancel'));
+        if (!newName || newName === node.name) return;
+        
+        if (newName.includes('/') || newName.includes('\\')) {
+            toast.error(t('error_invalid_filename') || "Filename cannot contain slashes");
+            return;
+        }
+        
+        let cleanName = newName;
+        if (node.type === 'file' && !cleanName.endsWith('.md')) {
+            cleanName += '.md';
+        }
+        
+        const parts = node.path.split('/');
+        const parentPath = parts.slice(0, -1).join('/');
+        const newPath = parentPath ? `${parentPath}/${cleanName}` : cleanName;
         
         const res = await fetch(API.FILE_MOVE, {
             method: 'POST',
@@ -66,14 +80,55 @@ export async function handleMenuCommand(cmd, node, contextPath = '') {
         });
         
         if (res.ok) {
-            toast.success("Path updated");
+            const result = await res.json();
+            const actualNewPath = result.new_path || newPath;
+            toast.success(t('toast_path_updated') || "Path updated");
             loadFileTree();
             if (node.path === state.currentFilePath) {
-                window.dispatchEvent(new CustomEvent('load-file', { detail: { path: newPath } }));
+                window.dispatchEvent(new CustomEvent('load-file', { detail: { path: actualNewPath } }));
             }
         } else {
             const err = await res.json();
-            toast.error(err.detail || "Failed to move");
+            toast.error(t(err.detail) || "Failed to rename");
+        }
+    } else if (cmd === 'move') {
+        const parts = node.path.split('/');
+        const currentParent = parts.slice(0, -1).join('/');
+        
+        const destFolder = await window.promptAction(
+            t('menu_move') || 'Move',
+            t('prompt_select_destination') || "Select destination folder:",
+            currentParent,
+            t('btn_save') || 'Save',
+            t('btn_cancel') || 'Cancel',
+            false,
+            null,
+            true,
+            node.path
+        );
+        
+        if (destFolder === null) return;
+        
+        const newPath = destFolder === '' ? node.name : `${destFolder}/${node.name}`;
+        if (newPath === node.path) return;
+        
+        const res = await fetch(API.FILE_MOVE, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ old_path: node.path, new_path: newPath })
+        });
+        
+        if (res.ok) {
+            const result = await res.json();
+            const actualNewPath = result.new_path || newPath;
+            toast.success(t('toast_path_updated') || "Path updated");
+            loadFileTree();
+            if (node.path === state.currentFilePath) {
+                window.dispatchEvent(new CustomEvent('load-file', { detail: { path: actualNewPath } }));
+            }
+        } else {
+            const err = await res.json();
+            toast.error(t(err.detail) || "Failed to move");
         }
     } else if (cmd.startsWith('status-')) {
         const status = cmd.replace('status-', '');

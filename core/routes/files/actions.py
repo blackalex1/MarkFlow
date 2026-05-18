@@ -78,10 +78,15 @@ def create_folder(request: Request, path: str, user=Depends(get_developer_user))
 @limiter.limit(SECURITY_LIMITS["file_ops"])
 def move_file(request: Request, data: MoveRequest, user=Depends(get_developer_user)):
     old_full_path = get_safe_path(DOCS_DIR, data.old_path)
-    new_full_path = get_safe_path(DOCS_DIR, data.new_path)
     
     if not os.path.exists(old_full_path):
         raise HTTPException(status_code=404, detail="Source not found")
+        
+    if os.path.isfile(old_full_path):
+        if not data.new_path.endswith(".md"):
+            data.new_path += ".md"
+            
+    new_full_path = get_safe_path(DOCS_DIR, data.new_path)
     if os.path.exists(new_full_path):
         raise HTTPException(status_code=400, detail="Destination already exists")
         
@@ -96,7 +101,7 @@ def move_file(request: Request, data: MoveRequest, user=Depends(get_developer_us
             update_fts_index(data.new_path, os.path.basename(data.new_path).replace(".md", ""), content)
     
     add_audit_log(user["username"], "file_moved", f"From: {data.old_path}, To: {data.new_path}", ip_address=request.client.host)
-    return {"message": "File moved successfully"}
+    return {"message": "File moved successfully", "new_path": data.new_path}
 
 @router.post("/reindex")
 def manual_reindex(request: Request, user=Depends(get_maintainer_user)):

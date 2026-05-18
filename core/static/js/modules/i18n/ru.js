@@ -24,6 +24,7 @@ export const ru = {
     error_access_denied: "Доступ ограничен",
     error_not_found: "Страница не найдена",
     error_generic: "Произошла ошибка",
+    error_invalid_filename: "Имя не должно содержать косую черту (/ или \\)",
     error_access_denied_msg: "У вас недостаточно прав для просмотра этого контента. Пожалуйста, войдите в систему.",
     error_not_found_msg: "Запрашиваемый файл не найден. Возможно, он был перемещен или удален.",
     btn_retry: "Повторить",
@@ -187,6 +188,10 @@ export const ru = {
     menu_delete: "Удалить",
     menu_new_file: "Новый файл",
     menu_new_folder: "Новая папка",
+    prompt_rename_path: "Введите новый путь для {name}:",
+    prompt_rename_name: "Введите новое имя для {name}:",
+    prompt_select_destination: "Выберите целевую папку:",
+    prompt_search_placeholder: "Поиск папки...",
     
     // Visibility
     vis_label: "Видимость",
@@ -256,6 +261,7 @@ export const ru = {
     toast_no_file: "Файл не выбран",
     toast_uploading: "Загрузка вложений...",
     toast_save_success: "Файл успешно сохранен",
+    toast_path_updated: "Путь успешно обновлен",
     toast_save_failed: "Ошибка при сохранении файла",
     toast_load_failed: "Ошибка при загрузке контента",
     toast_edit_mode_error: "Не удалось войти в режим редактирования",
@@ -369,4 +375,10 @@ export const ru = {
     stats_top_50: "ТОП 50",
     stats_top_100: "ТОП 100",
     stats_limit_all: "ВСЕ",
+    
+    // Backend API errors
+    "Destination already exists": "Элемент с таким именем уже существует",
+    "Source not found": "Исходный файл не найден",
+    "File already exists": "Файл уже существует",
+    "Path already exists": "Путь уже существует",
 };

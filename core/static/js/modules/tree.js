@@ -40,6 +40,7 @@ function renderFileTree(tree) {
             const item = document.createElement('div');
             const nodePath = node.path || (parentPath ? `${parentPath}/${node.name}` : node.name);
             item.className = node.type === 'folder' ? 'folder-item' : 'file-item';
+            item.dataset.path = nodePath;
             item.style.paddingLeft = `${level * 15 + 10}px`;
             
             if (node.type === 'folder') {
@@ -155,4 +156,15 @@ export function getAllFiles() {
         });
     });
     return files;
+}
+
+export function getAllFolders() {
+    const folders = [{ path: '', name: t('root_folder') || 'Root' }];
+    document.querySelectorAll('.folder-item').forEach(el => {
+        folders.push({
+            path: el.dataset.path,
+            name: el.dataset.path
+        });
+    });
+    return folders;
 }

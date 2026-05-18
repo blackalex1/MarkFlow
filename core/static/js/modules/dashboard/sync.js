@@ -83,6 +83,7 @@ export function initSync() {
                     toast.success(i18n.t('toast_sync_success') || 'Synchronization successful!');
                     setSyncStatus(true);
                     loadRepositories();
+                    window.dispatchEvent(new CustomEvent('tree-update-required'));
                 } else {
                     const errorMsg = data.detail || i18n.t('error_generic');
                     toast.error(`${i18n.t('error_prefix')}: ${errorMsg}`);

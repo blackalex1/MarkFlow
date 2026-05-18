@@ -24,6 +24,7 @@ export const en = {
     error_access_denied: "Access Denied",
     error_not_found: "Page Not Found",
     error_generic: "An error occurred",
+    error_invalid_filename: "Name cannot contain slashes (/ or \\)",
     error_access_denied_msg: "You don't have enough permissions to view this content. Please sign in.",
     error_not_found_msg: "The requested file could not be found. It might have been moved or deleted.",
     btn_retry: "Retry",
@@ -177,6 +178,10 @@ export const en = {
     menu_delete: "Delete",
     menu_new_file: "New File",
     menu_new_folder: "New Folder",
+    prompt_rename_path: "Enter new path for {name}:",
+    prompt_rename_name: "Enter new name for {name}:",
+    prompt_select_destination: "Select destination folder:",
+    prompt_search_placeholder: "Search folder...",
 
     // Visibility
     vis_label: "Visibility",
@@ -250,6 +255,7 @@ export const en = {
     toast_no_file: "No file selected",
     toast_uploading: "Uploading attachments...",
     toast_save_success: "File saved successfully",
+    toast_path_updated: "Path updated successfully",
     toast_save_failed: "Failed to save file",
     toast_load_failed: "Failed to load content",
     toast_edit_mode_error: "Failed to enter edit mode",
@@ -362,4 +368,10 @@ export const en = {
     stats_top_50: "TOP 50",
     stats_top_100: "TOP 100",
     stats_limit_all: "ALL",
+    
+    // Backend API errors
+    "Destination already exists": "Destination already exists",
+    "Source not found": "Source not found",
+    "File already exists": "File already exists",
+    "Path already exists": "Path already exists",
 };

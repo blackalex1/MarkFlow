@@ -23,11 +23,13 @@ def get_file_tree(request: Request):
     flattened_slugs = [r['slug'] for r in all_repos if r.get('flatten_in_tree')]
         
     def has_markdown(path):
+        if can_see_private:
+            return True
         for root, dirs, files in os.walk(path):
             for file in files:
                 if file.endswith('.md'):
                     rel_path = os.path.relpath(os.path.join(root, file), DOCS_DIR).replace('\\', '/')
-                    if is_public(rel_path) or can_see_private:
+                    if is_public(rel_path):
                         return True
         return False
 
@@ -107,11 +109,13 @@ def get_folder_content(path: str, request: Request):
             raise HTTPException(status_code=400, detail="Not a folder")
         
     def has_markdown(p):
+        if can_see_private:
+            return True
         for root, dirs, files in os.walk(p):
             for file in files:
                 if file.endswith('.md'):
                     rp = os.path.relpath(os.path.join(root, file), DOCS_DIR).replace('\\', '/')
-                    if is_public(rp) or can_see_private:
+                    if is_public(rp):
                         return True
         return False
 
