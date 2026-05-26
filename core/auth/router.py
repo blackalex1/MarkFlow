@@ -35,7 +35,7 @@ class TOTPVerifyRequest(BaseModel):
 class UserCreate(BaseModel):
     username: str
     password: str
-    role: str = 'guest'
+    role: str = 'reporter'
 
 class RoleUpdate(BaseModel):
     role: str
@@ -193,7 +193,7 @@ def api_create_user(request: Request, data: UserCreate, user=Depends(get_maintai
         raise HTTPException(status_code=400, detail=err)
         
     # Validate role
-    allowed_roles = ['guest', 'reporter', 'developer', 'maintainer', 'owner']
+    allowed_roles = ['reporter', 'developer', 'maintainer', 'owner']
     if data.role not in allowed_roles:
         raise HTTPException(status_code=400, detail=f"Invalid role. Allowed: {', '.join(allowed_roles)}")
 
@@ -225,7 +225,7 @@ def api_delete_user(request: Request, username: str, user=Depends(get_maintainer
 @router.put("/users/{username}/role")
 def api_update_role(request: Request, username: str, data: RoleUpdate, user=Depends(get_maintainer_user)):
     # Validate role
-    allowed_roles = ['guest', 'reporter', 'developer', 'maintainer', 'owner']
+    allowed_roles = ['reporter', 'developer', 'maintainer', 'owner']
     if data.role not in allowed_roles:
         raise HTTPException(status_code=400, detail=f"Invalid role. Allowed: {', '.join(allowed_roles)}")
         

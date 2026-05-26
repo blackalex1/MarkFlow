@@ -14,8 +14,8 @@
             <div class="tab-item" data-tab="users" data-t="tab_users">Users</div>
             <div class="tab-item" data-tab="git" data-t="tab_git">Git</div>
             <div class="tab-item" data-tab="logs" data-t="tab_logs">Audit Logs</div>
-            {% if user_role == 'owner' %}
             <div class="tab-item" data-tab="statuses" data-t="tab_statuses">Statuses</div>
+            {% if user_role == 'owner' %}
             <div class="tab-item" data-tab="system" data-t="tab_system">System</div>
             {% endif %}
             {% endif %}
@@ -28,9 +28,9 @@
             {% include 'components/dashboard/users.html' %}
             {% include 'components/dashboard/git.html' %}
             {% include 'components/dashboard/logs.html' %}
+            {% include 'components/dashboard/statuses.html' %}
             
             {% if user_role == 'owner' %}
-                {% include 'components/dashboard/statuses.html' %}
                 {% include 'components/dashboard/system.html' %}
             {% endif %}
         {% endif %}

@@ -4,7 +4,7 @@ import re
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
 from pydantic import BaseModel, constr, validator, Field
 from core.config import APP_CONFIG, limiter, SECURITY_LIMITS, BASE_DIR
-from core.auth import get_owner_user, get_developer_user
+from core.auth import get_owner_user, get_developer_user, get_maintainer_user
 from core.db.audit import add_audit_log
 from core.db.statuses import list_statuses, add_status, update_status, delete_status, get_status_by_slug
 from core.db.settings import set_setting
@@ -129,7 +129,7 @@ def get_statuses():
     return list_statuses()
 
 @router.post("/statuses")
-def create_status(request: Request, data: StatusUpdate, user=Depends(get_owner_user)):
+def create_status(request: Request, data: StatusUpdate, user=Depends(get_maintainer_user)):
     if not data.slug:
         data.slug = re.sub(r'[^a-z0-9]', '_', data.name.lower())
     if get_status_by_slug(data.slug):
@@ -140,13 +140,13 @@ def create_status(request: Request, data: StatusUpdate, user=Depends(get_owner_u
     raise HTTPException(status_code=500, detail="Failed")
 
 @router.put("/statuses/{status_id}")
-def edit_status(status_id: int, request: Request, data: StatusUpdate, user=Depends(get_owner_user)):
+def edit_status(status_id: int, request: Request, data: StatusUpdate, user=Depends(get_maintainer_user)):
     update_status(status_id, data.name, data.color)
     add_audit_log(user["username"], "status_updated", f"ID: {status_id}", ip_address=request.client.host)
     return {"message": "Updated"}
 
 @router.delete("/statuses/{status_id}")
-def remove_status(status_id: int, request: Request, user=Depends(get_owner_user)):
+def remove_status(status_id: int, request: Request, user=Depends(get_maintainer_user)):
     delete_status(status_id)
     add_audit_log(user["username"], "status_deleted", f"ID: {status_id}", ip_address=request.client.host)
     return {"message": "Deleted"}

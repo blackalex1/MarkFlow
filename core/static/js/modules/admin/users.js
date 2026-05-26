@@ -30,7 +30,7 @@ export async function loadUsers() {
         const res = await fetch('/api/auth/users');
         const users = await res.json();
         
-        const roles = ['guest', 'reporter', 'developer', 'maintainer', 'owner'];
+        const roles = ['reporter', 'developer', 'maintainer', 'owner'];
         
         container.innerHTML = `
             <table class="admin-table">

@@ -11,14 +11,17 @@ def init_table(cursor):
             password_hash TEXT NOT NULL,
             is_admin BOOLEAN NOT NULL DEFAULT 0,
             totp_secret TEXT DEFAULT NULL,
-            role TEXT DEFAULT "guest"
+            role TEXT DEFAULT "reporter"
         )
     ''')
     # Migrations
     try: cursor.execute('ALTER TABLE users ADD COLUMN totp_secret TEXT DEFAULT NULL')
     except sqlite3.OperationalError: pass
-    try: cursor.execute('ALTER TABLE users ADD COLUMN role TEXT DEFAULT "guest"')
+    try: cursor.execute('ALTER TABLE users ADD COLUMN role TEXT DEFAULT "reporter"')
     except sqlite3.OperationalError: pass
+    
+    # Migrate any existing guest accounts to reporter
+    cursor.execute('UPDATE users SET role = "reporter" WHERE role = "guest"')
 
 def get_user_by_username(username: str):
     with db_session() as conn:
@@ -44,7 +47,7 @@ def list_users():
         rows = cursor.fetchall()
         return [dict(row) for row in rows]
 
-def create_user(username: str, password_plain: str, role: str = 'guest'):
+def create_user(username: str, password_plain: str, role: str = 'reporter'):
     with db_session() as conn:
         cursor = conn.cursor()
         hashed_password = pwd_context.hash(password_plain)
