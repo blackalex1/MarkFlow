@@ -22,9 +22,9 @@ export function renderFolderGrid(data) {
             <div class="folder-grid">
                 ${data.items.map(item => {
                     const icon = item.type === 'folder' ? 'folder' : (item.public ? 'file-text' : 'lock');
-                    const isStaff = state.currentUser && ['developer', 'maintainer', 'owner'].includes(state.currentUser.role);
+                    const canSeeStatus = state.currentUser && ['reporter', 'developer', 'maintainer', 'owner'].includes(state.currentUser.role);
                     let statusDot = '';
-                    if (isStaff && item.type === 'file') {
+                    if (canSeeStatus && item.type === 'file') {
                         const status = item.status || 'published';
                         const color = getStatusColor(status);
                         const title = getStatusName(status);

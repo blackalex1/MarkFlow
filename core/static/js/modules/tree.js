@@ -87,8 +87,9 @@ function renderFileTree(tree) {
                 
                 // Dot shows Status
                 const isStaff = state.currentUser && ['developer', 'maintainer', 'owner'].includes(state.currentUser.role);
+                const canSeeStatus = state.currentUser && ['reporter', 'developer', 'maintainer', 'owner'].includes(state.currentUser.role);
                 let statusDot = '';
-                if (isStaff) {
+                if (canSeeStatus) {
                     const status = node.status || 'published';
                     const color = getStatusColor(status);
                     const statusTitle = getStatusName(status);

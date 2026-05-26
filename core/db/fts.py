@@ -162,6 +162,19 @@ def is_image_referenced(image_ref_part: str) -> bool:
     cursor.execute('SELECT 1 FROM fts_docs WHERE content LIKE ? LIMIT 1', (f'%{search_str}%',))
     exists = cursor.fetchone() is not None
     conn.close()
+    
+    if not exists:
+        try:
+            from core.config import BASE_DIR
+            home_path = os.path.join(os.path.dirname(BASE_DIR), "config", "home.md")
+            if os.path.exists(home_path):
+                with open(home_path, 'r', encoding='utf-8', errors='replace') as f:
+                    home_content = f.read()
+                if search_str in home_content:
+                    exists = True
+        except Exception:
+            pass
+            
     return exists
 
 def reindex_incremental(docs_dir: str, changed_rel_paths: list, deleted_rel_paths: list):

@@ -19,7 +19,10 @@ class FileStatus(BaseModel):
 
 @router.put("/visibility")
 @limiter.limit(SECURITY_LIMITS["file_ops"])
-def set_file_visibility(request: Request, path: str, data: FileVisibility, user=Depends(get_maintainer_user)):
+def set_file_visibility(request: Request, path: str, data: FileVisibility, user=Depends(get_developer_user)):
+    if path == "system/home.md":
+        raise HTTPException(status_code=400, detail="Cannot change home page visibility")
+        
     full_path = get_safe_path(DOCS_DIR, path)
     if os.path.isdir(full_path):
         set_public_recursive(path, data.public)
@@ -33,7 +36,10 @@ def set_file_visibility(request: Request, path: str, data: FileVisibility, user=
 
 @router.put("/status")
 @limiter.limit(SECURITY_LIMITS["file_ops"])
-def set_status(request: Request, path: str, data: FileStatus, user=Depends(get_maintainer_user)):
+def set_status(request: Request, path: str, data: FileStatus, user=Depends(get_developer_user)):
+    if path == "system/home.md":
+        raise HTTPException(status_code=400, detail="Cannot change home page status")
+        
     from core.database import set_file_status
     get_safe_path(DOCS_DIR, path)
     set_file_status(path, data.status)
@@ -111,7 +117,10 @@ def manual_reindex(request: Request, user=Depends(get_maintainer_user)):
 
 @router.delete("/delete")
 @limiter.limit(SECURITY_LIMITS["file_ops"])
-def delete_file(request: Request, path: str, user=Depends(get_maintainer_user)):
+def delete_file(request: Request, path: str, user=Depends(get_developer_user)):
+    if path == "system/home.md":
+        raise HTTPException(status_code=403, detail="Cannot delete system home page")
+        
     full_path = get_safe_path(DOCS_DIR, path)
     if not os.path.exists(full_path):
         raise HTTPException(status_code=404, detail="File not found")

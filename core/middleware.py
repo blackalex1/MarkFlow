@@ -73,6 +73,7 @@ async def add_security_headers(request: Request, call_next):
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net; "
         "font-src 'self' data: https://fonts.gstatic.com https://cdn.jsdelivr.net; "
         "img-src 'self' data: blob: https:; " 
+        "media-src 'self' blob: data: https:; " 
         "connect-src 'self' ws: wss: blob:; " 
         "frame-src 'self' blob: data:; " 
         "frame-ancestors 'none'; "

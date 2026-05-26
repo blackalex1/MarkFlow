@@ -5,7 +5,7 @@ from io import BytesIO
 from typing import Optional
 from fastapi import APIRouter, Depends, HTTPException, Response, Request
 from pydantic import BaseModel
-from .dependencies import get_current_user, get_admin_user, get_owner_user
+from .dependencies import get_current_user, get_admin_user, get_maintainer_user, get_owner_user
 from .utils import create_session_cookie, validate_password_complexity
 from core.config import limiter, SECURITY_LIMITS
 
@@ -175,12 +175,18 @@ def get_me(request: Request):
     }
 
 @router.get("/users")
-def api_list_users(user=Depends(get_owner_user)):
+def api_list_users(user=Depends(get_maintainer_user)):
     return list_users()
 
 @router.post("/users")
 @limiter.limit(SECURITY_LIMITS["create_user"])
-def api_create_user(request: Request, data: UserCreate, user=Depends(get_owner_user)):
+def api_create_user(request: Request, data: UserCreate, user=Depends(get_maintainer_user)):
+    # Prevent privilege escalation: cannot assign a role higher than your own
+    from .dependencies import ROLES
+    current_role = user.get("role", "guest")
+    if ROLES.get(data.role, 0) > ROLES.get(current_role, 0):
+        raise HTTPException(status_code=403, detail="Cannot assign a role higher than your own")
+
     # Validate password complexity
     err = validate_password_complexity(data.password)
     if err:
@@ -199,27 +205,49 @@ def api_create_user(request: Request, data: UserCreate, user=Depends(get_owner_u
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.delete("/users/{username}")
-def api_delete_user(request: Request, username: str, user=Depends(get_owner_user)):
+def api_delete_user(request: Request, username: str, user=Depends(get_maintainer_user)):
     if username == user["username"]:
         raise HTTPException(status_code=400, detail="Cannot delete yourself")
+        
+    # Prevent privilege escalation: cannot delete a user with a higher role than your own
+    target_user = get_user_by_username(username)
+    if target_user:
+        from .dependencies import ROLES
+        current_role = user.get("role", "guest")
+        target_role = target_user.get("role", "guest")
+        if ROLES.get(target_role, 0) > ROLES.get(current_role, 0):
+            raise HTTPException(status_code=403, detail="Cannot delete a user with a higher role than your own")
+
     delete_user(username)
     add_audit_log(user["username"], "user_deleted", f"User: {username}", ip_address=request.client.host)
     return {"message": "User deleted"}
 
 @router.put("/users/{username}/role")
-def api_update_role(request: Request, username: str, data: RoleUpdate, user=Depends(get_owner_user)):
+def api_update_role(request: Request, username: str, data: RoleUpdate, user=Depends(get_maintainer_user)):
     # Validate role
     allowed_roles = ['guest', 'reporter', 'developer', 'maintainer', 'owner']
     if data.role not in allowed_roles:
         raise HTTPException(status_code=400, detail=f"Invalid role. Allowed: {', '.join(allowed_roles)}")
         
+    # Prevent privilege escalation: cannot assign a role higher than your own
+    from .dependencies import ROLES
+    current_role = user.get("role", "guest")
+    if ROLES.get(data.role, 0) > ROLES.get(current_role, 0):
+        raise HTTPException(status_code=403, detail="Cannot assign a role higher than your own")
+
     old_user = get_user_by_username(username)
     old_role = old_user.get('role', 'guest') if old_user else 'unknown'
+    
+    # Prevent privilege escalation: cannot demote a user with a higher role than your own
+    if old_user:
+        target_role = old_user.get("role", "guest")
+        if ROLES.get(target_role, 0) > ROLES.get(current_role, 0):
+            raise HTTPException(status_code=403, detail="Cannot change role of a user with a higher role than your own")
     
     update_user_role(username, data.role)
     add_audit_log(user["username"], "user_role_updated", f"User: {username}, Old Role: {old_role}, New Role: {data.role}", ip_address=request.client.host)
     return {"message": "Role updated"}
 
 @router.get("/audit-logs")
-def api_get_logs(user=Depends(get_owner_user)):
+def api_get_logs(user=Depends(get_maintainer_user)):
     return get_audit_logs()

@@ -157,10 +157,24 @@ export async function loadFileContent(path, pushState = true, hash = null) {
             }
             
             if (ui.topBar) {
-                if (state.currentUser && state.currentUser.role !== 'guest' && state.currentUser.role !== 'reporter') {
+                if (state.currentUser && state.currentUser.role !== 'guest') {
                     ui.topBar.classList.remove('hidden');
                     updateStatusDisplay(data.status);
                     if (ui.visibilityCheckbox) ui.visibilityCheckbox.checked = data.public;
+                    
+                    const visToggle = ui.topBar.querySelector('.visibility-toggle');
+                    const statusDropdown = document.getElementById('status-dropdown');
+                    const btnDelete = document.getElementById('btn-delete');
+                    
+                    if (finalPath === "system/home.md") {
+                        if (visToggle) visToggle.classList.add('hidden');
+                        if (statusDropdown) statusDropdown.classList.add('hidden');
+                        if (btnDelete) btnDelete.classList.add('hidden');
+                    } else {
+                        if (visToggle) visToggle.classList.remove('hidden');
+                        if (statusDropdown) statusDropdown.classList.remove('hidden');
+                        if (btnDelete) btnDelete.classList.remove('hidden');
+                    }
                 } else ui.topBar.classList.add('hidden');
             }
             tree.updateTreeHighlighting(finalPath);

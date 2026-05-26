@@ -2,19 +2,40 @@
     <div id="breadcrumb" class="breadcrumb"></div>
     <div class="actions">
         <div class="header-actions">
+            {% if user_role in ['reporter', 'developer', 'maintainer', 'owner'] %}
+            
+            {# Visibility Toggle #}
             {% if user_role in ['developer', 'maintainer', 'owner'] %}
             <label class="visibility-toggle" title="Public Visibility">
                 <input type="checkbox" id="visibility-checkbox">
                 <span class="slider"></span>
                 <i data-lucide="eye" class="icon-xs"></i>
             </label>
+            {% else %}
+            <label class="visibility-toggle disabled" title="Public Visibility" style="pointer-events: none; opacity: 0.8;">
+                <input type="checkbox" id="visibility-checkbox" disabled>
+                <span class="slider"></span>
+                <i data-lucide="eye" class="icon-xs"></i>
+            </label>
+            {% endif %}
+
+            {# Status Dropdown #}
             <div class="custom-dropdown" id="status-dropdown">
+                {% if user_role in ['developer', 'maintainer', 'owner'] %}
                 <div class="dropdown-trigger">
                     <span id="current-status-text" data-t="status_draft">Draft</span>
                     <i data-lucide="chevron-down" class="select-arrow"></i>
                 </div>
                 <div class="dropdown-menu hidden" id="status-dropdown-menu"></div>
+                {% else %}
+                <div class="dropdown-trigger disabled">
+                    <span id="current-status-text" data-t="status_draft">Draft</span>
+                </div>
+                {% endif %}
             </div>
+
+            {# Action Buttons #}
+            {% if user_role in ['developer', 'maintainer', 'owner'] %}
             <button id="btn-edit" class="btn-icon" data-t-title="btn_edit">
                 <i data-lucide="edit-3" class="icon-sm"></i>
             </button>
@@ -23,6 +44,8 @@
             <button id="btn-delete" class="btn-icon btn-danger-hover" data-t-title="btn_delete">
                 <i data-lucide="trash-2" class="icon-sm"></i>
             </button>
+            {% endif %}
+
             {% endif %}
         </div>
     </div>

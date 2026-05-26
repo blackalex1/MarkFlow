@@ -21,21 +21,23 @@ export function initAuthListeners() {
             import('./admin.js').then(m => m.initAdmin());
             i18n.updatePage();
             if (window.lucide) lucide.createIcons();
-            try {
-                const gitRes = await fetch(API.GIT_CONFIG), gitData = await gitRes.json();
-                ui.gitRemoteUrl.value = gitData.url || '';
-                if (ui.gitBranchSelect) {
-                    ui.gitBranchSelect.innerHTML = '';
-                    const option = document.createElement('option');
-                    const branch = gitData.branch || 'master';
-                    option.value = branch;
-                    option.textContent = branch;
-                    ui.gitBranchSelect.appendChild(option);
-                }
-                updateCredsStatusUI(gitData.is_valid);
-                const sshRes = await fetch(API.SSH_STATUS), sshData = await sshRes.json();
-                if (sshData.has_keys) { ui.sshPublicKey.placeholder = '********'; ui.sshPrivateKey.placeholder = '********'; }
-            } catch (err) {}
+            if (state.currentUser && ['maintainer', 'owner'].includes(state.currentUser.role)) {
+                try {
+                    const gitRes = await fetch(API.GIT_CONFIG), gitData = await gitRes.json();
+                    ui.gitRemoteUrl.value = gitData.url || '';
+                    if (ui.gitBranchSelect) {
+                        ui.gitBranchSelect.innerHTML = '';
+                        const option = document.createElement('option');
+                        const branch = gitData.branch || 'master';
+                        option.value = branch;
+                        option.textContent = branch;
+                        ui.gitBranchSelect.appendChild(option);
+                    }
+                    updateCredsStatusUI(gitData.is_valid);
+                    const sshRes = await fetch(API.SSH_STATUS), sshData = await sshRes.json();
+                    if (sshData.has_keys) { ui.sshPublicKey.placeholder = '********'; ui.sshPrivateKey.placeholder = '********'; }
+                } catch (err) {}
+            }
         };
         import('./dashboard.js').then(m => m.initDashboardListeners());
     }
@@ -66,14 +68,25 @@ export async function setup2FA() {
     if (res.ok) {
         const data = await res.json();
         state.setupTotpSecret = data.secret;
-        ui.totpQrContainer.innerHTML = data.qr_svg;
-        ui.totpSetupModal.classList.remove('hidden');
+        const totpQrContainer = document.getElementById('totp-qr-container');
+        if (totpQrContainer) totpQrContainer.innerHTML = data.qr_svg;
+        const totpSetupModal = document.getElementById('totp-setup-modal');
+        if (totpSetupModal) totpSetupModal.classList.remove('hidden');
     }
 }
 
 export async function verify2FA() {
-    const res = await fetch(API.VERIFY_2FA_SETUP, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ totp_code: ui.setupTotpCode.value, secret: state.setupTotpSecret }) });
-    if (res.ok) { toast.success("OK"); ui.totpSetupModal.classList.add('hidden'); state.currentUser.two_factor_enabled = true; update2FAStatusUI(); }
+    const setupTotpCode = document.getElementById('setup-totp-code');
+    const totp_code = setupTotpCode ? setupTotpCode.value : '';
+    const res = await fetch(API.VERIFY_2FA_SETUP, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ totp_code, secret: state.setupTotpSecret }) });
+    if (res.ok) { 
+        toast.success("OK"); 
+        const totpSetupModal = document.getElementById('totp-setup-modal');
+        if (totpSetupModal) totpSetupModal.classList.add('hidden'); 
+        if (state.currentUser) state.currentUser.two_factor_enabled = true; 
+        const { update2FAStatusUI } = await import('./dashboard.js');
+        update2FAStatusUI(); 
+    }
     else toast.error("Error");
 }
 

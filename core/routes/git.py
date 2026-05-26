@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from typing import Optional, List
 from git import GitCommandError
 
-from core.auth import get_maintainer_user, get_owner_user
+from core.auth import get_developer_user, get_maintainer_user, get_owner_user
 from core.db.base import get_db
 from core.db.settings import get_setting
 from core.db.repos import (
@@ -61,7 +61,7 @@ def validate_slug(slug: str):
         raise HTTPException(status_code=400, detail="Invalid folder name")
 
 @router.get("/repos", response_model=List[RepoOutput])
-def api_list_repos(user=Depends(get_maintainer_user)):
+def api_list_repos(user=Depends(get_developer_user)):
     return list_repositories()
 
 @router.post("/repos")

@@ -1,6 +1,7 @@
 import { ui, state } from '../ui.js';
 import { t } from '../i18n.js';
 import { escapeHTML } from '../security.js';
+import { toast } from '../toasts.js';
 
 // Setup global listener once
 if (!window._roleDropdownInitialized) {
@@ -121,9 +122,7 @@ export async function loadUsers() {
                         });
                         if (!res.ok) throw new Error('Failed to update role');
                         
-                        import('../toasts.js').then(m => {
-                            m.toast.success(t('toast_role_updated') || 'Role updated successfully');
-                        });
+                        toast.success(t('toast_role_updated') || 'Role updated successfully');
                     } catch (err) {
                         console.error(err);
                         loadUsers(); // Revert on error
@@ -139,7 +138,7 @@ export async function loadUsers() {
                 if (!confirm(`${t('confirm_delete_user')} ${username}?`)) return;
                 const res = await fetch(`/api/auth/users/${username}`, { method: 'DELETE' });
                 if (res.ok) {
-                    import('../toasts.js').then(m => m.toast.success(t('toast_user_deleted') || 'User deleted'));
+                    toast.success(t('toast_user_deleted') || 'User deleted');
                     loadUsers();
                 }
             });
@@ -153,7 +152,7 @@ export async function createUser() {
     const u = ui.adminNewUsername.value.trim();
     const p = ui.adminNewPassword.value.trim();
     const r = ui.adminNewRole.value;
-    if (!u || !p) return alert(t('error_fill_all') || 'Please fill all fields');
+    if (!u || !p) return toast.warning(t('error_fill_all') || 'Please fill all fields');
     
     try {
         const res = await fetch('/api/auth/users', {
@@ -164,11 +163,11 @@ export async function createUser() {
         if (res.ok) {
             ui.adminNewUsername.value = '';
             ui.adminNewPassword.value = '';
-            import('../toasts.js').then(m => m.toast.success(t('toast_user_created') || 'User created'));
+            toast.success(t('toast_user_created') || 'User created');
             loadUsers();
         } else {
             const data = await res.json();
-            alert((t('error_generic') || 'Error') + ': ' + data.detail);
+            toast.error((t('error_generic') || 'Error') + ': ' + data.detail);
         }
     } catch (err) { console.error(err); }
 }
