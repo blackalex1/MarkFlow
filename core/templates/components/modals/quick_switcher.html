@@ -1,7 +1,13 @@
 <div id="quick-switcher-modal" class="modal hidden">
     <div class="quick-switcher-container">
         <div class="quick-switcher-header">
-            <input type="text" id="qs-input" placeholder="Перейти к..." autocomplete="off">
+            <form id="qs-form" autocomplete="off" style="margin: 0; padding: 0; display: flex; flex: 1; align-items: center; gap: 12px; width: 100%;">
+                <!-- Fake fields to absorb browser credential autofill -->
+                <input type="text" name="fake_username_qs" style="position: absolute; top: -9999px; left: -9999px; width: 1px; height: 1px; opacity: 0; pointer-events: none;" tabindex="-1" aria-hidden="true" autocomplete="username">
+                <input type="password" name="fake_password_qs" style="position: absolute; top: -9999px; left: -9999px; width: 1px; height: 1px; opacity: 0; pointer-events: none;" tabindex="-1" aria-hidden="true" autocomplete="current-password">
+
+                <input type="text" id="qs-input" placeholder="Перейти к..." autocomplete="off" style="width: 100%;">
+            </form>
             <i data-lucide="search" class="icon-sm"></i>
             <div class="qs-badge">ESC</div>
         </div>

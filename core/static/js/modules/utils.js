@@ -45,6 +45,15 @@ export function initGlobalHandlers() {
         const { path, hash } = e.detail;
         viewer.loadFileContent(path, true, hash);
     });
+
+    // Prevent default form submission to satisfy CSP and avoid page reloads
+    document.addEventListener('submit', (e) => {
+        const formId = e.target.id;
+        const formClass = e.target.className;
+        if (formId === 'prompt-form' || formId === 'qs-form' || (typeof formClass === 'string' && formClass.includes('sidebar-search'))) {
+            e.preventDefault();
+        }
+    });
 }
 
 export function toggleSidebar(force) {
