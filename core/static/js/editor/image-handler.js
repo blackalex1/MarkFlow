@@ -121,6 +121,14 @@ export const initDropHandler = (editor) => {
         e.stopPropagation();
         wrapper.classList.remove('drag-over');
 
+        // Move cursor to drop coordinates
+        if (editor.codemirror && typeof editor.codemirror.coordsChar === 'function') {
+            const coords = editor.codemirror.coordsChar({ left: e.clientX, top: e.clientY });
+            if (coords) {
+                editor.codemirror.setCursor(coords);
+            }
+        }
+
         const files = e.dataTransfer.files;
         if (files.length > 0) {
             for (const file of files) {

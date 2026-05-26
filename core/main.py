@@ -97,7 +97,23 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.middleware("http")(add_security_headers)
 
 # Host Header Injection Protection
+import socket
+
+def get_local_ip():
+    try:
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.connect(("8.8.8.8", 80))
+        ip = s.getsockname()[0]
+        s.close()
+        return ip
+    except Exception:
+        return None
+
+local_ip = get_local_ip()
 allowed_hosts = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
+if local_ip and local_ip not in allowed_hosts:
+    allowed_hosts.append(local_ip)
+
 if "*" in allowed_hosts:
     print("WARNING: ALLOWED_HOSTS is set to '*', disabling Host header protection.")
 app.add_middleware(TrustedHostMiddleware, allowed_hosts=allowed_hosts)
