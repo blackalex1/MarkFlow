@@ -11,13 +11,13 @@
         {% endif %}
     </div>
 
-    <div class="sidebar-search">
+    <form class="sidebar-search" autocomplete="off" onsubmit="return false;">
         <div class="search-input-wrapper">
-            <input type="search" id="search-input" name="search" autocomplete="off" data-t="search_placeholder" placeholder="Поиск в документах...">
+            <input type="search" id="search-input" autocomplete="off" data-t="search_placeholder" placeholder="Поиск в документах..." readonly onfocus="this.removeAttribute('readonly');" onblur="this.setAttribute('readonly', 'readonly');">
             <i data-lucide="search" class="icon-xs"></i>
         </div>
         <div id="search-results" class="search-results hidden"></div>
-    </div>
+    </form>
 
     <nav class="file-tree" id="file-tree">
         <!-- File tree dynamically inserted here -->
