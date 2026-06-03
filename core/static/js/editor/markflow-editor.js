@@ -294,10 +294,14 @@ export class MarkFlowEditor {
         if (window.lucide) window.lucide.createIcons();
         
         // Math (KaTeX)
-        if (window.renderMathInElement) {
-            window.renderMathInElement(this.previewContent, {
-                delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}],
-                throwOnError: false
+        if (window.katex) {
+            this.previewContent.querySelectorAll('.math-tex-inline, .math-tex-block').forEach(el => {
+                try {
+                    window.katex.render(el.dataset.math, el, {
+                        displayMode: el.classList.contains('math-tex-block'),
+                        throwOnError: false
+                    });
+                } catch (e) { console.error('KaTeX error:', e); }
             });
         }
 
