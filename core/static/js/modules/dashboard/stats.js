@@ -88,6 +88,9 @@ function renderChart(daily) {
 
         chart.appendChild(col);
     });
+
+    // Scroll to the end to show the most recent days
+    chart.scrollLeft = chart.scrollWidth;
 }
 
 function renderTopDocs(docs) {

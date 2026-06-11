@@ -2,7 +2,7 @@ import os
 import json
 import re
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
-from pydantic import BaseModel, constr, validator, Field
+from pydantic import BaseModel, constr, field_validator, Field
 from core.config import APP_CONFIG, limiter, SECURITY_LIMITS, BASE_DIR
 from core.auth import get_owner_user, get_developer_user, get_maintainer_user
 from core.db.audit import add_audit_log
@@ -18,7 +18,8 @@ class StatusUpdate(BaseModel):
     color: str
     slug: str = None
 
-    @validator('color')
+    @field_validator('color')
+    @classmethod
     def validate_color(cls, v):
         if not re.match(r'^#(?:[0-9a-fA-F]{3}){1,2}$', v):
             raise ValueError('Invalid Hex color format')
@@ -32,7 +33,8 @@ class SecurityLimits(BaseModel):
     file_ops: str
     search: str
 
-    @validator('*')
+    @field_validator('*')
+    @classmethod
     def validate_rate_limit(cls, v):
         if not re.match(r'^\d+/(second|minute|hour|day|month|year)$', v):
             if not re.match(r'^\d+/(s|m|h|d)$', v):
@@ -51,13 +53,15 @@ class SystemSettings(BaseModel):
     max_request_size_mb: int = Field(default=10, ge=1, le=500)
     security_limits: SecurityLimits
 
-    @validator('primary_color')
+    @field_validator('primary_color')
+    @classmethod
     def validate_color(cls, v):
         if not re.match(r'^#(?:[0-9a-fA-F]{3}){1,2}$', v):
             raise ValueError('Invalid Hex color format')
         return v
 
-    @validator('app_name')
+    @field_validator('app_name')
+    @classmethod
     def sanitize_app_name(cls, v):
         return re.sub(r'<[^>]*?>', '', v).strip()
 

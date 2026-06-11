@@ -53,8 +53,11 @@ class RepoOutput(BaseModel):
     flatten_in_tree: bool
 
 def validate_git_url(url: str):
-    if not (url.startswith('http://') or url.startswith('https://') or url.startswith('git@')):
-        raise HTTPException(status_code=400, detail="Invalid Git URL")
+    from core.services.git_service import validate_git_url as service_validate
+    try:
+        service_validate(url)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 def validate_slug(slug: str):
     if not re.match(r"^[a-z0-9_\-]+$", slug):

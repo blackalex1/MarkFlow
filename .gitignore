@@ -12,6 +12,8 @@
 !assets/**
 !requirements.txt
 !.env_example
+!tests/
+!tests/**
 
 # 3. Allow Source Code & Structure
 !core/
