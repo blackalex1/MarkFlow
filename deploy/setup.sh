@@ -47,11 +47,9 @@ echo " - Email:      ${CERTBOT_EMAIL:-None}"
 echo "----------------------------------------------------------"
 echo ""
 
-# 5. Prepare Nginx configuration
+# 5. Prepare initial Nginx configuration (HTTP mode to guarantee clean start)
 echo "### Preparing Nginx configuration..."
-cp ./nginx.conf.template ./nginx.conf
-sed -i "s/{{DOMAIN_NAME}}/$DOMAIN_NAME/g" ./nginx.conf
-sed -i "s/{{HTTPS_PORT}}/$HTTPS_PORT/g" ./nginx.conf
+cp ./nginx-http.conf.template ./nginx.conf
 
 # 6. Create Host Directories (to avoid root ownership by Docker)
 echo "### Preparing host directories..."

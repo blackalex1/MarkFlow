@@ -27,11 +27,19 @@ if [ -f "../.env" ]; then
         export "$key"="$clean_value"
     done < "../.env"
     
-    if [ -f "./nginx.conf.template" ]; then
-        echo "### Regenerating Nginx config from template..."
+    # Detect whether SSL certificates exist for the configured domain
+    SSL_CERT="../certbot/conf/live/${DOMAIN_NAME}/fullchain.pem"
+    SSL_KEY="../certbot/conf/live/${DOMAIN_NAME}/privkey.pem"
+    SSL_PARAMS="../certbot/conf/options-ssl-nginx.conf"
+
+    if [ -f "$SSL_CERT" ] && [ -f "$SSL_KEY" ] && [ -f "$SSL_PARAMS" ] && [ -f "./nginx.conf.template" ]; then
+        echo "### SSL certificates found. Regenerating Nginx config from HTTPS template..."
         cp ./nginx.conf.template ./nginx.conf
         sed -i "s/{{DOMAIN_NAME}}/${DOMAIN_NAME}/g" ./nginx.conf
         sed -i "s/{{HTTPS_PORT}}/${HTTPS_PORT:-443}/g" ./nginx.conf
+    elif [ -f "./nginx-http.conf.template" ]; then
+        echo "### SSL not configured. Regenerating Nginx config from HTTP template..."
+        cp ./nginx-http.conf.template ./nginx.conf
     fi
 fi
 

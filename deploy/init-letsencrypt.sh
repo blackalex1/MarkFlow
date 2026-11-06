@@ -77,10 +77,25 @@ sed -i "s/{{HTTPS_PORT}}/$HTTPS_PORT/g" ./nginx.conf
 # Ensure everyone can read/write to challenge folder so Nginx can see it
 chmod -R 777 "$data_path/www"
 
-if [ ! -e "$data_path/conf/options-ssl-nginx.conf" ] || [ ! -e "$data_path/conf/ssl-dhparams.pem" ]; then
-  echo "### Downloading recommended TLS parameters..."
-  curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf > "$data_path/conf/options-ssl-nginx.conf"
-  curl -s https://raw.githubusercontent.com/certbot/certbot/master/certbot/certbot/ssl-dhparams.pem > "$data_path/conf/ssl-dhparams.pem"
+if [ ! -e "$data_path/conf/options-ssl-nginx.conf" ]; then
+  echo "### Setting up recommended TLS parameters..."
+  cat << 'EOF' > "$data_path/conf/options-ssl-nginx.conf"
+ssl_session_cache shared:le_nginx_SSL:10m;
+ssl_session_timeout 1440m;
+ssl_session_tickets off;
+ssl_protocols TLSv1.2 TLSv1.3;
+ssl_prefer_server_ciphers off;
+ssl_ciphers "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384";
+EOF
+fi
+
+if [ ! -e "$data_path/conf/ssl-dhparams.pem" ]; then
+  echo "### Generating local 2048-bit Diffie-Hellman parameters (this may take a moment)..."
+  if command -v openssl &>/dev/null; then
+    openssl dhparam -out "$data_path/conf/ssl-dhparams.pem" 2048
+  else
+    $DOCKER_COMPOSE --env-file ../.env run --rm --entrypoint "openssl dhparam -out /etc/letsencrypt/ssl-dhparams.pem 2048" certbot
+  fi
 fi
 
 echo "### Creating dummy certificate to bootstrap Nginx..."

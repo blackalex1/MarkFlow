@@ -225,18 +225,26 @@ done < ".env"
 
 log_info "Привязано доменное имя: ${BOLD}${DOMAIN_NAME:-localhost}${RESET} (Порты: HTTP=${HTTP_PORT:-80}, HTTPS=${HTTPS_PORT:-443})"
 
-# Regenerate nginx.conf from template
-if [ -f "deploy/nginx.conf.template" ]; then
-    log_info "Регенерация deploy/nginx.conf из шаблона..."
+# Ensure required runtime volumes/folders exist on host and allow non-root container access
+mkdir -p certbot/conf/live certbot/www config markdown_docs
+chown -R 1001:1001 config markdown_docs 2>/dev/null || chmod -R ugo+rwX config markdown_docs 2>/dev/null || true
+
+# Check if SSL certificates and TLS parameters exist for DOMAIN_NAME
+SSL_CERT="certbot/conf/live/${DOMAIN_NAME}/fullchain.pem"
+SSL_KEY="certbot/conf/live/${DOMAIN_NAME}/privkey.pem"
+SSL_PARAMS="certbot/conf/options-ssl-nginx.conf"
+
+if [ -f "$SSL_CERT" ] && [ -f "$SSL_KEY" ] && [ -f "$SSL_PARAMS" ] && [ -f "deploy/nginx.conf.template" ]; then
+    log_info "Обнаружены SSL-сертификаты для '${DOMAIN_NAME}'. Настройка Nginx в режиме HTTPS..."
     cp deploy/nginx.conf.template deploy/nginx.conf
     sed -i "s/{{DOMAIN_NAME}}/${DOMAIN_NAME}/g" deploy/nginx.conf
     sed -i "s/{{HTTPS_PORT}}/${HTTPS_PORT:-443}/g" deploy/nginx.conf
-    log_success "Конфигурация Nginx синхронизирована."
+    log_success "Конфигурация Nginx (HTTPS) синхронизирована."
+elif [ -f "deploy/nginx-http.conf.template" ]; then
+    log_info "SSL-сертификаты не обнаружены (режим IP/локальной сети). Настройка Nginx в режиме HTTP (порт ${HTTP_PORT:-80})..."
+    cp deploy/nginx-http.conf.template deploy/nginx.conf
+    log_success "Конфигурация Nginx (HTTP) синхронизирована."
 fi
-
-# Ensure required runtime volumes/folders exist on host and allow non-root container access
-mkdir -p certbot/conf certbot/www config markdown_docs
-chown -R 1001:1001 config markdown_docs 2>/dev/null || chmod -R ugo+rwX config markdown_docs 2>/dev/null || true
 
 
 # Step 4: Docker Containers Build & Restart
