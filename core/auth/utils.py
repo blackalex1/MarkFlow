@@ -1,5 +1,6 @@
 import re
-from fastapi import Response
+from typing import Optional
+from fastapi import Request, Response
 from itsdangerous import URLSafeTimedSerializer
 from core.db.settings import get_setting
 from core.db.sessions import create_session
@@ -19,16 +20,26 @@ def validate_password_complexity(password: str):
         return "Пароль должен содержать хотя бы одну заглавную букву"
     return None
 
-def create_session_cookie(response: Response, username: str):
+def is_request_secure(request: Optional[Request] = None) -> bool:
+    if not request:
+        return False
+    proto = request.headers.get("x-forwarded-proto", "")
+    if proto:
+        return proto.lower() == "https"
+    return request.url.scheme == "https"
+
+def create_session_cookie(response: Response, username: str, request: Optional[Request] = None):
     session_id = create_session(username)
     serializer = get_serializer("SESSION_SECRET")
     token = serializer.dumps(session_id)
+    
+    secure_cookie = is_request_secure(request)
     
     response.set_cookie(
         key="session",
         value=token,
         httponly=True,
-        secure=True, 
+        secure=secure_cookie, 
         max_age=86400 * 7, 
-        samesite="strict"
+        samesite="lax"
     )

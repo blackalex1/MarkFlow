@@ -61,7 +61,7 @@ def login(request: Request, login_data: LoginRequest, response: Response):
     from core.services.session_service import clean_old_user_sessions
     clean_old_user_sessions(user["username"], keep_latest=5)
     
-    create_session_cookie(response, user["username"])
+    create_session_cookie(response, user["username"], request=request)
     add_audit_log(user["username"], "login_success", "", ip_address=request.client.host)
     return {"message": "Logged in successfully", "username": user["username"]}
 

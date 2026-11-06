@@ -55,14 +55,18 @@ async def add_security_headers(request: Request, call_next):
 
     response = await call_next(request)
     
+    proto = request.headers.get("x-forwarded-proto", "")
+    is_https = (proto.lower() == "https") or (request.url.scheme == "https")
+    
     # Ensure CSRF token is set in cookies
     if not request.cookies.get("csrf_token"):
-        response.set_cookie(key="csrf_token", value=csrf_token, httponly=True, samesite="lax")
+        response.set_cookie(key="csrf_token", value=csrf_token, httponly=True, samesite="lax", secure=is_https)
     
     # Modern Security Headers
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
-    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    if is_https:
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
     response.headers["Cross-Origin-Resource-Policy"] = "same-origin"

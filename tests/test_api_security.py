@@ -234,3 +234,40 @@ def test_vendor_purify_version():
     url, rel_path, expected_hash = purify_entry
     assert "3.2." in url, f"Expected DOMPurify 3.2.x, got URL: {url}"
     assert expected_hash is not None and expected_hash.startswith("sha384-")
+
+
+def test_cookie_secure_flag_adaptive():
+    """Verify that create_session_cookie sets secure=False over HTTP and secure=True over HTTPS"""
+    from fastapi import Response
+    from starlette.requests import Request
+    from core.auth.utils import create_session_cookie
+    
+    # 1. Plain HTTP request
+    scope_http = {
+        "type": "http",
+        "method": "POST",
+        "path": "/api/auth/login",
+        "headers": [(b"host", b"192.168.1.59")],
+        "scheme": "http"
+    }
+    req_http = Request(scope_http)
+    res_http = Response()
+    create_session_cookie(res_http, "testuser", request=req_http)
+    cookie_header_http = res_http.headers.get("set-cookie", "")
+    assert "session=" in cookie_header_http
+    assert "secure" not in cookie_header_http.lower()
+    
+    # 2. HTTPS request (or behind HTTPS proxy with x-forwarded-proto)
+    scope_https = {
+        "type": "http",
+        "method": "POST",
+        "path": "/api/auth/login",
+        "headers": [(b"host", b"example.com"), (b"x-forwarded-proto", b"https")],
+        "scheme": "http"
+    }
+    req_https = Request(scope_https)
+    res_https = Response()
+    create_session_cookie(res_https, "testuser", request=req_https)
+    cookie_header_https = res_https.headers.get("set-cookie", "")
+    assert "session=" in cookie_header_https
+    assert "secure" in cookie_header_https.lower()
