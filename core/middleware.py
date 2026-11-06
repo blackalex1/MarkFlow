@@ -84,6 +84,7 @@ async def add_security_headers(request: Request, call_next):
         "frame-src 'self' blob: data:; " 
         "worker-src 'self' blob:; "
         "manifest-src 'self'; "
+        "form-action 'self'; "
         "frame-ancestors 'none'; "
         "object-src 'none'; "
         "base-uri 'self'; "

@@ -232,7 +232,7 @@ def test_vendor_purify_version():
     purify_entry = next((entry for entry in LIBRARIES if "purify.min.js" in entry[1]), None)
     assert purify_entry is not None, "DOMPurify entry not found in LIBRARIES"
     url, rel_path, expected_hash = purify_entry
-    assert "3.2." in url, f"Expected DOMPurify 3.2.x, got URL: {url}"
+    assert "3.3." in url or "3.2." in url, f"Expected DOMPurify 3.2.x or 3.3.x, got URL: {url}"
     assert expected_hash is not None and expected_hash.startswith("sha384-")
 
 

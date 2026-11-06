@@ -33,6 +33,9 @@ RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-reco
     && rm -rf /var/lib/apt/lists/* \
     && find / -perm /6000 -type f -exec chmod a-s {} + 2>/dev/null || true
 
+# Upgrade system python tools to resolve Trivy CVEs in base image
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+
 # Create non-root user
 RUN groupadd -g 1001 appgroup && \
     useradd -u 1001 -g appgroup -s /bin/sh -m appuser
