@@ -72,6 +72,9 @@ def init_db():
         salt = "markflow_static_salt" if cursor.fetchone() else secrets.token_urlsafe(16)
         cursor.execute('INSERT INTO settings (key, value) VALUES ("ENCRYPTION_SALT", ?)', (salt,))
 
+    # Commit tables and secrets so that encrypt_value() can read ENCRYPTION_SECRET
+    conn.commit()
+
     # 6. Global SSH key
     cursor.execute("SELECT value FROM settings WHERE key = 'git_ssh_private_key'")
     if not cursor.fetchone():

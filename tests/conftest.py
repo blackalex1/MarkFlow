@@ -1,3 +1,10 @@
+import inspect
+import asyncio
+
+# Modernize asyncio.iscoroutinefunction to inspect.iscoroutinefunction for Python 3.12+ compatibility
+if getattr(asyncio, "iscoroutinefunction", None) is not inspect.iscoroutinefunction:
+    asyncio.iscoroutinefunction = inspect.iscoroutinefunction
+
 import pytest
 import os
 import sqlite3

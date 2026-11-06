@@ -13,7 +13,7 @@ def init_table(cursor):
 
 def create_session(username: str, days: int = 7) -> str:
     session_id = secrets.token_urlsafe(32)
-    expires_at = datetime.now() + timedelta(days=days)
+    expires_at = (datetime.now() + timedelta(days=days)).isoformat()
     with db_session() as conn:
         cursor = conn.cursor()
         cursor.execute('INSERT INTO sessions (id, username, expires_at) VALUES (?, ?, ?)', (session_id, username, expires_at))
