@@ -65,6 +65,15 @@ pre:hover .copy-btn {
     overflow-x: auto;
 }
 
+.mermaid svg {
+    max-width: 100%;
+    height: auto;
+}
+
+.mermaid .label foreignObject {
+    overflow: visible;
+}
+
 [data-theme="light"] .mermaid {
     background: #f8fafc;
     border: 1px solid var(--border-color);

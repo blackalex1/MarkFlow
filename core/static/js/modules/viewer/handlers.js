@@ -38,7 +38,7 @@ export function initMarkdownComponentHandlers() {
                                 });
                                 mermaid.run({
                                     nodes: nodes,
-                                    suppressErrors: false
+                                    suppressErrors: true
                                 });
                             } catch (e) {
                                 console.error('Mermaid tab render error:', e);
@@ -95,7 +95,7 @@ export function initMarkdownComponentHandlers() {
                                 });
                                 mermaid.run({
                                     nodes: nodes,
-                                    suppressErrors: false
+                                    suppressErrors: true
                                 });
                             } catch (e) {
                                 console.error('Mermaid dropdown render error:', e);

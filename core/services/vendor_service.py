@@ -61,7 +61,24 @@ def check_and_download_vendor_libs():
     for url, rel_path, expected_hash in LIBRARIES:
         target_path = os.path.join(VENDOR_DIR, rel_path)
         
+        needs_download = False
         if not os.path.exists(target_path):
+            needs_download = True
+        elif expected_hash:
+            # Verify if existing file on disk matches expected hash (auto-update outdated libraries)
+            try:
+                algo, hash_val = expected_hash.split("-")
+                with open(target_path, "rb") as f:
+                    disk_content = f.read()
+                digest = hashlib.new(algo, disk_content).digest()
+                actual_hash = base64.b64encode(digest).decode()
+                if actual_hash != hash_val:
+                    print(f"Vendor library {rel_path} on disk is outdated (hash mismatch). Updating to latest version...")
+                    needs_download = True
+            except Exception:
+                needs_download = True
+
+        if needs_download:
             print(f"Downloading {rel_path}...")
             try:
                 os.makedirs(os.path.dirname(target_path), exist_ok=True)

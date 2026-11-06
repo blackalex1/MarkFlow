@@ -16,18 +16,24 @@ if (window.DOMPurify && DOMPurify.setConfig) {
     });
 }
 
-if (window.mermaid) {
+export function initMermaid(theme = null) {
+    if (!window.mermaid) return;
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    const currentTheme = theme || (isLight ? 'default' : 'dark');
     mermaid.initialize({ 
         startOnLoad: false, 
-        theme: 'dark',
+        theme: currentTheme,
         securityLevel: 'antiscript',
+        htmlLabels: false,
+        flowchart: { useMaxWidth: false, htmlLabels: false },
         fontFamily: 'Inter, system-ui, sans-serif',
-        flowchart: { useMaxWidth: false, htmlLabels: true },
         themeVariables: {
             fontSize: '14px'
         }
     });
 }
+
+initMermaid();
 
 let currentLoadTimeout = null;
 
@@ -50,7 +56,7 @@ export async function loadFileContent(path, pushState = true, hash = null) {
         if (data.is_folder) return loadFolderContent(path, false);
         
         const cleanHTML = DOMPurify.sanitize(parseMarkdown(data.content), {
-            ADD_TAGS: ['mark'],
+            ADD_TAGS: ['mark', 'foreignobject', 'foreignObject'],
             ADD_ATTR: ['target', 'data-target', 'data-tab-id', 'data-lucide', 'id', 'class', 'data-code', 'style', 'aria-hidden', 'data-math'],
             USE_PROFILES: { html: true, mathMl: true, svg: true },
             HTML_INTEGRATION_POINTS: { foreignobject: true },

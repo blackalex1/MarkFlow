@@ -26,6 +26,22 @@ function setTheme(theme) {
             : '/static/vendor/css/github-dark.min.css';
     }
 
+    if (window.mermaid) {
+        try {
+            mermaid.initialize({
+                startOnLoad: false,
+                theme: theme === 'light' ? 'default' : 'dark',
+                securityLevel: 'antiscript',
+                htmlLabels: false,
+                flowchart: { useMaxWidth: false, htmlLabels: false },
+                fontFamily: 'Inter, system-ui, sans-serif',
+                themeVariables: {
+                    fontSize: '14px'
+                }
+            });
+        } catch (e) {}
+    }
+
     if (!themeToggle) return;
     
     const icon = themeToggle.querySelector('i');
