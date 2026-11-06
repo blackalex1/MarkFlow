@@ -48,7 +48,13 @@ import './modules/confirm.js';
 import './modules/prompt.js';
 import { loadStatuses, initVisibilityToggle } from './modules/status.js';
 
-// --- Trusted Types Policy ---
+// --- DOMPurify Global Defaults & Trusted Types Policy ---
+if (window.DOMPurify && DOMPurify.setConfig) {
+    DOMPurify.setConfig({
+        HTML_INTEGRATION_POINTS: { foreignobject: true }
+    });
+}
+
 if (window.trustedTypes && window.trustedTypes.createPolicy) {
     // We only create the 'default' policy if it doesn't exist.
     // DOMPurify 3.0+ will automatically create its own 'dompurify' policy.
@@ -59,7 +65,8 @@ if (window.trustedTypes && window.trustedTypes.createPolicy) {
                     RETURN_TRUSTED_TYPE: true,
                     ADD_TAGS: ['use', 'foreignObject', 'table', 'thead', 'tbody', 'tr', 'td', 'th'], // Required for Mermaid and dynamic tables
                     ADD_ATTR: ['xlink:href', 'transform', 'viewBox'],
-                    USE_PROFILES: { html: true, svg: true, svgFilters: true }
+                    USE_PROFILES: { html: true, svg: true, svgFilters: true },
+                    HTML_INTEGRATION_POINTS: { foreignobject: true }
                 }),
                 createScriptURL: (string) => string,
                 createScript: (string) => string 

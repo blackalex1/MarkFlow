@@ -27,8 +27,13 @@ export function initMarkdownComponentHandlers() {
                                 const nodes = target.querySelectorAll('.mermaid');
                                 nodes.forEach(n => {
                                     if (n.dataset.code) {
-                                        n.textContent = n.dataset.code;
+                                        try {
+                                            n.textContent = decodeURIComponent(n.dataset.code);
+                                        } catch (e) {
+                                            n.textContent = n.dataset.code;
+                                        }
                                         n.removeAttribute('data-processed');
+                                        delete n.dataset.processed;
                                     }
                                 });
                                 mermaid.run({
@@ -38,7 +43,7 @@ export function initMarkdownComponentHandlers() {
                             } catch (e) {
                                 console.error('Mermaid tab render error:', e);
                             }
-                        }, 300);
+                        }, 200);
                     }
                     if (window.katex) {
                         target.querySelectorAll('.math-tex-inline, .math-tex-block').forEach(el => {
@@ -79,8 +84,13 @@ export function initMarkdownComponentHandlers() {
                                 const nodes = container.querySelectorAll('.mermaid');
                                 nodes.forEach(n => {
                                     if (n.dataset.code) {
-                                        n.textContent = n.dataset.code;
+                                        try {
+                                            n.textContent = decodeURIComponent(n.dataset.code);
+                                        } catch (e) {
+                                            n.textContent = n.dataset.code;
+                                        }
                                         n.removeAttribute('data-processed');
+                                        delete n.dataset.processed;
                                     }
                                 });
                                 mermaid.run({
@@ -90,7 +100,7 @@ export function initMarkdownComponentHandlers() {
                             } catch (e) {
                                 console.error('Mermaid dropdown render error:', e);
                             }
-                        }, 300);
+                        }, 200);
                     }
                     if (window.katex) {
                         container.querySelectorAll('.math-tex-inline, .math-tex-block').forEach(el => {

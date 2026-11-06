@@ -10,6 +10,12 @@ import { updateURL, renderErrorPage } from './viewer/core.js';
 
 initMarked();
 
+if (window.DOMPurify && DOMPurify.setConfig) {
+    DOMPurify.setConfig({
+        HTML_INTEGRATION_POINTS: { foreignobject: true }
+    });
+}
+
 if (window.mermaid) {
     mermaid.initialize({ 
         startOnLoad: false, 
@@ -47,6 +53,7 @@ export async function loadFileContent(path, pushState = true, hash = null) {
             ADD_TAGS: ['mark'],
             ADD_ATTR: ['target', 'data-target', 'data-tab-id', 'data-lucide', 'id', 'class', 'data-code', 'style', 'aria-hidden', 'data-math'],
             USE_PROFILES: { html: true, mathMl: true, svg: true },
+            HTML_INTEGRATION_POINTS: { foreignobject: true },
             RETURN_TRUSTED_TYPE: true,
             ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel|data|blob):|[^&#:\/?]*(?:[\/?#]|$))/i
         });
@@ -132,6 +139,10 @@ export async function loadFileContent(path, pushState = true, hash = null) {
                         entries.forEach(entry => {
                             if (entry.isIntersecting) {
                                 const n = entry.target;
+                                // Skip if inside a hidden/collapsed accordion or tab
+                                if (n.closest('.dropdown-container:not(.expanded)') || n.closest('.tab-content:not(.active)') || n.offsetParent === null) {
+                                    return;
+                                }
                                 if (!n.dataset.processed) {
                                     if (!n.dataset.code) n.dataset.code = n.textContent;
                                     mermaid.run({ nodes: [n], suppressErrors: true });
@@ -141,7 +152,13 @@ export async function loadFileContent(path, pushState = true, hash = null) {
                             }
                         });
                     }, { rootMargin: '200px' });
-                    mermaidNodes.forEach(n => mermaidObserver.observe(n));
+                    mermaidNodes.forEach(n => {
+                        // If initially inside a closed dropdown or inactive tab, let click handler render it
+                        if (n.closest('.dropdown-container:not(.expanded)') || n.closest('.tab-content:not(.active)')) {
+                            return;
+                        }
+                        mermaidObserver.observe(n);
+                    });
                 }
             }
             if (window.lucide) lucide.createIcons({

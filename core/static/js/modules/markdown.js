@@ -48,7 +48,10 @@ export function initMarked() {
     renderer.code = function (arg1, arg2) {
         let code = typeof arg1 === 'object' ? arg1.text : arg1;
         let lang = typeof arg1 === 'object' ? arg1.lang : arg2;
-        if (lang === 'mermaid') return `<div class="mermaid">${code}</div>`;
+        if (lang === 'mermaid') {
+            const encoded = encodeURIComponent(code);
+            return `<div class="mermaid" data-code="${encoded}">${code}</div>`;
+        }
         return `<pre><code class="language-${lang || ''}">${code}</code></pre>`;
     };
 

@@ -309,6 +309,13 @@ export class MarkFlowEditor {
         if (window.mermaid) {
             const nodes = this.previewContent.querySelectorAll('.mermaid');
             if (nodes.length > 0) {
+                nodes.forEach(n => {
+                    if (n.dataset.code) {
+                        try { n.textContent = decodeURIComponent(n.dataset.code); } catch (e) {}
+                        n.removeAttribute('data-processed');
+                        delete n.dataset.processed;
+                    }
+                });
                 try {
                     window.mermaid.run({ nodes: nodes, suppressErrors: true });
                 } catch (e) { console.error('Mermaid error:', e); }
