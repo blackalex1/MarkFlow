@@ -234,8 +234,10 @@ if [ -f "deploy/nginx.conf.template" ]; then
     log_success "Конфигурация Nginx синхронизирована."
 fi
 
-# Ensure required runtime volumes/folders exist on host
+# Ensure required runtime volumes/folders exist on host and allow non-root container access
 mkdir -p certbot/conf certbot/www config markdown_docs
+chown -R 1001:1001 config markdown_docs 2>/dev/null || chmod -R ugo+rwX config markdown_docs 2>/dev/null || true
+
 
 # Step 4: Docker Containers Build & Restart
 log_step 4 6 "Пересборка и запуск Docker-контейнеров"
