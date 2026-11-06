@@ -180,7 +180,13 @@ def read_root(request: Request):
 
 @app.get("/{rest_of_path:path}")
 async def catch_all(request: Request, rest_of_path: str):
-    if rest_of_path.startswith(("api/", "static/")) or ("." in rest_of_path.split("/")[-1] and not rest_of_path.endswith(".md")):
+    # Reject common scanner probes and script paths directly with 404 to avoid false-positives
+    scanner_prefixes = ("cgi-bin/", "wp-", "actuator/", "boaform/", "phpmyadmin", "shell", ".well-known/")
+    if (
+        rest_of_path.lower().startswith(scanner_prefixes)
+        or rest_of_path.startswith(("api/", "static/"))
+        or ("." in rest_of_path.split("/")[-1] and not rest_of_path.endswith(".md"))
+    ):
         raise HTTPException(status_code=404)
     
     user = get_current_user(request)
@@ -211,5 +217,8 @@ if __name__ == "__main__":
     default_trusted = "127.0.0.1,172.20.0.5,172.16.0.0/12,192.168.0.0/16,10.0.0.0/8"
     trusted_ips = os.getenv("TRUSTED_PROXIES", default_trusted)
     
-    print(f"Starting server with trusted proxies: {trusted_ips}")
-    uvicorn.run("core.main:app", host="0.0.0.0", port=8000, reload=True, proxy_headers=True, forwarded_allow_ips=trusted_ips, **ssl_config)
+    # Secure host binding: defaults to 127.0.0.1 locally, HOST=0.0.0.0 in Docker/Production
+    host = os.getenv("HOST", "127.0.0.1")
+    
+    print(f"Starting server on {host}:8000 with trusted proxies: {trusted_ips}")
+    uvicorn.run("core.main:app", host=host, port=8000, reload=True, proxy_headers=True, forwarded_allow_ips=trusted_ips, **ssl_config)

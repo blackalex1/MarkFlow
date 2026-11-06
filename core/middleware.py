@@ -2,6 +2,7 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 from urllib.parse import urlparse
 import secrets
+import hashlib
 
 async def add_security_headers(request: Request, call_next):
     # Generate a unique nonce for this request
@@ -65,6 +66,7 @@ async def add_security_headers(request: Request, call_next):
     response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
     response.headers["Cross-Origin-Resource-Policy"] = "same-origin"
+    response.headers["Cross-Origin-Embedder-Policy"] = "require-corp"
     
     # Tightened CSP with Nonce and Strict-Dynamic
     csp = (
@@ -76,6 +78,8 @@ async def add_security_headers(request: Request, call_next):
         "media-src 'self' blob: data: https:; " 
         "connect-src 'self' ws: wss: blob:; " 
         "frame-src 'self' blob: data:; " 
+        "worker-src 'self' blob:; "
+        "manifest-src 'self'; "
         "frame-ancestors 'none'; "
         "object-src 'none'; "
         "base-uri 'self'; "
@@ -85,6 +89,12 @@ async def add_security_headers(request: Request, call_next):
 
     response.headers["Content-Security-Policy"] = csp
     response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+
+    # Prevent filesystem inode leak in ETag (Nikto / Information Disclosure)
+    if "etag" in response.headers:
+        raw_etag = response.headers["etag"].strip('"')
+        hashed = hashlib.sha256(raw_etag.encode()).hexdigest()[:16]
+        response.headers["etag"] = f'"{hashed}"'
 
     # Caching for static assets
     if request.url.path.startswith(("/static/", "/branding/", "/config/")):

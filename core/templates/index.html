@@ -77,12 +77,16 @@
     {% endif %}
 
 
+    <!-- Безопасная передача конфига через JSON-контейнер -->
+    <script id="markflow-config" type="application/json">
+    {{ {
+        "homePagePath": config.home_page_path or "",
+        "flattenedSlugs": flattened_slugs or [],
+        "repoMapping": repo_mapping or {}
+    } | tojson }}
+    </script>
     <script nonce="{{ csp_nonce }}">
-        {{ 'window.MARKFLOW_CONFIG = {' ~
-           'homePagePath: ' ~ (config.home_page_path or "") | tojson ~ ',' ~
-           'flattenedSlugs: ' ~ (flattened_slugs or []) | tojson ~ ',' ~
-           'repoMapping: ' ~ (repo_mapping or {}) | tojson ~
-        '};' | safe }}
+        window.MARKFLOW_CONFIG = JSON.parse(document.getElementById('markflow-config').textContent);
     </script>
     <script nonce="{{ csp_nonce }}" type="module" src="/static/js/app.js?v={{ app_version }}"></script>
 </body>

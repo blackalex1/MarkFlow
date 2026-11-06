@@ -20,8 +20,8 @@ LIBRARIES = [
     ("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js", "js/languages/java.min.js", None),
     ("https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/r.min.js", "js/languages/r.min.js", None),
     ("https://cdn.jsdelivr.net/npm/marked@15.0.0/marked.min.js", "js/marked.min.js", "sha384-5S+6C4bM5PFDRwie5G8wVUoq/5EzdFEaE2bg7xLLhNiz4fjj7fsecAfOl8VzZ/co"),
-    ("https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js", "js/purify.min.js", "sha384-rneZSW/1QE+3/U5/u+/7eRNi/tRc+SzS+yXy36fltr1tDN9EHaVo1Bwz2Z8o8DA4"),
-    ("https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.5/purify.min.js.map", "js/purify.min.js.map", None),
+    ("https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.7/purify.min.js", "js/purify.min.js", "sha384-qJNkHwhlYywDHfyoEe1np+1lYvX/8x+3gHCKFhSSBMQyCFlvFnn+zXmaebXl21rV"),
+    ("https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.2.7/purify.min.js.map", "js/purify.min.js.map", None),
     ("https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js", "js/mermaid.min.js", "sha384-WmdflGW9aGfoBdHc4rRyWzYuAjEmDwMdGdiPNacbwfGKxBW/SO6guzuQ76qjnSlr"),
 
     ("https://unpkg.com/easymde@2.18.0/dist/easymde.min.js", "js/easymde.min.js", "sha384-KtB38COewxfrhJxoN2d+olxJAeT08LF8cVZ6DQ8Poqu89zIptqO6zAXoIxpGNWYE"),

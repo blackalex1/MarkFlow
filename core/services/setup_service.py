@@ -3,7 +3,7 @@ import shutil
 import json
 from core.config import DOCS_DIR, BASE_DIR
 
-WELCOME_CONTENT = """# MarkFlow: Полная демонстрация возможностей
+WELCOME_CONTENT = r"""# MarkFlow: Полная демонстрация возможностей
 
 Этот файл содержит примеры всех поддерживаемых элементов оформления в MarkFlow, включая стандартный Markdown и кастомные расширения.
 
@@ -259,7 +259,8 @@ def initialize_volumes():
     # Copy from example if file is missing in config
     for item in os.listdir(example_dir):
         s = os.path.join(example_dir, item)
-        d = os.path.join(config_dir, item)
+        target_name = ".env" if item == ".env.example" else item
+        d = os.path.join(config_dir, target_name)
         if os.path.isdir(s):
             if not os.path.exists(d):
                 shutil.copytree(s, d)

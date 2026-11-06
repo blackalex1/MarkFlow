@@ -1,50 +1,57 @@
-# Stage 1: Build stage
+# Multi-stage build for MarkFlow
 FROM python:3.11.9-slim AS builder
-
-# Copy the uv executable from the official image
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
-
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-# Install Python dependencies into virtual environment
+# Install uv for fast package installation
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
+
+# Copy requirements and install dependencies
 COPY requirements.txt .
 RUN uv venv /app/.venv && \
     uv pip install --no-cache -r requirements.txt
 
-# Stage 2: Final runner stage
+# Final runner stage
 FROM python:3.11.9-slim AS runner
+
+WORKDIR /app
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app \
-    PATH="/app/.venv/bin:$PATH"
+    PATH="/app/.venv/bin:$PATH" \
+    HOST=0.0.0.0
 
-WORKDIR /app
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+# Install system dependencies, upgrade OS packages for security fixes & cleanup setuid
+RUN apt-get update && apt-get upgrade -y && apt-get install -y --no-install-recommends \
     git \
     openssh-client \
     libmagic1 \
     ffmpeg \
-    && rm -rf /var/lib/apt/lists/*
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && find / -perm /6000 -type f -exec chmod a-s {} + 2>/dev/null || true
 
-# Copy virtual environment from builder stage
+# Create non-root user
+RUN groupadd -g 1001 appgroup && \
+    useradd -u 1001 -g appgroup -s /bin/sh -m appuser
+
+# Copy virtual environment and project files
 COPY --from=builder /app/.venv /app/.venv
-
-# Copy project files
 COPY core/ /app/core/
 
-# Create necessary directories
-RUN mkdir -p /app/markdown_docs /app/config
+# Create necessary directories and set ownership
+RUN mkdir -p /app/markdown_docs /app/config && \
+    chown -R appuser:appgroup /app
 
-# Expose port
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD curl -f http://127.0.0.1:8000/ || exit 1
+
+# Switch to non-root user
+USER appuser
+
 EXPOSE 8000
 
-# Run the application
 CMD ["python", "core/main.py"]

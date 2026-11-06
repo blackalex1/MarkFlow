@@ -28,7 +28,7 @@ bash deploy/setup.sh
 - Инициализировать SSL-сертификаты Let's Encrypt.
 
 ### 2. Обслуживание
-- **Обновление**: `bash deploy/update.sh`
+- **Обновление**: `bash update.sh`
 - **Пересборка**: `bash deploy/rebuild.sh`
 
 Доступ по умолчанию: `http://ваш-домен` (Логин: `admin`, пароль: см. в логах при первом запуске).

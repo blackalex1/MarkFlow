@@ -166,3 +166,71 @@ def test_rbac_detailed_access(client):
     assert "maintainer" in response.text.lower()
     
     app.dependency_overrides.clear()
+
+
+def test_index_config_safe_json(client):
+    """Verify that frontend configuration is safely embedded as application/json and not executable script interpolation"""
+    response = client.get("/")
+    assert response.status_code == 200
+    html = response.text
+    
+    # Ensure safe JSON script tag is present
+    assert '<script id="markflow-config" type="application/json">' in html
+    assert "window.MARKFLOW_CONFIG = JSON.parse(document.getElementById('markflow-config').textContent);" in html
+    
+    # Ensure dangerous | safe pattern is absent
+    assert "| safe" not in html
+    
+    # Extract and parse JSON
+    start_tag = '<script id="markflow-config" type="application/json">'
+    end_tag = '</script>'
+    start_idx = html.find(start_tag) + len(start_tag)
+    end_idx = html.find(end_tag, start_idx)
+    json_str = html[start_idx:end_idx].strip()
+    
+    config_data = json.loads(json_str)
+    assert "homePagePath" in config_data
+    assert "flattenedSlugs" in config_data
+    assert "repoMapping" in config_data
+
+
+def test_security_headers_and_csp(client):
+    """Verify modern security headers including COEP and full CSP directives"""
+    response = client.get("/")
+    assert response.status_code == 200
+    headers = response.headers
+    
+    assert headers.get("Cross-Origin-Embedder-Policy") == "require-corp"
+    assert headers.get("Cross-Origin-Opener-Policy") == "same-origin"
+    assert headers.get("Cross-Origin-Resource-Policy") == "same-origin"
+    
+    csp = headers.get("Content-Security-Policy", "")
+    assert "worker-src 'self' blob:;" in csp
+    assert "manifest-src 'self';" in csp
+    assert "require-trusted-types-for 'script';" in csp
+
+
+def test_scanner_probes_blocked_404(client):
+    """Verify that legacy scanner probes (CGI/PHP/etc) return 404 rather than 200 OK SPA HTML"""
+    probes = [
+        "/cgi-bin/test",
+        "/cgi-bin/test.cgi",
+        "/wp-login.php",
+        "/wp-admin",
+        "/phpmyadmin",
+        "/actuator/health",
+        "/shell.php"
+    ]
+    for probe in probes:
+        response = client.get(probe)
+        assert response.status_code == 404, f"Expected 404 for scanner probe {probe}, got {response.status_code}"
+
+
+def test_vendor_purify_version():
+    """Verify that vendor_service references safe DOMPurify >= 3.2.0"""
+    from core.services.vendor_service import LIBRARIES
+    purify_entry = next((entry for entry in LIBRARIES if "purify.min.js" in entry[1]), None)
+    assert purify_entry is not None, "DOMPurify entry not found in LIBRARIES"
+    url, rel_path, expected_hash = purify_entry
+    assert "3.2." in url, f"Expected DOMPurify 3.2.x, got URL: {url}"
+    assert expected_hash is not None and expected_hash.startswith("sha384-")
